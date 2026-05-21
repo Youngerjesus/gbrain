@@ -159,6 +159,33 @@ async function resolveAIOptions(opts: ResolveAIOptionsArgs): Promise<ResolvedAIO
   const { verbose, shorthand, dimsArg, expansion, chat, noEmbedding, nonInteractive } = opts;
   const out: ResolvedAIOptions = {};
 
+  // --- D5: persisted config wins on re-init -----------------------------------
+  // When `~/.gbrain/config.json` already has embedding_model set (a re-init
+  // against an existing brain), honor it BEFORE env detection. Without this
+  // the env-detection branch fires unnecessarily on every re-init, and a
+  // non-TTY re-init with no env keys exits 1 (D3) even though the brain is
+  // already correctly configured. Caught by CI's E2E init sequence where
+  // multiple tests share `~/.gbrain` and only the first init has flags.
+  //
+  // The deferred-setup sentinel (`embedding_disabled: true`) is also honored —
+  // a re-init without --no-embedding shouldn't re-trigger fail-loud when the
+  // user already opted into deferred mode.
+  try {
+    const { loadConfig } = await import('../core/config.ts');
+    const cfg = loadConfig();
+    if (cfg?.embedding_disabled) {
+      out.noEmbedding = true;
+    } else if (cfg?.embedding_model) {
+      out.embedding_model = cfg.embedding_model;
+      if (cfg.embedding_dimensions) out.embedding_dimensions = cfg.embedding_dimensions;
+    }
+    if (cfg?.expansion_model) out.expansion_model = cfg.expansion_model;
+    if (cfg?.chat_model) out.chat_model = cfg.chat_model;
+  } catch {
+    // loadConfig throws when no brain configured — first-time install, fall
+    // through to env detection.
+  }
+
   // --- Tier 1+2: explicit flags ---------------------------------------------
 
   if (verbose) {
