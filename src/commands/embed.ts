@@ -4,6 +4,8 @@ import type { ChunkInput } from '../core/types.ts';
 import { chunkText } from '../core/chunkers/recursive.ts';
 import { createProgress, type ProgressReporter } from '../core/progress.ts';
 import { getCliOptions, cliOptsToProgressOptions } from '../core/cli-options.ts';
+import { assertEmbeddingEnabled } from '../core/embedding-dim-check.ts';
+import { loadConfig } from '../core/config.ts';
 
 export interface EmbedOpts {
   /** Embed ALL pages (every chunk). */
@@ -124,9 +126,15 @@ async function preflightDimMismatch(engine: BrainEngine, dryRun: boolean): Promi
 }
 
 export async function runEmbedCore(engine: BrainEngine, opts: EmbedOpts): Promise<EmbedResult> {
-  // D.2: pre-flight dim-mismatch check. Catches the headline fresh-install
-  // bug class before the worker pool spends 20 parallel calls hitting
-  // raw Postgres dimension errors.
+  // v0.37.10.0 T7 (D9): refuse cleanly when init persisted the deferred-setup
+  // sentinel. Skipped in dryRun mode so plan-mode introspection still works.
+  if (!opts.dryRun) {
+    assertEmbeddingEnabled(loadConfig());
+  }
+
+  // v0.37.11.0 (Lane D.2): pre-flight dim-mismatch check. Catches the headline
+  // fresh-install bug class before the worker pool spends 20 parallel calls
+  // hitting raw Postgres dimension errors.
   await preflightDimMismatch(engine, !!opts.dryRun);
 
   const result: EmbedResult = {
