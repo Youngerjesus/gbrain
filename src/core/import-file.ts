@@ -250,14 +250,34 @@ export async function importFromContent(
 
   const parsed = parseMarkdown(content, slug + '.md');
 
-  // Hash includes ALL fields for idempotency (not just compiled_truth + timeline)
+  // v0.38.3.0 CV8 — DB content_hash excludes timestamp-bearing frontmatter
+  // keys so identical body content from `gbrain capture` (which stamps
+  // `captured_at` and `ingested_at` per call) produces a stable hash.
+  // Pre-fix, every capture-cli invocation produced a fresh hash because
+  // the timestamp changed, defeating:
+  //   - the existing.content_hash === hash short-circuit below (every
+  //     capture re-chunked + re-embedded unchanged content — wasted
+  //     embedding spend)
+  //   - the daemon's 24h LRU dedup (separate consumer keyed on same hash)
+  //
+  // We strip ONLY the timestamp keys, not the whole frontmatter object.
+  // Stripping all frontmatter would regress sync: a user adding a tag
+  // would update the frontmatter without changing the body, the hash
+  // would not change, and tag reconciliation would silently no-op
+  // (this function returns early on hash-match).
+  const HASH_EPHEMERAL_FRONTMATTER_KEYS = ['captured_at', 'ingested_at'];
+  const stableFrontmatter: Record<string, unknown> = { ...parsed.frontmatter };
+  for (const k of HASH_EPHEMERAL_FRONTMATTER_KEYS) {
+    delete stableFrontmatter[k];
+  }
+  // Hash includes all meaningful fields for idempotency.
   const hash = createHash('sha256')
     .update(JSON.stringify({
       title: parsed.title,
       type: parsed.type,
       compiled_truth: parsed.compiled_truth,
       timeline: parsed.timeline,
-      frontmatter: parsed.frontmatter,
+      frontmatter: stableFrontmatter,
       tags: parsed.tags.sort(),
     }))
     .digest('hex');
