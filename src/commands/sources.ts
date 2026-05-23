@@ -532,6 +532,48 @@ async function runCurrent(engine: BrainEngine, args: string[]): Promise<void> {
 
 // ── Dispatcher ──────────────────────────────────────────────
 
+// ── Subcommand: status (v0.40.3.0) ──────────────────────────
+//
+// Read-only per-source dashboard. Mirror of the existing `sources list`
+// shape: pure data fn (`buildSyncStatusReport` from `sync.ts`) + JSON
+// formatter + human formatter (same as `orphans.ts` / `salience.ts` /
+// `anomalies.ts` pattern).
+//
+// `--json` emits the stable {schema_version:1, ...} envelope on stdout
+// for monitoring pipelines. Bare invocation prints the human table.
+//
+// Archived sources are excluded (`archived IS NOT TRUE`) — operators
+// looking at archived state use `gbrain sources archived`. This mirrors
+// the existing default-list filter in `sources-ops.listSources`.
+
+async function runStatus(engine: BrainEngine, args: string[]): Promise<void> {
+  const json = args.includes('--json');
+  const { buildSyncStatusReport, printSyncStatusReport } = await import('./sync.ts');
+
+  // Same source filter as `sync --all`: rows with a working tree to sync,
+  // active (not archived). The dashboard is about WHERE sync work happens.
+  const sources = await engine.executeRaw<{
+    id: string;
+    name: string;
+    local_path: string | null;
+    config: Record<string, unknown>;
+  }>(
+    `SELECT id, name, local_path, config FROM sources
+       WHERE local_path IS NOT NULL AND archived IS NOT TRUE
+       ORDER BY (id = 'default') DESC, id`,
+  );
+
+  const report = await buildSyncStatusReport(engine, sources);
+
+  if (json) {
+    // JSON-only on stdout. No header, no decoration. Pipes cleanly
+    // through `jq`. (D4 + D14 envelope contract.)
+    console.log(JSON.stringify(report));
+    return;
+  }
+  printSyncStatusReport(report);
+}
+
 export async function runSources(engine: BrainEngine, args: string[]): Promise<void> {
   const sub = args[0];
   const rest = args.slice(1);
@@ -551,6 +593,7 @@ export async function runSources(engine: BrainEngine, args: string[]): Promise<v
     case 'purge':      return runPurge(engine, rest);
     case 'archived':   return runListArchived(engine, rest);
     case 'current':    return runCurrent(engine, rest);
+    case 'status':     return runStatus(engine, rest);
     case undefined:
     case '--help':
     case '-h':
@@ -576,6 +619,11 @@ Subcommands:
                                     when the source has data (pages/chunks/embeddings).
   archive <id>                      Soft-delete: hide from search, preserve data for ${SOFT_DELETE_TTL_HOURS}h.
   restore <id> [--no-federate]      Un-archive a soft-deleted source.
+  status [--json]                   v0.40.3.0 — read-only per-source dashboard:
+                                    last sync, staleness, page count,
+                                    embedding coverage, unacked failures.
+                                    --json emits {schema_version:1, ...} on
+                                    stdout for monitoring pipelines.
   archived [--json]                 List soft-deleted sources and their expiry.
   purge [<id>] [--confirm-destructive]
                                     Permanently delete archived sources.

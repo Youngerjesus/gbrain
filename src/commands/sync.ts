@@ -25,8 +25,19 @@ import {
   autoConcurrency,
   shouldRunParallel,
   parseWorkers,
+  DEFAULT_PARALLEL_SOURCES,
 } from '../core/sync-concurrency.ts';
-import { tryAcquireDbLock, SYNC_LOCK_ID } from '../core/db-lock.ts';
+import {
+  tryAcquireDbLock,
+  withRefreshingLock,
+  LockUnavailableError,
+  SYNC_LOCK_ID,
+} from '../core/db-lock.ts';
+import {
+  withSourcePrefix,
+  slog,
+  serr,
+} from '../core/console-prefix.ts';
 import { loadStorageConfig } from '../core/storage-config.ts';
 import { getDefaultSourcePath } from '../core/source-resolver.ts';
 import { sortNewestFirst } from '../core/sort-newest-first.ts';
@@ -161,6 +172,39 @@ export interface SyncOpts {
    * v0.22.13 (PR #490 CODEX-2). Not part of the public CLI surface.
    */
   skipLock?: boolean;
+  /**
+   * Internal: override the DB lock id taken around the writer window.
+   * Not part of the public CLI surface — explicit escape hatch for
+   * callers that already know which lock id they want.
+   *
+   * Defaults to:
+   *   - `gbrain-sync:<sourceId>` when `opts.sourceId` is set
+   *     (multi-source / federated brains; the per-source invariant)
+   *   - `gbrain-sync` (the legacy global lock) when `sourceId` is unset
+   *     (single-default-source brains; preserves bit-for-bit behavior
+   *      for installs that never set up multiple sources)
+   *
+   * Why source-id keyed by default (v0.40.3.0):
+   *   PR #1314 originally only changed the lock id inside the parallel
+   *   `sync --all` fan-out. That introduced a worse race than the global
+   *   lock fixes — `gbrain sync --all` (per-source lock) running
+   *   concurrently with `gbrain sync --source foo` (global lock) would
+   *   both write source foo simultaneously. The fix: every source-scoped
+   *   sync (CLI, --all fan-out, cycle, jobs handler) defaults to the
+   *   per-source lock. Same source = same lock id, always.
+   *
+   * For the per-source path, `performSync` ALSO switches from bare
+   * `tryAcquireDbLock` to `withRefreshingLock` so long-running sources
+   * (the PR's whole motivation — media-corpus, 250K+ chunks) don't lose
+   * their lock at the 30-minute TTL mid-run. The legacy global-lock
+   * path keeps bare `tryAcquireDbLock` for back-compat (no caller
+   * depends on the global lock surviving past 30 minutes today).
+   *
+   * Total live Postgres connections per parallel `sync --all` wave:
+   *   parallel  ×  workers  ×  2 (per-file pool inside each worker)
+   *   + parent pool. See DEFAULT_PARALLEL_SOURCES in sync-concurrency.ts.
+   */
+  lockId?: string;
 }
 
 /**
@@ -358,35 +402,66 @@ async function writeChunkerVersion(
 }
 
 export async function performSync(engine: BrainEngine, opts: SyncOpts): Promise<SyncResult> {
-  // CODEX-2 (v0.22.13): cross-process writer lock for performSync. Two
-  // concurrent syncs can otherwise read the same last_commit anchor, both
-  // write last_commit unconditionally, and the last writer wins — including
-  // regressing the bookmark backwards. cycle.ts already takes gbrain-cycle
-  // for its broader scope; performSync (called from cycle, jobs handler,
-  // and CLI) takes gbrain-sync just for the writer window. The two ids
-  // nest cleanly: cycle holds gbrain-cycle, calls performSync, performSync
-  // takes gbrain-sync. Other callers serialize on gbrain-sync against
-  // each other AND against the cycle's sync phase.
+  // v0.22.13 CODEX-2: cross-process writer lock prevents two concurrent
+  // syncs from racing on the same last_commit anchor (last writer wins,
+  // bookmark regresses, silent corruption).
   //
-  // skipLock is reserved for callers that already serialize via another
-  // mechanism (none in v0.22.13; reserved for future).
-  let lockHandle: { release: () => Promise<void> } | null = null;
-  if (!opts.skipLock) {
-    lockHandle = await tryAcquireDbLock(engine, SYNC_LOCK_ID);
-    if (!lockHandle) {
-      throw new Error(
-        `Another sync is in progress (lock ${SYNC_LOCK_ID} held). ` +
-        `Wait for it to finish, or run 'gbrain doctor' if it has been more than 30 minutes.`,
-      );
+  // v0.40.3.0 lock-identity invariant (D8 + D11 from PR #1314 review):
+  //
+  //   - When `opts.sourceId` is set (every multi-source call site: --all
+  //     fan-out, `sync --source X`, cycle, jobs handler), default lockId is
+  //     `gbrain-sync:<sourceId>`. Independent sources don't contend; the
+  //     SAME source still serializes against itself across processes.
+  //   - When `opts.sourceId` is unset (legacy single-default-source brains),
+  //     fall through to the global `gbrain-sync` lock. Preserves bit-for-
+  //     bit behavior for installs that never set up multiple sources.
+  //   - Per-source path uses `withRefreshingLock` so long-running sources
+  //     (the PR #1314 motivating case — media-corpus, 250K+ chunks) don't
+  //     lose their lock at the 30-minute TTL mid-run.
+  //   - Global path keeps bare `tryAcquireDbLock` for back-compat.
+  //   - `opts.lockId` is an explicit override for callers that already know
+  //     which lock id they want. Not used by any production caller; reserved
+  //     for tests and operator escape hatches.
+  //   - `opts.skipLock` (v0.22.13 reserve) — cycle.ts already holds
+  //     gbrain-cycle for the broader scope; performSync nested under cycle
+  //     could opt out. Currently unused but the contract stays.
+  if (opts.skipLock) {
+    return await performSyncInner(engine, opts);
+  }
+
+  const lockId =
+    opts.lockId ?? (opts.sourceId ? `${SYNC_LOCK_ID}:${opts.sourceId}` : SYNC_LOCK_ID);
+  const usePerSourcePath = opts.lockId !== undefined || opts.sourceId !== undefined;
+
+  if (usePerSourcePath) {
+    // Per-source path: withRefreshingLock handles TTL renewal for long
+    // sources. LockUnavailableError shape stays the same as the legacy
+    // path so the operator-facing error message is consistent.
+    try {
+      return await withRefreshingLock(engine, lockId, () => performSyncInner(engine, opts));
+    } catch (err) {
+      if (err instanceof LockUnavailableError) {
+        throw new Error(
+          `Another sync is in progress (lock ${lockId} held). ` +
+            `Wait for it to finish, or run 'gbrain doctor' if it has been more than 30 minutes.`,
+        );
+      }
+      throw err;
     }
   }
 
+  // Legacy global-lock path (single-default-source brains).
+  const lockHandle = await tryAcquireDbLock(engine, SYNC_LOCK_ID);
+  if (!lockHandle) {
+    throw new Error(
+      `Another sync is in progress (lock ${SYNC_LOCK_ID} held). ` +
+        `Wait for it to finish, or run 'gbrain doctor' if it has been more than 30 minutes.`,
+    );
+  }
   try {
     return await performSyncInner(engine, opts);
   } finally {
-    if (lockHandle) {
-      try { await lockHandle.release(); } catch { /* best-effort release */ }
-    }
+    try { await lockHandle.release(); } catch { /* best-effort release */ }
   }
 }
 
@@ -443,7 +518,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
         case 'missing':
         case 'no-git':
         case 'not-a-dir':
-          console.error(
+          serr(
             `[gbrain] auto-recovery: re-cloning "${opts.sourceId}" (clone state: ${state}).`,
           );
           await recloneIfMissing(engine, opts.sourceId);
@@ -476,7 +551,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
   // gated on opts.noPull.
   const detachedHead = isDetachedHead(repoPath);
   if (detachedHead && !opts.noPull) {
-    console.error(`Detached HEAD on ${repoPath}; skipping git pull. Syncing from local working tree.`);
+    serr(`Detached HEAD on ${repoPath}; skipping git pull. Syncing from local working tree.`);
   }
 
   // Git pull (unless --no-pull). v0.28.1 codex finding (HIGH): the legacy
@@ -487,23 +562,23 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
   // ongoing pulls — single source of truth for the defensive flags.
   const originRemotePresent = !opts.noPull && !detachedHead ? hasOriginRemote(repoPath) : false;
   if (!opts.noPull && !detachedHead && !originRemotePresent) {
-    console.error(`No origin remote on ${repoPath}; skipping git pull. Syncing from local working tree.`);
+    serr(`No origin remote on ${repoPath}; skipping git pull. Syncing from local working tree.`);
   }
 
   if (!opts.noPull && !detachedHead && originRemotePresent) {
     const _t0 = Date.now();
-    console.error(`[gbrain phase] sync.git_pull start`);
+    serr(`[gbrain phase] sync.git_pull start`);
     try {
       const { pullRepo } = await import('../core/git-remote.ts');
       pullRepo(repoPath);
-      console.error(`[gbrain phase] sync.git_pull done ${Date.now() - _t0}ms`);
+      serr(`[gbrain phase] sync.git_pull done ${Date.now() - _t0}ms`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      console.error(`[gbrain phase] sync.git_pull error ${Date.now() - _t0}ms (${msg.slice(0, 80)})`);
+      serr(`[gbrain phase] sync.git_pull error ${Date.now() - _t0}ms (${msg.slice(0, 80)})`);
       if (msg.includes('non-fast-forward') || msg.includes('diverged')) {
-        console.error(`Warning: git pull failed (remote diverged). Syncing from local state.`);
+        serr(`Warning: git pull failed (remote diverged). Syncing from local state.`);
       } else {
-        console.error(`Warning: git pull failed: ${msg.slice(0, 100)}`);
+        serr(`Warning: git pull failed: ${msg.slice(0, 100)}`);
       }
     }
   }
@@ -524,7 +599,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
     try {
       git(repoPath, ['cat-file', '-t', lastCommit]);
     } catch {
-      console.error(`Sync anchor commit ${lastCommit.slice(0, 8)} missing (force push?). Running full reimport.`);
+      serr(`Sync anchor commit ${lastCommit.slice(0, 8)} missing (force push?). Running full reimport.`);
       return performFullSync(engine, repoPath, headCommit, opts);
     }
 
@@ -532,7 +607,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
     try {
       git(repoPath, ['merge-base', '--is-ancestor', lastCommit, headCommit]);
     } catch {
-      console.error(`Sync anchor ${lastCommit.slice(0, 8)} is not an ancestor of HEAD. Running full reimport.`);
+      serr(`Sync anchor ${lastCommit.slice(0, 8)} is not an ancestor of HEAD. Running full reimport.`);
       return performFullSync(engine, repoPath, headCommit, opts);
     }
   }
@@ -573,7 +648,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
   }
 
   if ((versionMismatch || versionNeverSet) && lastCommit === headCommit) {
-    console.log(
+    slog(
       `[sync] chunker_version gate: stored=${storedVersion ?? 'unset'}, current=${currentVersion}. ` +
       `Forcing full re-chunk pass (git HEAD unchanged but pipeline version advanced).`,
     );
@@ -618,7 +693,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
       const existing = await engine.getPage(slug, pageOpts);
       if (existing) {
         await engine.deletePage(slug, pageOpts);
-        console.log(`  Deleted un-syncable page: ${slug}`);
+        slog(`  Deleted un-syncable page: ${slug}`);
       }
     } catch { /* ignore */ }
   }
@@ -628,12 +703,12 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
 
   // Dry run
   if (opts.dryRun) {
-    console.log(`Sync dry run: ${lastCommit.slice(0, 8)}..${headCommit.slice(0, 8)}`);
-    if (filtered.added.length) console.log(`  Added: ${filtered.added.join(', ')}`);
-    if (filtered.modified.length) console.log(`  Modified: ${filtered.modified.join(', ')}`);
-    if (filtered.deleted.length) console.log(`  Deleted: ${filtered.deleted.join(', ')}`);
-    if (filtered.renamed.length) console.log(`  Renamed: ${filtered.renamed.map(r => `${r.from} -> ${r.to}`).join(', ')}`);
-    if (totalChanges === 0) console.log(`  No syncable changes.`);
+    slog(`Sync dry run: ${lastCommit.slice(0, 8)}..${headCommit.slice(0, 8)}`);
+    if (filtered.added.length) slog(`  Added: ${filtered.added.join(', ')}`);
+    if (filtered.modified.length) slog(`  Modified: ${filtered.modified.join(', ')}`);
+    if (filtered.deleted.length) slog(`  Deleted: ${filtered.deleted.join(', ')}`);
+    if (filtered.renamed.length) slog(`  Renamed: ${filtered.renamed.map(r => `${r.from} -> ${r.to}`).join(', ')}`);
+    if (totalChanges === 0) slog(`  No syncable changes.`);
     return {
       status: 'dry_run',
       fromCommit: lastCommit,
@@ -666,7 +741,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
 
   const noEmbed = opts.noEmbed || totalChanges > 100;
   if (totalChanges > 100) {
-    console.log(`Large sync (${totalChanges} files). Importing text, deferring embeddings.`);
+    slog(`Large sync (${totalChanges} files). Importing text, deferring embeddings.`);
   }
 
   const pagesAffected: string[] = [];
@@ -788,7 +863,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.error(`  Warning: skipped ${path}: ${msg}`);
+        serr(`  Warning: skipped ${path}: ${msg}`);
         failedFiles.push({ path, error: msg });
       }
       progress.tick(1, path);
@@ -812,7 +887,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
         const databaseUrl = config.database_url;
 
         // Q4 (v0.22.13): banner on stderr so stdout stays clean for --json.
-        console.error(`  Parallel sync: ${workerCount} workers for ${addsAndMods.length} files`);
+        serr(`  Parallel sync: ${workerCount} workers for ${addsAndMods.length} files`);
 
         const workerEngines: InstanceType<typeof PostgresEngine>[] = [];
         try {
@@ -846,7 +921,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
           await Promise.all(
             workerEngines.map((e) =>
               e.disconnect().catch((err: unknown) =>
-                console.error(`  worker disconnect failed: ${err instanceof Error ? err.message : String(err)}`),
+                serr(`  worker disconnect failed: ${err instanceof Error ? err.message : String(err)}`),
               ),
             ),
           );
@@ -898,7 +973,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
     // can see *why* files failed, not just how many.
     const codeBreakdown = formatCodeBreakdown(failedFiles);
     if (!opts.skipFailed) {
-      console.error(
+      serr(
         `\nSync blocked: ${failedFiles.length} file(s) failed to parse:\n` +
         `${codeBreakdown}\n\n` +
         `Fix the YAML frontmatter in the files above and re-run, or use ` +
@@ -924,7 +999,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
     // --skip-failed: acknowledge the now-recorded set and proceed.
     const acked = acknowledgeSyncFailures();
     if (acked.count > 0) {
-      console.error(
+      serr(
         `  Acknowledged ${acked.count} failure(s) and advancing past them:\n` +
         `${formatCodeBreakdown(acked.summary)}`,
       );
@@ -961,7 +1036,7 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
       const linksCreated = await extractLinksForSlugs(engine, repoPath, pagesAffected, extractOpts);
       const timelineCreated = await extractTimelineForSlugs(engine, repoPath, pagesAffected, extractOpts);
       if (linksCreated > 0 || timelineCreated > 0) {
-        console.log(`  Extracted: ${linksCreated} links, ${timelineCreated} timeline entries`);
+        slog(`  Extracted: ${linksCreated} links, ${timelineCreated} timeline entries`);
       }
     } catch { /* extraction is best-effort */ }
   }
@@ -1022,14 +1097,14 @@ async function performSyncInner(engine: BrainEngine, opts: SyncOpts): Promise<Sy
     } catch (e: unknown) {
       const { EmbeddingDimMismatchError } = await import('./embed.ts');
       if (e instanceof EmbeddingDimMismatchError) {
-        console.error('\n' + e.recipeMessage + '\n');
-        console.error(`Tip: pass --no-embed to sync without embedding, then`);
-        console.error(`run 'gbrain embed --stale' after fixing the schema.\n`);
+        serr('\n' + e.recipeMessage + '\n');
+        serr(`Tip: pass --no-embed to sync without embedding, then`);
+        serr(`run 'gbrain embed --stale' after fixing the schema.\n`);
       }
       // Other errors stay best-effort — rate limits, transient network.
     }
   } else if (noEmbed || totalChanges > 100) {
-    console.log(`Text imported. Run 'gbrain embed --stale' to generate embeddings.`);
+    slog(`Text imported. Run 'gbrain embed --stale' to generate embeddings.`);
   }
 
   return {
@@ -1063,7 +1138,7 @@ async function performFullSync(
   // files were waiting.
   if (opts.dryRun) {
     const allFiles = collectSyncableFiles(repoPath, { strategy: opts.strategy ?? 'markdown' });
-    console.log(
+    slog(
       `Full-sync dry run (strategy=${opts.strategy ?? 'markdown'}): ` +
       `${allFiles.length} file(s) would be imported ` +
       `from ${repoPath} @ ${headCommit.slice(0, 8)}.`,
@@ -1089,7 +1164,7 @@ async function performFullSync(
   // sync and the jobs handler.
   const FULL_SYNC_LARGE_MARKER = Number.MAX_SAFE_INTEGER;
   const fullConcurrency = autoConcurrency(engine, FULL_SYNC_LARGE_MARKER, opts.concurrency);
-  console.log(`Running full import of ${repoPath}${fullConcurrency > 1 ? ` (${fullConcurrency} workers)` : ''}...`);
+  slog(`Running full import of ${repoPath}${fullConcurrency > 1 ? ` (${fullConcurrency} workers)` : ''}...`);
   const { runImport } = await import('./import.ts');
   const importArgs = [repoPath];
   if (opts.noEmbed) importArgs.push('--no-embed');
@@ -1099,13 +1174,13 @@ async function performFullSync(
   // v0.30.x: thread sourceId so performFullSync routes pages to the named
   // source (incremental path already does this).
   const _fullImportT0 = Date.now();
-  console.error(`[gbrain phase] sync.fullsync.import start strategy=${opts.strategy ?? 'markdown'}`);
+  serr(`[gbrain phase] sync.fullsync.import start strategy=${opts.strategy ?? 'markdown'}`);
   const result = await runImport(engine, importArgs, {
     commit: headCommit,
     strategy: opts.strategy,
     sourceId: opts.sourceId,
   });
-  console.error(
+  serr(
     `[gbrain phase] sync.fullsync.import done ${Date.now() - _fullImportT0}ms ` +
     `imported=${result.imported} skipped=${result.skipped} errors=${result.errors}`,
   );
@@ -1118,7 +1193,7 @@ async function performFullSync(
     recordSyncFailures(result.failures, headCommit);
     const codeBreakdown = formatCodeBreakdown(result.failures);
     if (!opts.skipFailed) {
-      console.error(
+      serr(
         `\nFull sync blocked: ${result.failures.length} file(s) failed:\n` +
         `${codeBreakdown}\n\n` +
         `Fix the YAML in those files and re-run, or use '--skip-failed'.`,
@@ -1138,7 +1213,7 @@ async function performFullSync(
     }
     const acked = acknowledgeSyncFailures();
     if (acked.count > 0) {
-      console.error(
+      serr(
         `  Acknowledged ${acked.count} failure(s) and advancing past them:\n` +
         `${formatCodeBreakdown(acked.summary)}`,
       );
@@ -1167,9 +1242,9 @@ async function performFullSync(
     } catch (e: unknown) {
       const { EmbeddingDimMismatchError } = await import('./embed.ts');
       if (e instanceof EmbeddingDimMismatchError) {
-        console.error('\n' + e.recipeMessage + '\n');
-        console.error(`Tip: pass --no-embed to sync without embedding, then`);
-        console.error(`run 'gbrain embed --stale' after fixing the schema.\n`);
+        serr('\n' + e.recipeMessage + '\n');
+        serr(`Tip: pass --no-embed to sync without embedding, then`);
+        serr(`run 'gbrain embed --stale' after fixing the schema.\n`);
       }
       // Other errors stay best-effort.
     }
@@ -1219,7 +1294,20 @@ Options:
   --no-pull            Skip 'git pull' before the sync (useful for tests).
   --all                Sync every registered source instead of just the
                        default (multi-source brains).
-  --json               Emit a structured JSON summary on stdout.
+  --parallel N         (with --all) Run up to N sources concurrently.
+                       Default: min(sourceCount, --workers, 4). Each
+                       source takes its own per-source DB lock
+                       (gbrain-sync:<source_id>) so independent sources
+                       sync without contending. Total live Postgres
+                       connections per wave ≈ parallel × workers × 2
+                       (per-file pool) + parent pool. Pass --parallel 1
+                       to force serial.
+  --json               Emit a structured JSON envelope on stdout
+                       ({schema_version: 1, sources, parallel,
+                       ok_count, error_count}). Human banners route to
+                       stderr so '--json | jq' parses cleanly.
+                       Exit codes: 0 = all sources ok, 1 = any error,
+                       2 = cost-prompt-not-confirmed.
   --yes                Accept any interactive prompts (CI / non-TTY).
 
 See also:
@@ -1244,12 +1332,20 @@ See also:
   const yesFlag = args.includes('--yes');
   const strategyArg = args.find((a, i) => args[i - 1] === '--strategy') as SyncOpts['strategy'] | undefined;
   const concurrencyStr = args.find((a, i) => args[i - 1] === '--concurrency' || args[i - 1] === '--workers');
+  const parallelStr = args.find((a, i) => args[i - 1] === '--parallel');
   // v0.22.13 (PR #490 Q2): parseWorkers throws on '0', '-3', 'foo', '1.5' instead
   // of silently falling through to auto-concurrency or NaN. Loud failure beats
-  // a 4-worker spawn from a typo.
+  // a 4-worker spawn from a typo. v0.40.3.0: same validation applies to --parallel.
   let concurrency: number | undefined;
+  let parallelOverride: number | undefined;
   try {
     concurrency = parseWorkers(concurrencyStr);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : String(e));
+    process.exit(1);
+  }
+  try {
+    parallelOverride = parseWorkers(parallelStr);
   } catch (e) {
     console.error(e instanceof Error ? e.message : String(e));
     process.exit(1);
@@ -1350,34 +1446,182 @@ See also:
       }
     }
 
+    // v0.40.3.0 (D8 + D11 + D13 bundle): per-source fan-out via continuous
+    // worker pool. Each per-source `performSync` takes its own lock id
+    // (`gbrain-sync:<source_id>`, with withRefreshingLock for long sources)
+    // so independent sources sync concurrently without contending. Slow
+    // sources don't block already-finished workers from picking up the
+    // next pending source (the head-of-line blocking the PR's wave
+    // dispatch would have inherited).
+    //
+    // D15 → B: --skip-failed and --retry-failed force --parallel 1. The
+    // sync-failures.jsonl is brain-global (not per-source); parallel acks
+    // race. Source-scoping the failure log is filed as a v0.40.4 TODO.
+    //
+    // D1 + D10: connection-budget warning when parallel × workers × 2 > 16.
+    // Each per-file worker opens its own PostgresEngine with poolSize=2
+    // (sync.ts:810), so the real connection count is `parallel × workers × 2`
+    // per fan-out wave plus the parent pool.
+    //
+    // D4 + D14: `--json` routes human banners to stderr; only the final
+    // {schema_version:1, sources, parallel, ok_count, error_count}
+    // envelope hits stdout. Exit codes: 0 = all ok, 1 = any error.
+    const activeSources = sources.filter((src) => {
+      const cfg = (src.config || {}) as { syncEnabled?: boolean };
+      return cfg.syncEnabled !== false;
+    });
+    const disabledCount = sources.length - activeSources.length;
+    const humanSink: NodeJS.WriteStream = jsonOut ? process.stderr : process.stdout;
+    const writeHuman = (line: string) => humanSink.write(line + '\n');
+
     for (const src of sources) {
-      const cfg = (src.config || {}) as { syncEnabled?: boolean; strategy?: 'markdown' | 'code' | 'auto' };
-      if (cfg.syncEnabled === false) {
-        console.log(`Skipping disabled source: ${src.name}`);
-        continue;
+      const cfg = (src.config || {}) as { syncEnabled?: boolean };
+      if (cfg.syncEnabled === false) writeHuman(`Skipping disabled source: ${src.name}`);
+    }
+    if (activeSources.length === 0) {
+      if (disabledCount > 0) writeHuman('All sources are syncEnabled=false. Nothing to sync.');
+      if (jsonOut) {
+        console.log(JSON.stringify({
+          schema_version: 1,
+          sources: [],
+          parallel: 0,
+          ok_count: 0,
+          error_count: 0,
+        }));
       }
-      console.log(`\n--- Syncing source: ${src.name} ---`);
-      const repoOpts: SyncOpts = {
-        repoPath: src.local_path!,
-        dryRun, full, noPull, noEmbed, skipFailed, retryFailed,
-        sourceId: src.id,
-        strategy: cfg.strategy,
-        concurrency,
-      };
-      try {
-        const result = await performSync(engine, repoOpts);
-        printSyncResult(result);
-        // Codex P2: --all loop must also manage .gitignore per-source. Without
-        // this, multi-source users who rely on `gbrain sync --all` never get
-        // the advertised db_only ignore rules unless they sync each repo
-        // individually.
-        if (result.status !== 'dry_run' && result.status !== 'blocked_by_failures') {
-          manageGitignore(src.local_path!, engine.kind);
+      return;
+    }
+
+    const parallel = resolveParallelism({
+      sourceCount: activeSources.length,
+      explicitParallel: parallelOverride,
+      workers: concurrency,
+      engineKind: engine.kind,
+    });
+
+    // D15 → B: refuse --skip-failed / --retry-failed under parallel.
+    if (parallel > 1 && (skipFailed || retryFailed)) {
+      const flag = skipFailed ? '--skip-failed' : '--retry-failed';
+      console.error(
+        `Error: ${flag} is not supported under --parallel > 1 in v0.40.3.0\n` +
+        `       (the sync-failures log is brain-global and parallel acks race).\n` +
+        `       Re-run with --parallel 1 for the recovery flow:\n` +
+        `         gbrain sync --all --parallel 1 ${flag}`,
+      );
+      process.exit(1);
+    }
+
+    // D1 + D10: connection-budget warning. Effective post-resolution values:
+    //   parallel = resolveParallelism's output
+    //   workers = caller's --workers or undefined → import-phase auto kicks
+    //     in at 100+ files; assume the default 4 for the worst-case ceiling.
+    const effectiveWorkers = concurrency ?? 4;
+    const budget = parallel * effectiveWorkers * 2;
+    if (budget > 16) {
+      process.stderr.write(
+        `[sync --all] Connection budget: parallel=${parallel} × workers=${effectiveWorkers} × 2 ` +
+        `(per-file pool) = ${budget} concurrent connections per fan-out wave (+ parent pool). ` +
+        `Check pgbouncer/Postgres max_connections (SELECT count(*) FROM pg_stat_activity); ` +
+        `raise the cap or lower --parallel/--workers if you see "too many clients" errors.\n`,
+      );
+    }
+
+    if (parallel > 1) {
+      writeHuman(
+        `\nSyncing ${activeSources.length} source(s) with ${parallel} concurrent worker(s)...`,
+      );
+    }
+
+    // Continuous worker pool (D2 → B): `parallel` long-lived async workers
+    // pull from a shared FIFO queue until empty. Slow source A doesn't
+    // block worker B/C/D from immediately advancing.
+    const queue = [...activeSources];
+    const perSourceResults: Array<{
+      sourceId: string;
+      sourceName: string;
+      status: 'ok' | 'error';
+      result?: SyncResult;
+      error?: string;
+    }> = [];
+
+    async function worker(): Promise<void> {
+      while (queue.length > 0) {
+        const src = queue.shift();
+        if (!src) return;
+        try {
+          const { result, log } = await syncOneSource(engine, src, {
+            dryRun, full, noPull, noEmbed, skipFailed, retryFailed, concurrency,
+          });
+          // Write the per-source banner + result to the human sink so
+          // --json can keep stdout clean. printSyncResult takes an
+          // optional sink for the same reason.
+          humanSink.write(log);
+          printSyncResult(result, humanSink);
+          perSourceResults.push({
+            sourceId: src.id,
+            sourceName: src.name,
+            status: 'ok',
+            result,
+          });
+          // Codex P2 (preserved from PR): --all loop must manage .gitignore
+          // per-source. Without this, multi-source users never get the
+          // advertised db_only ignore rules unless they sync each repo
+          // individually. Skip on dry_run / blocked_by_failures so we don't
+          // mutate disk on a preview / failure-blocked run.
+          if (result.status !== 'dry_run' && result.status !== 'blocked_by_failures') {
+            manageGitignore(src.local_path!, engine.kind);
+          }
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e);
+          process.stderr.write(`Error syncing ${src.name}: ${msg}\n`);
+          perSourceResults.push({
+            sourceId: src.id,
+            sourceName: src.name,
+            status: 'error',
+            error: msg,
+          });
         }
-      } catch (e: unknown) {
-        console.error(`Error syncing ${src.name}: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
+
+    await Promise.all(Array.from({ length: parallel }, () => worker()));
+
+    const okCount = perSourceResults.filter((r) => r.status === 'ok').length;
+    const errCount = perSourceResults.filter((r) => r.status === 'error').length;
+    if (parallel > 1) {
+      writeHuman(`\n--- sync --all complete: ${okCount} ok, ${errCount} failed ---`);
+    }
+
+    if (jsonOut) {
+      // Sort by source_id at emit time so the envelope is deterministic
+      // even though completion order is not (worker pool semantics).
+      const sortedSources = perSourceResults
+        .slice()
+        .sort((a, b) => a.sourceId.localeCompare(b.sourceId))
+        .map((r) => ({
+          source_id: r.sourceId,
+          name: r.sourceName,
+          status: r.status,
+          ...(r.result ? {
+            sync_status: r.result.status,
+            added: r.result.added,
+            modified: r.result.modified,
+            deleted: r.result.deleted,
+            chunks_created: r.result.chunksCreated,
+            embedded: r.result.embedded,
+          } : {}),
+          ...(r.error ? { error: r.error } : {}),
+        }));
+      console.log(JSON.stringify({
+        schema_version: 1,
+        sources: sortedSources,
+        parallel,
+        ok_count: okCount,
+        error_count: errCount,
+      }));
+    }
+
+    if (errCount > 0) process.exit(1);
     return;
   }
 
@@ -1445,6 +1689,353 @@ See also:
       }
     }
     await new Promise(r => setTimeout(r, interval * 1000));
+  }
+}
+
+/**
+ * v0.40.3.0 — resolve effective per-source concurrency for `sync --all`.
+ *
+ * Inputs:
+ *   - sourceCount: number of `syncEnabled !== false` sources to walk
+ *   - explicitParallel: user's `--parallel N` value (post `parseWorkers`),
+ *     `undefined` when the flag was not provided
+ *   - workers: user's `--workers N` value, used as a soft cap when no
+ *     explicit `--parallel` is given. The per-source budget can't exceed
+ *     the per-file worker count because each per-file worker opens its
+ *     own PostgresEngine pool — see DEFAULT_PARALLEL_SOURCES in
+ *     `src/core/sync-concurrency.ts` for the connection-math story.
+ *   - engineKind: PGLite is single-connection → always returns 1.
+ *
+ * Rules:
+ *   - PGLite → always 1
+ *   - sourceCount <= 0 → 1 (divide-by-zero guard)
+ *   - explicit `--parallel` → wins, clamped to `[1, sourceCount]`
+ *   - auto path → `min(sourceCount, workers ?? DEFAULT_PARALLEL_SOURCES)`
+ *
+ * Returns >= 1. Single-source brains return 1 (no point fanning out).
+ */
+export function resolveParallelism(input: {
+  sourceCount: number;
+  explicitParallel?: number;
+  workers?: number;
+  engineKind: 'pglite' | 'postgres';
+}): number {
+  if (input.engineKind === 'pglite') return 1;
+  if (input.sourceCount <= 0) return 1;
+  if (input.explicitParallel !== undefined) {
+    return Math.max(1, Math.min(input.explicitParallel, input.sourceCount));
+  }
+  const ceiling = input.workers && input.workers > 0
+    ? Math.min(input.workers, DEFAULT_PARALLEL_SOURCES)
+    : DEFAULT_PARALLEL_SOURCES;
+  return Math.max(1, Math.min(input.sourceCount, ceiling));
+}
+
+/**
+ * v0.40.3.0 — per-source sync wrapper for the `--all` worker pool.
+ *
+ * Three responsibilities:
+ *   1. Build the per-source `SyncOpts` from the shared CLI flags.
+ *   2. Wrap the call in `withSourcePrefix(src.id, ...)` so every
+ *      `slog`/`serr` line emitted from inside `performSync` (and its
+ *      callees) gets prefixed with `[<source-id>] ` for greppable
+ *      parallel output (D6 + D12 + D13).
+ *   3. Pre-render the start banner into the returned `log` string so
+ *      the worker pool flushes it (and any subsequent `printSyncResult`)
+ *      via the human sink — which `--json` routes to stderr to keep
+ *      stdout JSON-only (D4).
+ *
+ * Note: source.name is shown in the start banner (one-shot, easy to
+ * escape) but the prefix on every line uses source.id (slug-validated;
+ * no newline-injection risk per D13).
+ *
+ * The per-source DB lock invariant (D8) fires inside `performSync` —
+ * since `repoOpts.sourceId` is set, the per-source lock is the default.
+ * `withRefreshingLock` (D11) handles TTL renewal automatically for
+ * sources that exceed 30 minutes.
+ */
+export async function syncOneSource(
+  engine: BrainEngine,
+  src: { id: string; name: string; local_path: string | null; config: Record<string, unknown> },
+  shared: {
+    dryRun: boolean;
+    full: boolean;
+    noPull: boolean;
+    noEmbed: boolean;
+    skipFailed: boolean;
+    retryFailed: boolean;
+    concurrency: number | undefined;
+  },
+): Promise<{ result: SyncResult; log: string }> {
+  const cfg = (src.config || {}) as { strategy?: 'markdown' | 'code' | 'auto' };
+  const log = `\n--- Syncing source: ${src.name} ---\n`;
+  const repoOpts: SyncOpts = {
+    repoPath: src.local_path!,
+    dryRun: shared.dryRun,
+    full: shared.full,
+    noPull: shared.noPull,
+    noEmbed: shared.noEmbed,
+    skipFailed: shared.skipFailed,
+    retryFailed: shared.retryFailed,
+    sourceId: src.id,
+    strategy: cfg.strategy,
+    concurrency: shared.concurrency,
+    // lockId defaults to `gbrain-sync:${src.id}` via the invariant in
+    // performSync (no explicit override needed — sourceId triggers it).
+  };
+  const result = await withSourcePrefix(src.id, () => performSync(engine, repoOpts));
+  return { result, log };
+}
+
+/**
+ * v0.40.3.0 — read-only per-source dashboard for `gbrain sources status`.
+ *
+ * Aggregates from existing tables (no schema changes):
+ *   - sources:        last_commit, last_sync_at, archived, config.syncEnabled
+ *                     (filtered: archived=false, local_path IS NOT NULL)
+ *   - pages:          per-source page count (excluding soft-deleted)
+ *   - content_chunks: per-source total + count of unembedded chunks for
+ *                     the ACTIVE embedding column (resolved via the
+ *                     registry — see `src/core/search/embedding-column.ts`).
+ *                     Voyage / multimodal / non-default-column brains
+ *                     see counts against the column they actually use.
+ *   - sync-failures.jsonl: unacknowledged failures (brain-global; the
+ *     JSONL log isn't per-source. v0.40.4 TODO source-scopes it.)
+ *
+ * Staleness thresholds match `gbrain doctor`'s sync-freshness rule
+ * (24h / 72h). Sources that have NEVER synced (last_sync_at IS NULL)
+ * report `staleness_hours: null` so callers can disambiguate "first run
+ * pending" from "32h since last successful sync".
+ *
+ * Errors propagate. Pre-v0.40.3.0 the dashboard swallowed all DB errors
+ * and reported zero counts, which lied at exactly the moment it mattered
+ * (Q2 sub-fix from Codex review). The dashboard is read-only — a thrown
+ * error surfaces the real problem (DB down, permission denied, statement
+ * timeout) instead of misleading the operator with a "0 chunks" report.
+ */
+export interface SyncStatusReportSource {
+  source_id: string;
+  name: string;
+  local_path: string | null;
+  sync_enabled: boolean;
+  last_sync_at: string | null;
+  staleness_hours: number | null;
+  staleness_class: 'fresh' | 'stale' | 'severe' | 'unknown';
+  last_commit: string | null;
+  pages: number;
+  chunks_total: number;
+  chunks_unembedded: number;
+  embedding_coverage_pct: number;
+}
+
+export interface SyncStatusReport {
+  schema_version: 1;
+  generated_at: string;
+  sources: SyncStatusReportSource[];
+  unacknowledged_failures: number;
+  /** The embedding column counts were computed against. Useful for
+   *  operators verifying their Voyage / multimodal setup is reported
+   *  correctly. */
+  embedding_column: string;
+}
+
+export async function buildSyncStatusReport(
+  engine: BrainEngine,
+  sources: Array<{ id: string; name: string; local_path: string | null; config: Record<string, unknown> }>,
+): Promise<SyncStatusReport> {
+  // Resolve the active embedding column via the registry. Brains pointed
+  // at Voyage / multimodal / any non-default column get accurate counts
+  // for the column they actually use (D16 → A, Codex P2 #10).
+  const { resolveEmbeddingColumn, quoteIdentifier } = await import('../core/search/embedding-column.ts');
+  // loadConfig() returns null when ~/.gbrain/config.json is missing.
+  // resolveEmbeddingColumn handles missing fields via its own
+  // gateway-fallback chain, so a minimal stub satisfies the call shape.
+  const cfg = loadConfig() ?? ({ engine: engine.kind } as Parameters<typeof resolveEmbeddingColumn>[1]);
+  const resolved = resolveEmbeddingColumn(undefined, cfg);
+  const embeddingColIdent = quoteIdentifier(resolved.name);
+
+  const sourceIds = sources.map((s) => s.id);
+  type SourceRow = {
+    id: string;
+    last_commit: string | null;
+    last_sync_at: string | Date | null;
+  };
+  type CountRow = {
+    source_id: string;
+    pages: string | number;
+    chunks_total: string | number;
+    chunks_unembedded: string | number;
+  };
+
+  // Pull last_commit + last_sync_at fresh (caller may have called us
+  // with stale rows). Empty source list → skip the round-trip.
+  const sourceRows = sourceIds.length === 0
+    ? []
+    : await engine.executeRaw<SourceRow>(
+        `SELECT id, last_commit, last_sync_at FROM sources WHERE id = ANY($1::text[])`,
+        [sourceIds],
+      );
+  const sourceMap = new Map<string, SourceRow>();
+  for (const r of sourceRows) sourceMap.set(r.id, r);
+
+  // Per-source page + chunk + unembedded-chunk counts in a single
+  // round-trip. Canonical SQL (verified against
+  // src/commands/doctor.ts:2740): content_chunks joined on page_id
+  // (NOT page_slug — Codex P0 #1), filtered for non-soft-deleted pages
+  // (NOT NULL — soft-delete shipped v0.26.5), unembedded counted
+  // against the resolved active embedding column (D16 → A).
+  //
+  // No try/catch swallow — a thrown error means DB down / permission
+  // denied / statement timeout (NOT a schema variant). Surfacing the
+  // real error is better than a misleading "0 chunks" report (Q2).
+  let countRows: CountRow[] = [];
+  if (sourceIds.length > 0) {
+    countRows = await engine.executeRaw<CountRow>(
+      `WITH s AS (
+         SELECT unnest($1::text[]) AS source_id
+       )
+       SELECT
+         s.source_id,
+         COALESCE(p.pages, 0) AS pages,
+         COALESCE(c.chunks_total, 0) AS chunks_total,
+         COALESCE(c.chunks_unembedded, 0) AS chunks_unembedded
+       FROM s
+       LEFT JOIN (
+         SELECT source_id, COUNT(*) AS pages
+         FROM pages
+         WHERE deleted_at IS NULL
+         GROUP BY source_id
+       ) p ON p.source_id = s.source_id
+       LEFT JOIN (
+         SELECT pg.source_id,
+                COUNT(*) AS chunks_total,
+                COUNT(*) FILTER (WHERE cc.${embeddingColIdent} IS NULL) AS chunks_unembedded
+         FROM content_chunks cc
+         JOIN pages pg ON pg.id = cc.page_id
+         WHERE pg.deleted_at IS NULL
+         GROUP BY pg.source_id
+       ) c ON c.source_id = s.source_id`,
+      [sourceIds],
+    );
+  }
+  const countMap = new Map<string, { pages: number; chunks_total: number; chunks_unembedded: number }>();
+  for (const r of countRows) {
+    countMap.set(r.source_id, {
+      pages: Number(r.pages) || 0,
+      chunks_total: Number(r.chunks_total) || 0,
+      chunks_unembedded: Number(r.chunks_unembedded) || 0,
+    });
+  }
+
+  const now = Date.now();
+  const out: SyncStatusReportSource[] = sources.map((src) => {
+    const cfgEntry = (src.config || {}) as { syncEnabled?: boolean };
+    const row = sourceMap.get(src.id) || { id: src.id, last_commit: null, last_sync_at: null };
+    const counts = countMap.get(src.id) || { pages: 0, chunks_total: 0, chunks_unembedded: 0 };
+    const lastSyncMs = row.last_sync_at
+      ? (row.last_sync_at instanceof Date ? row.last_sync_at.getTime() : Date.parse(row.last_sync_at))
+      : null;
+    const stalenessHours = lastSyncMs !== null && Number.isFinite(lastSyncMs)
+      ? (now - lastSyncMs) / 3_600_000
+      : null;
+    let stalenessClass: 'fresh' | 'stale' | 'severe' | 'unknown' = 'unknown';
+    if (stalenessHours !== null) {
+      if (stalenessHours < 24) stalenessClass = 'fresh';
+      else if (stalenessHours < 72) stalenessClass = 'stale';
+      else stalenessClass = 'severe';
+    }
+    const embeddingCoveragePct = counts.chunks_total === 0
+      ? 100
+      : Math.round(((counts.chunks_total - counts.chunks_unembedded) / counts.chunks_total) * 1000) / 10;
+    const lastSyncIso = row.last_sync_at
+      ? (row.last_sync_at instanceof Date ? row.last_sync_at.toISOString() : row.last_sync_at)
+      : null;
+    return {
+      source_id: src.id,
+      name: src.name,
+      local_path: src.local_path,
+      sync_enabled: cfgEntry.syncEnabled !== false,
+      last_sync_at: lastSyncIso,
+      staleness_hours: stalenessHours === null ? null : Math.round(stalenessHours * 10) / 10,
+      staleness_class: stalenessClass,
+      last_commit: row.last_commit,
+      pages: counts.pages,
+      chunks_total: counts.chunks_total,
+      chunks_unembedded: counts.chunks_unembedded,
+      embedding_coverage_pct: embeddingCoveragePct,
+    };
+  });
+
+  // Unacknowledged sync failures — brain-global (the JSONL log isn't
+  // per-source). v0.40.4 TODO will source-scope this. Best-effort:
+  // missing file / parse error returns 0, doesn't throw the dashboard.
+  let unackedCount = 0;
+  try {
+    unackedCount = unacknowledgedSyncFailures().length;
+  } catch {
+    unackedCount = 0;
+  }
+
+  return {
+    schema_version: 1,
+    generated_at: new Date().toISOString(),
+    sources: out,
+    unacknowledged_failures: unackedCount,
+    embedding_column: resolved.name,
+  };
+}
+
+/**
+ * v0.40.3.0 — render a `SyncStatusReport` as a human-readable table.
+ *
+ * `sink` defaults to `process.stdout` so the bare `gbrain sources status`
+ * invocation writes its table to stdout. `--json` callers don't use
+ * this — they emit `JSON.stringify(report)` to stdout directly.
+ */
+export function printSyncStatusReport(
+  report: SyncStatusReport,
+  sink: NodeJS.WriteStream = process.stdout,
+): void {
+  const write = (line: string) => sink.write(line + '\n');
+  write(`\nSync status — generated ${report.generated_at}`);
+  write(`Embedding column: ${report.embedding_column}\n`);
+  if (report.sources.length === 0) {
+    write('  (no sources registered)');
+    return;
+  }
+  const headers = ['SOURCE', 'STATE', 'STALENESS', 'PAGES', 'EMBEDDED', 'LAST SYNC'];
+  const rows = report.sources.map((s) => {
+    const stale = s.staleness_hours === null
+      ? 'never'
+      : `${s.staleness_hours.toFixed(1)}h`;
+    const stateBits: string[] = [];
+    if (!s.sync_enabled) stateBits.push('disabled');
+    stateBits.push(s.staleness_class);
+    return [
+      s.name,
+      stateBits.join(','),
+      stale,
+      String(s.pages),
+      `${s.embedding_coverage_pct}%`,
+      s.last_sync_at ?? '(never)',
+    ];
+  });
+  const widths = headers.map((h, i) =>
+    Math.max(h.length, ...rows.map((r) => r[i].length)),
+  );
+  // Numeric columns (PAGES at index 3, EMBEDDED at index 4, STALENESS
+  // at index 2) right-pad-left so digits align cleanly. Text columns
+  // left-pad-right per the existing `sources list` convention.
+  const NUMERIC_COLS = new Set([2, 3, 4]);
+  const fmt = (cells: string[]) =>
+    cells.map((c, i) => (NUMERIC_COLS.has(i) ? c.padStart(widths[i]) : c.padEnd(widths[i]))).join('  ');
+  write(fmt(headers));
+  write(fmt(widths.map((w) => '-'.repeat(w))));
+  for (const r of rows) write(fmt(r));
+  write(`\nUnacknowledged sync failures (brain-wide): ${report.unacknowledged_failures}`);
+  const severe = report.sources.filter((s) => s.staleness_class === 'severe').length;
+  if (severe > 0) {
+    write(`WARNING: ${severe} source(s) are SEVERELY stale (>72h). Run \`gbrain sync --all\` to refresh.`);
   }
 }
 
@@ -1584,26 +2175,35 @@ export function manageGitignore(
   }
 }
 
-function printSyncResult(result: SyncResult) {
+/**
+ * Render a SyncResult to a Writable sink.
+ *
+ * `sink` defaults to `process.stdout` so existing single-source callers
+ * see identical output. The `--all` parallel path passes `process.stderr`
+ * when `--json` is set, so banners stay off stdout and the JSON envelope
+ * pipes cleanly through `jq` (D4).
+ */
+function printSyncResult(result: SyncResult, sink: NodeJS.WriteStream = process.stdout) {
+  const write = (line: string) => sink.write(line + '\n');
   switch (result.status) {
     case 'up_to_date':
-      console.log('Already up to date.');
+      write('Already up to date.');
       break;
     case 'synced':
-      console.log(`Synced ${result.fromCommit?.slice(0, 8)}..${result.toCommit.slice(0, 8)}:`);
-      console.log(`  +${result.added} added, ~${result.modified} modified, -${result.deleted} deleted, R${result.renamed} renamed`);
-      console.log(`  ${result.chunksCreated} chunks created${result.embedded > 0 ? `, ${result.embedded} pages embedded` : ''}`);
+      write(`Synced ${result.fromCommit?.slice(0, 8)}..${result.toCommit.slice(0, 8)}:`);
+      write(`  +${result.added} added, ~${result.modified} modified, -${result.deleted} deleted, R${result.renamed} renamed`);
+      write(`  ${result.chunksCreated} chunks created${result.embedded > 0 ? `, ${result.embedded} pages embedded` : ''}`);
       break;
     case 'first_sync':
-      console.log(`First sync complete. Checkpoint: ${result.toCommit.slice(0, 8)}`);
-      console.log(`  ${result.added} file(s) imported, ${result.chunksCreated} chunks${result.embedded > 0 ? `, ${result.embedded} pages embedded` : ''}`);
+      write(`First sync complete. Checkpoint: ${result.toCommit.slice(0, 8)}`);
+      write(`  ${result.added} file(s) imported, ${result.chunksCreated} chunks${result.embedded > 0 ? `, ${result.embedded} pages embedded` : ''}`);
       break;
     case 'dry_run':
       break; // already printed in performSync
     case 'blocked_by_failures':
-      console.log(`Sync BLOCKED at ${result.toCommit.slice(0, 8)}: ${result.failedFiles ?? 0} file(s) failed to parse.`);
-      console.log(`  See ~/.gbrain/sync-failures.jsonl for details, or run 'gbrain doctor'.`);
-      console.log(`  Fix the files then re-run 'gbrain sync', or 'gbrain sync --skip-failed' to move on.`);
+      write(`Sync BLOCKED at ${result.toCommit.slice(0, 8)}: ${result.failedFiles ?? 0} file(s) failed to parse.`);
+      write(`  See ~/.gbrain/sync-failures.jsonl for details, or run 'gbrain doctor'.`);
+      write(`  Fix the files then re-run 'gbrain sync', or 'gbrain sync --skip-failed' to move on.`);
       break;
   }
 }
