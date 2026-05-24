@@ -2596,6 +2596,8 @@ https://raw.githubusercontent.com/garrytan/gbrain/master/INSTALL_FOR_AGENTS.md
 
 The agent installs GBrain, creates the brain, asks for your API keys, loads 43 skills, configures the dream cycle, and verifies the install end-to-end. ~30 minutes. You answer questions, it does the work.
 
+> **Never set up an AI agent platform before?** The [personal-brain tutorial](docs/tutorials/personal-brain.md) walks the whole path end-to-end — picking OpenClaw vs Hermes, deploying it, pointing it at INSTALL_FOR_AGENTS.md, getting the API keys, and verifying the first query. Start there if any of the above is new.
+
 ### Install it into your existing agent
 
 Already running Codex, Claude Code, Cursor, or another coding agent? Paste the same instruction in:
