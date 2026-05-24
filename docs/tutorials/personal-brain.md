@@ -135,13 +135,52 @@ GBrain populates the brain repo with its default directory structure, skill file
 
 ## Step 7: Set up Supabase (embeddings and search)
 
-GBrain uses Supabase for vector embeddings and full-text search at scale.
+GBrain uses Supabase for vector embeddings and full-text search at scale. There are three setup gotchas I hit the hard way. Walk through them in this order.
 
-1. Create a Supabase project
-2. Get the connection string and API keys
-3. Configure them in GBrain settings
+### 7a. Create the project and turn on pgvector
 
-I discovered the hard way that **Supabase is usually the scaling bottleneck**, not CPU or LLM calls. If you're doing heavy ingestion (emails, calendar, Slack streaming in), upgrade from small to large DB instance early. Don't wait for the small instance to choke.
+1. Create a Supabase project at [supabase.com](https://supabase.com). Pick a region close to where your Render host runs.
+2. In the Supabase dashboard, go to **Database → Extensions**.
+3. Find `vector` (the pgvector extension) and toggle it on.
+
+Skip this and every embed write fails with "type vector does not exist" the moment GBrain tries to create its schema. pgvector is what stores the embeddings; the schema migrations refuse to run without it. Five seconds in the UI; an hour of debugging if you forget.
+
+### 7b. Get the CONNECTION POOLER connection string, not the direct one
+
+In **Project Settings → Database → Connection string**, Supabase shows you two options. They look almost identical. Use the right one.
+
+- **Direct connection** (port 5432). Talks straight to the Postgres instance. IPv6-only. Will fail if your Render host doesn't have IPv6 outbound (most don't by default).
+- **Connection pooler** (port 6543, hostname starts with `aws-0-...pooler.supabase.com`). Talks through Supabase's pgbouncer. Works over IPv4. Survives connection storms from parallel workers.
+
+You want the **connection pooler** string. Format looks like:
+
+```
+postgresql://postgres.YOUR-PROJECT:YOUR-PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres
+```
+
+Configure it via:
+
+```bash
+gbrain config set database_url "postgresql://postgres.YOUR-PROJECT:YOUR-PASSWORD@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+```
+
+### 7c. Buy the IPv4 add-on if your host is IPv4-only
+
+Even with the pooler, some Supabase regions and some Render plans hit IPv6 resolution snags. If your `gbrain doctor` shows connection failures and the error mentions "network unreachable" or hangs forever on connect, you need Supabase's **IPv4 add-on**.
+
+In the Supabase dashboard, **Project Settings → Add-ons → IPv4 address**. About $4 a month. Toggle on, wait a minute, retry the connection. This bit me on multiple installs before I learned to just buy it up front.
+
+### 7d. Verify the connection
+
+```bash
+gbrain doctor
+```
+
+Green checks on schema, connectivity, pgvector extension, embedding provider. If any of those are yellow, the message will tell you which gotcha you hit (and which of 7a / 7b / 7c to revisit).
+
+### Operating note
+
+Supabase is usually the scaling bottleneck, not CPU or LLM calls. If you're doing heavy ingestion (emails, calendar, Slack streaming in), upgrade from small to large DB instance early. Don't wait for the small instance to choke; the symptoms (silent failed inserts, sync timeouts, embedding backfill stalls) all look like different bugs but are the same bug.
 
 ---
 
