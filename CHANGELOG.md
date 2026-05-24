@@ -2,13 +2,13 @@
 
 All notable changes to GBrain will be documented in this file.
 
-## [0.41.0.0] - 2026-05-24
+## [0.41.1.0] - 2026-05-24
 
 **Your CI can now fail a PR when search retrieval gets worse.** Before this release, gbrain shipped the pieces you'd need to measure retrieval quality (capture, replay, nightly probe, cross-modal runner) but nothing connected them into a loop. You could see a quality drop on your screen but nothing automatically caught it. v0.41 closes the loop end-to-end. You publish a baseline once — a snapshot of how your brain performs on a set of real queries — and then `gbrain eval gate` runs against that baseline on every PR. If results get materially worse OR if the brain stops finding pages it used to find, the command exits non-zero and CI turns red. The wave also wires the nightly quality probe into the autopilot daemon (opt-in via config) so a brain you've left running notices its own degradation.
 
 Two ways to fail a gate: a **regression gate** that compares current retrieval to a baseline you captured (catches "did my refactor break search?") and a **correctness gate** that runs your queries against a list of known-right answers (catches "is my search actually any good?"). Most people will start with the regression gate because it's cheaper — `gbrain bench publish` turns your last 200 real queries into a baseline file in a few seconds. The correctness gate (qrels-based, recall@K + first-relevant-hit-rate) is the more honest signal: jaccard alone measures consistency with old retrieval, not correctness, so a better embedding model would FAIL a jaccard-only gate. Both gates are source-id-aware (`source_id::slug` compares) so federated brains can't false-pass via wrong-source hits — the canonical gbrain pitfall closed structurally before it could enter the eval surface.
 
-## To take advantage of v0.41.0.0
+## To take advantage of v0.41.1.0
 
 `gbrain upgrade` handles the binary update. Then choose one of three paths depending on how you use gbrain:
 
