@@ -395,6 +395,90 @@ describe('scorePatternFull — full-body scoring (v0.41.18+ Codex P1 #1)', () =>
 });
 
 // ---------------------------------------------------------------------------
+// bold-paren-time pattern (v0.41.18+ D-FOLLOWUP-1.B; closes user-facing
+// half of #1533 — the 112 Circleback meeting files at
+// ~/git/brain/meetings/*.md with `source: circleback` frontmatter)
+// ---------------------------------------------------------------------------
+
+describe('bold-paren-time pattern (Circleback meeting transcripts)', () => {
+  test('matches **Speaker** (HH:MM): text with frontmatter date', () => {
+    const body = [
+      '**Garry Tan** (00:00): Hey, can you hear me?',
+      '**Participant 2** (02:22): Yeah, just joined.',
+      '**Garry Tan** (15:09): That makes sense.',
+    ].join('\n');
+    const r = parseConversation(body, { fallbackDate: '2026-03-19' });
+    expect(r.phase).toBe('regex_match');
+    expect(r.matched_pattern_id).toBe('bold-paren-time');
+    expect(r.messages).toHaveLength(3);
+    expect(r.messages[0]).toEqual({
+      speaker: 'Garry Tan',
+      timestamp: '2026-03-19T00:00:00Z',
+      text: 'Hey, can you hear me?',
+    });
+    expect(r.messages[2]).toEqual({
+      speaker: 'Garry Tan',
+      timestamp: '2026-03-19T15:09:00Z',
+      text: 'That makes sense.',
+    });
+  });
+
+  test('matches **Speaker** (HH:MM:SS): text shape (Circleback seconds variant)', () => {
+    const body = [
+      '**Participant 1** (00:00:00): opening line',
+      '**Participant 2** (00:00:19): quick reply',
+      '**Participant 1** (01:23:45): later in the meeting',
+    ].join('\n');
+    const r = parseConversation(body, { fallbackDate: '2026-04-01' });
+    expect(r.phase).toBe('regex_match');
+    expect(r.matched_pattern_id).toBe('bold-paren-time');
+    expect(r.messages).toHaveLength(3);
+    // Seconds segment is non-capturing; minute_group still captures the
+    // minutes component. Time-format is wall-clock 24h on frontmatter date.
+    expect(r.messages[0].timestamp).toBe('2026-04-01T00:00:00Z');
+    expect(r.messages[1].timestamp).toBe('2026-04-01T00:00:00Z');
+    expect(r.messages[2].timestamp).toBe('2026-04-01T01:23:00Z');
+  });
+
+  test('imessage-slack shape still wins over bold-paren-time on overlap', () => {
+    // Both patterns start with `**` and have parens. The imessage-
+    // slack regex requires a full date+time inside; bold-paren-time
+    // requires just `(HH:MM)`. The dates-with-AM/PM shape MUST fall
+    // through to imessage-slack, not bold-paren-time.
+    const body = '**Alice Example** (2024-03-15 9:00 AM): hello world';
+    const r = parseConversation(body);
+    expect(r.phase).toBe('regex_match');
+    expect(r.matched_pattern_id).toBe('imessage-slack');
+    expect(r.messages).toHaveLength(1);
+    expect(r.messages[0].text).toBe('hello world');
+  });
+
+  test('meeting page with preamble + bold-paren-time transcript hits fallback', () => {
+    // Real Circleback shape: ## Summary + blockquote + ## Transcript
+    // before the bold-paren-time chat. Same fallback gate that
+    // closes #1533 must work for this pattern too.
+    const preamble = [
+      '## Summary',
+      'Meeting covered Q1 roadmap discussion.',
+      '> Source: circleback meeting #7411053',
+      '## Topics Discussed',
+      '- Roadmap',
+      '- Hiring',
+      '## Transcript',
+    ];
+    const transcript = Array.from(
+      { length: 20 },
+      (_, i) => `**Participant 2** (${String(Math.floor(i / 6)).padStart(2, '0')}:${String((i * 11) % 60).padStart(2, '0')}): transcript line ${i}`,
+    );
+    const body = [...preamble, ...transcript].join('\n');
+    const r = parseConversation(body, { fallbackDate: '2026-03-19' });
+    expect(r.phase).toBe('regex_match');
+    expect(r.matched_pattern_id).toBe('bold-paren-time');
+    expect(r.messages).toHaveLength(20);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // parseConversation — full-body fallback (v0.41.18+ #1533 + Codex P1 #1, #2, #8)
 // ---------------------------------------------------------------------------
 
