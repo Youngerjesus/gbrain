@@ -5092,6 +5092,15 @@ export async function buildChecks(
     // v0.38 — cycle_phase_scope (informational; no DB cost)
     progress.heartbeat('cycle_phase_scope');
     checks.push(checkCyclePhaseScope());
+
+    // v0.42.0.0 (A16, T4): 4 onboard checks — each emits a Check + its
+    // own RemediationStep[] aggregated by onboard's plan path. The
+    // checks themselves are cheap counts (backed by content_chunks_stale_idx
+    // for embed_staleness, TABLESAMPLE on PG >50K for the coverage pair).
+    progress.heartbeat('onboard_checks');
+    const { runAllOnboardChecks } = await import('../core/onboard/checks.ts');
+    const onboardResults = await runAllOnboardChecks(engine);
+    for (const r of onboardResults) checks.push(r.check);
   }
 
   progress.finish();
