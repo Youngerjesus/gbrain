@@ -2,7 +2,7 @@
 
 All notable changes to GBrain will be documented in this file.
 
-## [0.41.27.0] - 2026-05-27
+## [0.41.28.0] - 2026-05-27
 
 **Your `gbrain dream` cycle stops losing rows when the database connection
 blips, and the silent `'No database connection'` errors after `gbrain
@@ -22,7 +22,7 @@ log lines like:
 The retry layer was correctly noticing the problem and waiting. But the
 underlying database connection wrapper had been nulled out by some other
 code path in the same process, and the retry was hammering against a dead
-reference. v0.41.27.0 makes the retry layer rebuild the connection between
+reference. v0.41.28.0 makes the retry layer rebuild the connection between
 attempts via a new opt-in `reconnect` callback on `withRetry`. The engine
 self-heals; rows land. (Closes #1570.)
 
@@ -30,7 +30,7 @@ The other symptom was that `gbrain capture` would print a trailing
 `'No database connection'` line on stderr from a background facts:absorb
 worker firing AFTER the CLI's `engine.disconnect()` finally block ran.
 The fact subsystem queues post-page-write work fire-and-forget; that work
-sometimes outlived the CLI process's connection lifetime. v0.41.27.0 adds
+sometimes outlived the CLI process's connection lifetime. v0.41.28.0 adds
 a new `FactsQueue.drainPending({timeout: 1000})` method, semantically
 distinct from `shutdown()` (which would abort in-flight) — drain lets
 in-flight finish. The CLI op-dispatch now awaits the drain before
@@ -39,7 +39,7 @@ pay only a fast no-op check.
 
 **Honest scope.** This is the tactical symptom fix. The deeper question
 — which specific code path nulls the database singleton mid-cycle — is
-still open. v0.41.27.0 also ships diagnostic instrumentation:
+still open. v0.41.28.0 also ships diagnostic instrumentation:
 every call to `db.disconnect()` and `PostgresEngine.disconnect()` writes
 a JSONL audit row to `~/.gbrain/audit/db-disconnect-YYYY-Www.jsonl`
 recording the engine kind, connection style, caller stack trace, and
