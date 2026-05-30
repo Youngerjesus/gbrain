@@ -46,6 +46,8 @@ mock.module('../../src/core/embedding.ts', () => ({
   EMBEDDING_DIMENSIONS: 1536,
   EMBEDDING_COST_PER_1K_TOKENS: 0.00013,
   estimateEmbeddingCostUsd: (tokens: number) => (tokens / 1000) * 0.00013,
+  // v0.41.31: embed phase reads the current signature to stamp provenance.
+  currentEmbeddingSignature: () => 'text-embedding-3-large:1536',
 }));
 
 const { runCycle, ALL_PHASES } = await import('../../src/core/cycle.ts');
@@ -106,6 +108,9 @@ async function withoutAnthropicKey<T>(body: () => Promise<T>): Promise<T> {
 //   v0.31   — added `consolidate` between recompute_emotional_weight and embed
 //   v0.33   — added `resolve_symbol_edges` between extract and patterns
 type CyclePhase = (typeof ALL_PHASES)[number];
+// Mirrors src/core/cycle.ts ALL_PHASES order exactly. v0.41.31: synced the
+// three phases that drifted in after this test was last touched (v0.41.0.0):
+// extract_atoms (v0.41 T9), synthesize_concepts, conversation_facts_backfill.
 const EXPECTED_PHASES: CyclePhase[] = [
   'lint',
   'backlinks',

@@ -271,6 +271,177 @@ Every originally-deferred follow-up is included:
 - **Issue #1481 closed** — supersedes the original proposal with the
   decisions captured in plan
   `~/.claude/plans/system-instruction-you-are-working-drifting-falcon.md`.
+## [0.41.31.0] - 2026-05-30
+
+**Your nightly `gbrain sync --all` cron stops getting blocked. It used to
+demand `--yes` on every non-interactive run even when nothing needed
+embedding. Now it just runs. And when you change your embedding model,
+`gbrain embed --stale` actually re-embeds the pages still on the old model
+instead of silently leaving them stale.**
+
+Before this release, `gbrain sync --all` always stopped and asked for
+confirmation in any non-interactive run (cron, script, piped output) based on
+a guess of your whole corpus's embedding cost. On an already-synced brain that
+guess was large and the real work was zero, so the cron exited with an error
+every night and you had to wire in `--yes` permanently, which defeats the
+safety check.
+
+Here's what changed. On the default fast sync path, embedding doesn't run
+during the sync itself; it's handed to background jobs that already cap their
+own spend at $25 per source per day. So the sync command now prints what's
+queued and proceeds. It never blocks. You'll only see a confirmation prompt
+when sync embeds inline (the older non-parallel mode), and even then only when
+the new content this sync embeds crosses a dollar threshold you control.
+
+**The threshold knob:**
+```
+gbrain config set sync.cost_gate_min_usd 0.50   # default; raise or lower to taste
+```
+At or below this estimate an inline sync proceeds silently. Set it to 0 to
+confirm on any nonzero cost.
+
+**Real stale detection.** gbrain now records which model and dimensions
+produced each page's vectors. Change your embedding model (OpenAI to Voyage,
+or a different dimension) and `gbrain embed --stale` finds and re-embeds every
+page still on the old model. Before, "stale" only meant "never embedded," so a
+model swap was invisible and search quietly mixed vector spaces.
+
+This does NOT trigger a surprise re-embed of your whole brain on upgrade. Pages
+that predate this release have no recorded signature, and gbrain treats "no
+signature" as "leave it alone." Only pages embedded after you upgrade carry a
+signature, and only an actual model change marks them stale.
+
+**See your embedding backlog.** `gbrain sources status` gains a BACKFILL column
+showing whether each source has embed jobs queued, running, or idle, plus when
+the last one finished. After a `sync --all` you can tell at a glance whether
+embeddings are caught up or still trickling in.
+
+## To take advantage of v0.41.31.0
+
+`gbrain upgrade` does this automatically (it applies migration v108, which adds
+the per-page embedding-signature column). If `gbrain doctor` warns about a
+partial migration:
+
+1. **Apply migrations manually:**
+   ```bash
+   gbrain apply-migrations --yes
+   ```
+2. **Verify the cron no longer blocks:**
+   ```bash
+   gbrain sync --all --dry-run        # previews, exits 0, no confirmation demanded
+   gbrain sources status              # BACKFILL column present
+   ```
+3. **After a future model swap:** `gbrain embed --stale` re-embeds the drifted
+   pages. (Pages embedded before this upgrade keep their old vectors until they
+   are next re-embedded for some other reason — the no-surprise-cost
+   grandfather behavior.)
+4. **If anything looks wrong,** file an issue at
+   https://github.com/garrytan/gbrain/issues with the output of `gbrain doctor`.
+
+### Itemized changes
+
+#### Sync cost gate
+- `gbrain sync --all` is mode-aware. When embedding is deferred to backfill
+  jobs (the federated_v2 default), the gate is informational only: it prints a
+  deferred notice (cap-aware, "not charged by this sync") plus the current
+  backlog and never exits 2. The blocking confirmation gate fires only when
+  sync embeds inline AND the new-content estimate exceeds
+  `sync.cost_gate_min_usd` (default $0.50).
+- The inline estimate is delta-aware: sources unchanged since their last sync
+  (HEAD == last_commit, clean tree, chunker version current) contribute 0;
+  changed sources contribute the full-tree ceiling. The pre-existing stale
+  backlog is shown informationally but does not gate inline sync (that backlog
+  is `gbrain embed --stale`'s job, not sync's).
+- The cost preview prices against the configured model's real rate rather than
+  a hardcoded OpenAI rate.
+
+#### Real stale semantics (migration v108)
+- New `pages.embedding_signature` column records `<provider:model>:<dims>` when
+  a page's chunks are embedded. `gbrain embed --stale`, the embed-backfill
+  jobs, and the sync cost preview treat a page as stale when its signature
+  differs from the current model's. NULL signature is grandfathered (never
+  stale) so upgrading does not mass-re-embed.
+- All embed-write paths stamp the signature: `gbrain embed`/`--all`/`--stale`,
+  the embed-backfill minion, `gbrain sync`'s inline import, and `gbrain import`.
+- New engine methods on both Postgres and PGLite: `sumStaleChunkChars`,
+  `setPageEmbeddingSignature`, `invalidateStaleSignatureEmbeddings`, plus an
+  optional `signature` filter on `countStaleChunks` / `sumStaleChunkChars`.
+
+#### Backfill visibility
+- `gbrain sources status` shows per-source embed-backfill state
+  (queued/active/idle + last completion). The deferred sync notice appends the
+  queued-job count so a cron operator sees work is enqueued, not lost.
+
+#### Configuration
+- `sync.cost_gate_min_usd` (default 0.50) sets the inline-sync confirmation
+  floor.
+## [0.41.30.0] - 2026-05-30
+
+**`gbrain lsd --save` (and `brainstorm --save`) now actually writes the
+committable `wiki/ideas/<slug>.md` file it always promised, makes the saved
+idea searchable, and tells you the truth when a save fails instead of always
+printing "Saved".**
+
+The old behavior was a quiet lie. `--save` printed `Saved to <slug>` every
+time, but under the hood it only did a lightweight database write. The help
+text promised a `.md` file on disk for you to commit to your brain repo, and
+that file never appeared. Worse, when the database write itself failed (which
+happens under PgBouncer transaction-mode), it still said "Saved" — a real LSD
+run reported success while `gbrain get <slug>` returned `page_not_found`.
+Nothing landed anywhere, and the only way to recover the idea was to scrape it
+back out of the terminal.
+
+Now the save runs through the same ingestion path the rest of gbrain uses. The
+page is written canonically (chunked and tagged, so `gbrain search` can find
+it), and when your `sync.repo_path` points at a real brain repo, the
+`wiki/ideas/<date>-<lsd|brainstorm>-<slug>.md` file is written to disk,
+rendered from the saved row so the two can't drift apart. The success message
+now names exactly which sinks landed. If nothing persisted, you get a loud
+`NOT persisted` error and a nonzero exit code, so a scripted `--save` can no
+longer be mistaken for success.
+
+Same-day ideas no longer clobber each other either: the slug gets a short
+random suffix, so two quick `lsd` runs on similar questions keep both files.
+
+How to use it:
+
+```
+gbrain config set sync.repo_path /path/to/your/brain   # if not already set
+gbrain lsd "why are agent tools converging" --save
+gbrain get wiki/ideas/2026-05-30-lsd-why-are-agent-tools-converging-<suffix>
+ls /path/to/your/brain/wiki/ideas/                     # the .md file is really there
+```
+
+No `sync.repo_path`? You still get the database page (queryable immediately),
+and the message tells you the file write was skipped. Nothing changes for
+`--json` callers (that path stays database-only, as before).
+
+### For contributors
+
+The disk write-through that `put_page` shipped in v0.38 was extracted into a
+shared `src/core/write-through.ts` helper that `put_page` and brainstorm save
+now both call, and it was upgraded to write atomically (unique temp file +
+rename) so a crash or a concurrently-running `gbrain sync` can never read a
+half-written `.md`. That hardens `put_page`'s own write-through as a side
+effect.
+
+## To take advantage of v0.41.30.0
+
+`gbrain upgrade` is all you need. There is no schema migration and no data
+backfill in this release. To confirm the fix:
+
+1. **Set a repo path if you haven't:** `gbrain config set sync.repo_path /path/to/your/brain`
+2. **Save an idea and verify both sinks:**
+   ```bash
+   gbrain lsd "test idea" --save
+   gbrain get <printed-slug>        # database page exists
+   ls /path/to/your/brain/wiki/ideas/   # the .md file exists
+   ```
+3. **If a save ever reports `NOT persisted`,** that is the new honest failure
+   path doing its job — check the stderr line above it for the underlying DB
+   or file error, then please file an issue with `gbrain doctor` output:
+   https://github.com/garrytan/gbrain/issues
+
 ## [0.41.29.0] - 2026-05-29
 
 **Your meeting transcripts that look like `**Garry Tan:** ...` now actually
@@ -17657,9 +17828,13 @@ Tonight's production upgrade surfaced eleven bugs. Two of them — Bug 1 (the mi
 ## **Silent binaries are dead. Every bulk action now heartbeats.**
 ## **Agents can tell the difference between "working" and "hung."**
 
-`gbrain doctor` on a 52K-page brain used to sit silent for 10+ minutes and then get killed by an agent timeout. The checks always completed when run by hand, but stdout buffered and agents saw nothing. The same pattern hit `embed`, `sync`, `import`, `extract`, `migrate`, and every orchestrator that shelled out to them — progress either went to stdout with `` rewrites that collapse when piped, or nowhere at all. v0.15.2 routes every bulk action through one shared reporter. Non-TTY default is plain human lines on stderr, one line per event. Agents that want structured progress flip `--progress-json` and get one JSON object per line.
+`gbrain doctor` on a 52K-page brain used to sit silent for 10+ minutes and then get killed by an agent timeout. The checks always completed when run by hand, but stdout buffered and agents saw nothing. The same pattern hit `embed`, `sync`, `import`, `extract`, `migrate`, and every orchestrator that shelled out to them — progress either went to stdout with `
+` rewrites that collapse when piped, or nowhere at all. v0.15.2 routes every bulk action through one shared reporter. Non-TTY default is plain human lines on stderr, one line per event. Agents that want structured progress flip `--progress-json` and get one JSON object per line.
 
-Progress events never touch stdout. Data and final summaries still go there. Script you wrote six months ago that parses `gbrain embed` output? Still works. Agent that captures stdout to JSON.parse the result? Now gets clean JSON instead of `1234/52000 pages...` mixed in.
+Progress events never touch stdout. Data and final summaries still go there. Script you wrote six months ago that parses `gbrain embed` output? Still works. Agent that captures stdout to JSON.parse the result? Now gets clean JSON instead of `
+
+
+1234/52000 pages...` mixed in.
 
 ### The numbers that matter
 
@@ -17667,7 +17842,8 @@ Measured on this repo (80 unit test files, 14 E2E test files, real Postgres+pgve
 
 | Metric                                            | BEFORE v0.15.2         | AFTER v0.15.2                          | Δ              |
 |---------------------------------------------------|------------------------|----------------------------------------|----------------|
-| Commands that stream progress                     | 3 (ad-hoc `` stdout) | **14** (reporter, stderr, rate-gated) | **+11**        |
+| Commands that stream progress                     | 3 (ad-hoc `
+` stdout) | **14** (reporter, stderr, rate-gated) | **+11**        |
 | Progress observable when stdout is piped          | **0 of 3**             | **14 of 14**                           | always visible |
 | Canonical JSON event schema                       | none                   | **locked in `docs/progress-events.md`** | stable         |
 | `doctor` silence window on 52K pages              | 10+ min then killed    | **heartbeat every 1s**                 | observable     |
@@ -17680,9 +17856,12 @@ Measured on this repo (80 unit test files, 14 E2E test files, real Postgres+pgve
 |-----------------------|-----------------|----------------------------------------------------------------|
 | `doctor`              | None (blocks)   | Per-check heartbeat, 1s on slow queries                        |
 | `orphans`             | Final summary   | Heartbeat while `NOT EXISTS` scan runs                         |
-| `embed`               | `` stdout     | Per-page stderr, `job.updateProgress` from Minions             |
-| `files sync`          | `` stdout     | Per-file stderr                                                |
-| `export`              | `` stdout     | Per-page stderr (newly in scope)                               |
+| `embed`               | `
+` stdout     | Per-page stderr, `job.updateProgress` from Minions             |
+| `files sync`          | `
+` stdout     | Per-file stderr                                                |
+| `export`              | `
+` stdout     | Per-page stderr (newly in scope)                               |
 | `import`              | Per-100 stdout  | Per-file stderr, rate-gated                                    |
 | `extract` (fs + db)   | Ad-hoc stderr   | Canonical event schema, all paths                              |
 | `sync`                | Final summary   | Per-file ticks across delete/rename/import phases              |
@@ -17722,7 +17901,8 @@ If you run `gbrain` in CI, through a Minion worker, or inside any agent that cap
 ### Itemized changes
 
 #### Reporter (new, `src/core/progress.ts`)
-- Dependency-free. Modes: `auto` (TTY → ``-rewriting; non-TTY → plain lines), `human`, `json` (JSONL on stderr), `quiet`.
+- Dependency-free. Modes: `auto` (TTY → `
+`-rewriting; non-TTY → plain lines), `human`, `json` (JSONL on stderr), `quiet`.
 - Rate gating: emits on whichever fires first: `minIntervalMs` (default 1000) or `minItems` (default `max(10, ceil(total/100))`). Final `tick` where `done === total` always emits.
 - `startHeartbeat(reporter, note)` helper for single long-running queries (doctor's `markdown_body_completeness`, `orphans` anti-join, `repair-jsonb` per-column UPDATE).
 - `child()` composes phase paths, `sync.import.<slug>`, not flat `<slug>`.
@@ -17740,7 +17920,8 @@ If you run `gbrain` in CI, through a Minion worker, or inside any agent that cap
 - Phases use `snake_case.dot.path`. Machine-stable. Agent parsers can group by phase prefix (all `doctor.*` events belong to one run).
 
 #### Backward-compat warnings
-Progress for `embed`, `files`, `export`, `extract`, `import`, `migrate-engine` moved from stdout to stderr. Stdout now carries only final summaries and `--json` payloads. Scripts that parsed `process.stdout` for progress lines (`  1234/52000 pages...`) see empty stdout for those counters; the data they actually want (the final "Embedded N chunks" summary) is still there. Point anything grepping stdout for progress at stderr instead.
+Progress for `embed`, `files`, `export`, `extract`, `import`, `migrate-engine` moved from stdout to stderr. Stdout now carries only final summaries and `--json` payloads. Scripts that parsed `process.stdout` for progress lines (`
+  1234/52000 pages...`) see empty stdout for those counters; the data they actually want (the final "Embedded N chunks" summary) is still there. Point anything grepping stdout for progress at stderr instead.
 
 #### Minion handlers (`src/commands/jobs.ts`)
 - `embed` handler passes `job.updateProgress({done, total, embedded, phase})` as the `onProgress` callback. Primary Minion progress channel is DB-backed, readable via `gbrain jobs get <id>` or the `get_job_progress` MCP op. Stderr from `jobs work` stays coarse for daemon liveness.
@@ -17755,7 +17936,8 @@ Progress for `embed`, `files`, `export`, `extract`, `import`, `migrate-engine` m
 - Post-upgrade timeout bumped 300s → 1800s (30 min). Override via `GBRAIN_POST_UPGRADE_TIMEOUT_MS`. The old 300s cap killed v0.12.0 graph-backfill migrations on 50K+ brains; heartbeat wiring in v0.15.2 makes the long wait observable.
 
 #### CI guard
-- `scripts/check-progress-to-stdout.sh` greps `src/` for `process.stdout.write('...')` and fails `bun run test` if any regression lands.
+- `scripts/check-progress-to-stdout.sh` greps `src/` for `process.stdout.write('
+...')` and fails `bun run test` if any regression lands.
 
 #### Tests
 - New: `test/progress.test.ts` (17 cases — mode resolution, rate gating, EPIPE paths, SIGINT singleton, child phase composition), `test/cli-options.test.ts` (18 cases — flag parsing, `--quiet` skillpack-check collision regression, global-flag strip-and-dispatch), `test/e2e/doctor-progress.test.ts` (3 cases, Tier 1 — spawns the real CLI against a real Postgres, asserts stderr JSONL matches the schema and stdout stays clean).
