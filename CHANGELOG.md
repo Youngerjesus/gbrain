@@ -26,7 +26,7 @@ lag is `0` and the source reports clean, no matter how long ago the sync ran.
 
 Nothing to turn on. Run `gbrain doctor` (or `gbrain sources status`) and a quiet,
 caught-up source now shows fresh instead of stale. After `gbrain upgrade`,
-migration v108 adds one column and the next `gbrain sync` starts populating it.
+migration v109 adds one column and the next `gbrain sync` starts populating it.
 
 ### What you'd see
 
@@ -79,7 +79,7 @@ doctor` warns about a partial migration:
    ```bash
    gbrain apply-migrations --yes
    ```
-   This adds `sources.newest_content_at` (migration v108) — a metadata-only
+   This adds `sources.newest_content_at` (migration v109) — a metadata-only
    column add, instant on any brain size.
 2. **Run a sync so the column populates:**
    ```bash
@@ -108,7 +108,7 @@ doctor` warns about a partial migration:
   gains `{ probeContent }` (local opts into the live commit-hash probe, remote reads the
   column). Dead `isSourceStale(src, intervalMs)` removed (only `autopilot-fanout.ts`'s
   own variant was live).
-- **`src/core/migrate.ts` v108** + `src/schema.sql` + `src/core/pglite-schema.ts` (+
+- **`src/core/migrate.ts` v109** + `src/schema.sql` + `src/core/pglite-schema.ts` (+
   regenerated `schema-embedded.ts`) — `sources.newest_content_at TIMESTAMPTZ`.
 - **`src/commands/sync.ts`** — `writeSyncAnchor` stamps `newest_content_at` (HEAD committer
   time) in the same atomic UPDATE as `last_commit`/`last_sync_at`; `buildSyncStatusReport`
@@ -124,6 +124,110 @@ doctor` warns about a partial migration:
   `test/doctor.test.ts` (T1 untracked-folders headline bug, T2 remote-never-shells-out trust
   boundary), `test/sync-all-parallel.test.ts` (column-path staleness).
 - **CI tooling** — `scripts/ship-remote-tests.sh` + `workflow_dispatch` on `test.yml`.
+## [0.41.31.0] - 2026-05-30
+
+**Your nightly `gbrain sync --all` cron stops getting blocked. It used to
+demand `--yes` on every non-interactive run even when nothing needed
+embedding. Now it just runs. And when you change your embedding model,
+`gbrain embed --stale` actually re-embeds the pages still on the old model
+instead of silently leaving them stale.**
+
+Before this release, `gbrain sync --all` always stopped and asked for
+confirmation in any non-interactive run (cron, script, piped output) based on
+a guess of your whole corpus's embedding cost. On an already-synced brain that
+guess was large and the real work was zero, so the cron exited with an error
+every night and you had to wire in `--yes` permanently, which defeats the
+safety check.
+
+Here's what changed. On the default fast sync path, embedding doesn't run
+during the sync itself; it's handed to background jobs that already cap their
+own spend at $25 per source per day. So the sync command now prints what's
+queued and proceeds. It never blocks. You'll only see a confirmation prompt
+when sync embeds inline (the older non-parallel mode), and even then only when
+the new content this sync embeds crosses a dollar threshold you control.
+
+**The threshold knob:**
+```
+gbrain config set sync.cost_gate_min_usd 0.50   # default; raise or lower to taste
+```
+At or below this estimate an inline sync proceeds silently. Set it to 0 to
+confirm on any nonzero cost.
+
+**Real stale detection.** gbrain now records which model and dimensions
+produced each page's vectors. Change your embedding model (OpenAI to Voyage,
+or a different dimension) and `gbrain embed --stale` finds and re-embeds every
+page still on the old model. Before, "stale" only meant "never embedded," so a
+model swap was invisible and search quietly mixed vector spaces.
+
+This does NOT trigger a surprise re-embed of your whole brain on upgrade. Pages
+that predate this release have no recorded signature, and gbrain treats "no
+signature" as "leave it alone." Only pages embedded after you upgrade carry a
+signature, and only an actual model change marks them stale.
+
+**See your embedding backlog.** `gbrain sources status` gains a BACKFILL column
+showing whether each source has embed jobs queued, running, or idle, plus when
+the last one finished. After a `sync --all` you can tell at a glance whether
+embeddings are caught up or still trickling in.
+
+## To take advantage of v0.41.31.0
+
+`gbrain upgrade` does this automatically (it applies migration v108, which adds
+the per-page embedding-signature column). If `gbrain doctor` warns about a
+partial migration:
+
+1. **Apply migrations manually:**
+   ```bash
+   gbrain apply-migrations --yes
+   ```
+2. **Verify the cron no longer blocks:**
+   ```bash
+   gbrain sync --all --dry-run        # previews, exits 0, no confirmation demanded
+   gbrain sources status              # BACKFILL column present
+   ```
+3. **After a future model swap:** `gbrain embed --stale` re-embeds the drifted
+   pages. (Pages embedded before this upgrade keep their old vectors until they
+   are next re-embedded for some other reason — the no-surprise-cost
+   grandfather behavior.)
+4. **If anything looks wrong,** file an issue at
+   https://github.com/garrytan/gbrain/issues with the output of `gbrain doctor`.
+
+### Itemized changes
+
+#### Sync cost gate
+- `gbrain sync --all` is mode-aware. When embedding is deferred to backfill
+  jobs (the federated_v2 default), the gate is informational only: it prints a
+  deferred notice (cap-aware, "not charged by this sync") plus the current
+  backlog and never exits 2. The blocking confirmation gate fires only when
+  sync embeds inline AND the new-content estimate exceeds
+  `sync.cost_gate_min_usd` (default $0.50).
+- The inline estimate is delta-aware: sources unchanged since their last sync
+  (HEAD == last_commit, clean tree, chunker version current) contribute 0;
+  changed sources contribute the full-tree ceiling. The pre-existing stale
+  backlog is shown informationally but does not gate inline sync (that backlog
+  is `gbrain embed --stale`'s job, not sync's).
+- The cost preview prices against the configured model's real rate rather than
+  a hardcoded OpenAI rate.
+
+#### Real stale semantics (migration v108)
+- New `pages.embedding_signature` column records `<provider:model>:<dims>` when
+  a page's chunks are embedded. `gbrain embed --stale`, the embed-backfill
+  jobs, and the sync cost preview treat a page as stale when its signature
+  differs from the current model's. NULL signature is grandfathered (never
+  stale) so upgrading does not mass-re-embed.
+- All embed-write paths stamp the signature: `gbrain embed`/`--all`/`--stale`,
+  the embed-backfill minion, `gbrain sync`'s inline import, and `gbrain import`.
+- New engine methods on both Postgres and PGLite: `sumStaleChunkChars`,
+  `setPageEmbeddingSignature`, `invalidateStaleSignatureEmbeddings`, plus an
+  optional `signature` filter on `countStaleChunks` / `sumStaleChunkChars`.
+
+#### Backfill visibility
+- `gbrain sources status` shows per-source embed-backfill state
+  (queued/active/idle + last completion). The deferred sync notice appends the
+  queued-job count so a cron operator sees work is enqueued, not lost.
+
+#### Configuration
+- `sync.cost_gate_min_usd` (default 0.50) sets the inline-sync confirmation
+  floor.
 ## [0.41.30.0] - 2026-05-30
 
 **`gbrain lsd --save` (and `brainstorm --save`) now actually writes the

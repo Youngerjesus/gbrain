@@ -32,7 +32,7 @@ export interface SourceRow {
    * v0.41.32.0: newest COMMIT timestamp observed at last sync (HEAD committer
    * time). The REMOTE staleness path reads this column so it never shells out
    * to git on a DB-supplied local_path. Optional because the forward-reference
-   * fallback SELECT below omits it on pre-v108 brains; null/undefined → the
+   * fallback SELECT below omits it on pre-v109 brains; null/undefined → the
    * reader falls back to wall-clock.
    */
   newest_content_at?: Date | null;
@@ -80,7 +80,7 @@ export async function loadAllSources(
        ORDER BY (id = 'default') DESC, id`,
     );
   } catch (err) {
-    // Forward-reference safety: pre-v0.26.5 brains lack `archived`; pre-v108
+    // Forward-reference safety: pre-v0.26.5 brains lack `archived`; pre-v109
     // brains lack `newest_content_at`. Re-issue with the historical minimal
     // set; archived defaults false, newest_content_at undefined → wall-clock.
     if (isUndefinedColumnError(err)) {
