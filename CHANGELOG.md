@@ -2,6 +2,96 @@
 
 All notable changes to GBrain will be documented in this file.
 
+## [0.42.9.0] - 2026-06-01
+
+**Self-improving skills can no longer cheat. When you run `gbrain skillopt` to let
+a skill rewrite itself, it now has to prove the change actually helps on a set of
+tasks it wasn't optimized against — and for the skills gbrain ships, it won't
+overwrite them in place unless you hand it that independent check.**
+
+Here is the problem. `gbrain skillopt` treats a skill's SKILL.md as something it
+can edit and re-score against a benchmark, keeping edits that score higher. The
+trap: an edit can score higher on its own benchmark while quietly getting worse at
+the real job (classic "teaching to the test"). Until now the safety net for that —
+a held-out check — was documented but never actually wired in, the run's report
+showed a fake baseline score of 0, and a "final test" score was never computed. So
+you couldn't tell from the receipt whether a skill genuinely improved.
+
+This release makes the loop honest. Pass `--held-out <file.jsonl>` (a set of tasks
+with different IDs than your benchmark) and a candidate that climbs the benchmark
+but slips on the held-out set is refused. The run report now records the real
+baseline score and a real test-set score, so "did this skill get better" is a
+number you can read. `--no-mutate` finally writes the proposed rewrite to disk for
+review (it was a stub), and `--max-runtime-min` is actually enforced.
+
+For the ~47 skills gbrain ships, the bar is higher: mutating one in place now
+*requires* `--held-out` with at least 5 independent tasks. Without it you get a
+`proposed.md` to review instead of a silent overwrite. The held-out file must use
+task IDs disjoint from the benchmark — point it at a copy of the benchmark and the
+run refuses, because an overlapping check can't catch overfitting.
+
+The `run_skillopt` MCP tool got a security tighten in the same pass: it validates
+the skill name and confines benchmark/held-out paths to the skills directory for
+remote callers, so an admin token can't read arbitrary host files through it.
+
+## To take advantage of v0.42.9.0
+
+`gbrain upgrade` is all you need — these are behavior changes to an existing
+command, no migration.
+
+1. **Optimize a user skill with the new safety net:**
+   ```bash
+   gbrain skillopt my-skill --held-out skills/my-skill/held-out.jsonl
+   ```
+   The held-out file is the same JSONL shape as the benchmark, with task IDs that
+   do NOT appear in the benchmark.
+2. **Optimize a bundled (shipped) skill in place** — now requires the held-out
+   check; otherwise it writes `proposed.md` for review:
+   ```bash
+   gbrain skillopt brain-ops --allow-mutate-bundled --held-out skills/brain-ops/held-out.jsonl
+   ```
+3. **Read the honest receipt:** `gbrain skillopt ... --json` now reports
+   `baseline_sel_score`, `best_sel_score`, `baseline_test_score`, and `test_score`.
+
+### Itemized changes
+
+#### Added
+- **Held-out validation gate (F11) is now wired into the optimizer loop.** `--held-out <path>`
+  (CLI), `held_out_path` (background job + `run_skillopt` MCP op), and `heldOutPath`
+  (batch/fleet) load an independent task set; the gate runs at checkpoint acceptance
+  and blocks any candidate whose held-out score regresses below baseline. Previously
+  `runHeldOutGate` existed but nothing called it.
+- **Final-test eval.** After optimization, the best skill and the baseline are scored
+  on the held-out test split; receipts now carry `test_score` + `baseline_test_score`.
+- **Shared `scoreSkillOnTasks` primitive** (`validate-gate.ts`) used by the baseline
+  eval, final-test, held-out gate, and external eval harnesses so they can't drift.
+
+#### Changed
+- **Bundled-skill mutation requires a non-empty held-out set (>=5 tasks).** Enforced in
+  core mutation policy (`assertBundledMutationHeldOut`), so it fires for every entry
+  point — CLI, batch, fleet, background job, and the `run_skillopt` MCP op. Without it,
+  the run hard-refuses (exit 2) and points you at `proposed.md`.
+- **Held-out must be independent of the benchmark.** A held-out file sharing task IDs
+  with the benchmark is rejected (an overlapping check can't catch overfitting).
+- **Honest receipts.** `baseline_sel_score` is the real measured baseline (was hardcoded
+  to 0).
+- **`run_skillopt` MCP op hardening:** validates `skill_name` is kebab-case and confines
+  caller-supplied benchmark/held-out paths to the skills directory for remote callers.
+
+#### Fixed
+- **`--no-mutate` now writes `proposed.md`** with the winning rewrite (was a stub that
+  wrote nothing).
+- **`--max-runtime-min` is enforced** via a wall-clock deadline between optimization steps.
+
+### For contributors
+- Eval-internal ablation knobs on `runSkillOpt` (not exposed on the CLI): `reflectMode`
+  (`'both'`/`'failure-only'`), `disableValidationGate`, and `optimizerMode`
+  (`'reflect'`/`'one-shot-rewrite'`), recorded in the receipt + audit for replayability.
+  These drive the SkillOpt benchmark suite in the sibling `gbrain-evals` repo.
+- New tests: `test/skillopt/rollout.test.ts`, held-out + one-shot-rewrite unit cases, and
+  e2e coverage for the held-out gate (block/allow), bundled enforcement, no-mutate write,
+  runtime deadline, receipt honesty, and no-DB-pollution.
+
 ## [0.42.3.0] - 2026-05-30
 
 **Search now returns the *confident handful* instead of a fixed wall of results
