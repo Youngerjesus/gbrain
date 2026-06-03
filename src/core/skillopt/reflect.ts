@@ -14,8 +14,55 @@
  */
 
 import { chat as gatewayChat } from '../ai/gateway.ts';
-import type { EditOp, ScoredRollout } from './types.ts';
+import type { EditOp, ScoredRollout, Judge, RuleCheck } from './types.ts';
 import type { RejectedEntry } from './rejected-buffer.ts';
+
+/**
+ * Render ONE rule check as a plain-English requirement the optimizer can target.
+ */
+function describeCheck(c: RuleCheck): string {
+  switch (c.op) {
+    case 'contains': return `the output must contain the exact text \`${c.arg}\``;
+    case 'regex': return `the output must match the regular expression \`/${c.arg}/\``;
+    case 'section_present': return `the output must include a markdown heading titled "${c.arg}" (any heading level, case-insensitive)`;
+    case 'max_chars': return `the output must be at most ${c.arg} characters long`;
+    case 'min_citations': return `the output must include at least ${c.arg} citation(s)`;
+    case 'tool_called': return `the agent must call the \`${c.arg}\` tool at least once`;
+    case 'tool_not_called': return `the agent must NOT call the \`${c.arg}\` tool`;
+  }
+}
+
+/**
+ * Render a Judge into the plain-English criteria the scorer rewards, so the
+ * optimizer knows WHAT it is optimizing toward. Without this the optimizer only
+ * sees a pass/fail score and has to reverse-engineer the target from behavior
+ * alone — which fails for rule judges that require a specific structure (e.g. a
+ * literal "Confidence:" line): it proposes plausible-but-off edits that never
+ * satisfy the rule, the candidate scores 0, the gate rejects it, and the skill
+ * never changes. Reward-hacking is defended separately by the held-out gate.
+ */
+export function describeJudge(judge: Judge): string {
+  switch (judge.kind) {
+    case 'rule': return judge.checks.map((c) => `- ${describeCheck(c)}`).join('\n');
+    case 'llm': return `- the output is graded 0..1 by an LLM judge against this rubric:\n  "${judge.rubric}"`;
+    case 'qrels': return `- the agent must retrieve the expected pages (scored recall@${judge.k})`;
+  }
+}
+
+/**
+ * Describe the DISTINCT success criteria across a set of benchmark tasks. Most
+ * benchmarks use one judge shape for every task, so this collapses to a single
+ * block; heterogeneous benchmarks list each distinct shape once.
+ */
+export function describeJudges(tasks: ReadonlyArray<{ judge: Judge }>): string {
+  const seen = new Set<string>();
+  const blocks: string[] = [];
+  for (const t of tasks) {
+    const desc = describeJudge(t.judge);
+    if (!seen.has(desc)) { seen.add(desc); blocks.push(desc); }
+  }
+  return blocks.join('\n');
+}
 
 const FAILURE_REFLECT_SYSTEM = `You are SkillOpt's optimizer. You analyze AGENT FAILURE TRAJECTORIES and propose specific edits to a SKILL document so the agent does better next time.
 
@@ -33,7 +80,8 @@ Rules:
 - Do NOT propose edits already in the rejected-edit history — those were tried and didn't help.
 - Be SURGICAL. Small targeted edits outperform large rewrites.
 - Do NOT modify the YAML frontmatter (triggers, brain_first, etc.) — that's out of scope.
-- Output at MOST 8 edits. The orchestrator's LR budget will rank-and-clip further.`;
+- Output at MOST 8 edits. The orchestrator's LR budget will rank-and-clip further.
+- You may be given SUCCESS CRITERIA describing exactly how the agent's output is scored. Make your edits cause the agent to SATISFY those criteria, through genuine, high-quality content (a real section with real substance, a justified confidence level) — never by inserting empty keywords. An independent held-out check rejects edits that game the score while hurting real quality.`;
 
 const SUCCESS_REFLECT_SYSTEM = `You are SkillOpt's optimizer. You analyze AGENT SUCCESS TRAJECTORIES and propose specific edits to a SKILL document so the agent CONSISTENTLY does what worked here.
 
@@ -51,6 +99,12 @@ export interface ReflectOpts {
   failures: ScoredRollout[];
   /** Rejected-edit buffer for anti-bias context. */
   rejected: readonly RejectedEntry[];
+  /**
+   * Plain-English description of how the agent's output is scored (from
+   * `describeJudges(benchmarkTasks)`). Threaded into the reflect prompt so the
+   * optimizer targets the actual criteria instead of guessing from score alone.
+   */
+  criteria?: string;
   optimizerModel: string;
   /**
    * Ablation (cat31 config B): 'failure-only' skips the D7 success-reflect call
@@ -119,7 +173,7 @@ export interface OneShotRewriteResult {
 export async function runOneShotRewrite(opts: ReflectOpts): Promise<OneShotRewriteResult> {
   const usage = { input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_creation_tokens: 0 };
   const chat = opts.chatFn ?? gatewayChat;
-  const userMsg = buildReflectUserMessage(opts.skillBodyText, [...opts.failures, ...opts.successes], opts.rejected);
+  const userMsg = buildReflectUserMessage(opts.skillBodyText, [...opts.failures, ...opts.successes], opts.rejected, opts.criteria);
   try {
     const result = await chat({
       model: opts.optimizerModel,
@@ -155,7 +209,7 @@ async function callReflect(
   errors: string[],
 ): Promise<EditOp[]> {
   const chat = opts.chatFn ?? gatewayChat;
-  const userMsg = buildReflectUserMessage(opts.skillBodyText, scoredRollouts, opts.rejected);
+  const userMsg = buildReflectUserMessage(opts.skillBodyText, scoredRollouts, opts.rejected, opts.criteria);
   try {
     const result = await chat({
       model: opts.optimizerModel,
@@ -181,6 +235,7 @@ function buildReflectUserMessage(
   skillBody: string,
   rollouts: ScoredRollout[],
   rejected: readonly RejectedEntry[],
+  criteria?: string,
 ): string {
   const trajectoryBlocks = rollouts.map((r, i) => {
     const tcSummary = r.trajectory.tool_calls
@@ -199,8 +254,12 @@ ${r.rationale ? `JUDGE RATIONALE: ${r.rationale}` : ''}`;
     ? `\n\n--- PREVIOUSLY REJECTED EDITS (do not re-propose) ---\n${rejected.slice(0, 20).map((r) => `- ${r.reason}: ${JSON.stringify(r.edits)}`).join('\n')}`
     : '';
 
+  const criteriaBlock = criteria
+    ? `\n\nSUCCESS CRITERIA (exactly how the agent's output is scored — make the agent satisfy these through genuine, high-quality content, never empty keywords):\n${criteria}`
+    : '';
+
   return `CURRENT SKILL BODY:
-${truncate(skillBody, 5000)}
+${truncate(skillBody, 5000)}${criteriaBlock}
 
 OBSERVED ROLLOUTS:
 ${trajectoryBlocks}${rejectedSummary}

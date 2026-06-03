@@ -94,6 +94,16 @@ command, no migration.
   score — a pricing crash that looked exactly like a real "0 out of N" measurement. The
   pricing entry is added, and the gate now re-throws budget/pricing errors loudly instead
   of recording a hollow zero. Surfaced by the SkillOpt real-LLM eval.
+- **The optimizer now knows what the scorer rewards.** `gbrain skillopt`'s reflect step
+  was only shown a pass/fail score and the agent's transcript, never the benchmark's
+  success criteria — so on a skill judged by structure (e.g. "must include a Confidence:
+  line") it proposed plausible-but-off edits that never satisfied the check, every
+  candidate scored 0, the validation gate rejected them all, and the skill never changed.
+  The reflect prompt now includes a plain-English description of exactly how the output is
+  scored, with an instruction to satisfy it through genuine content, not empty keywords.
+  In an end-to-end run this took a deficient skill from 0.00 to 1.00 on a held-out set it
+  never trained on. Reward-hacking is still defended by the independent held-out gate.
+  Surfaced by the SkillOpt real-LLM eval.
 - **`--no-mutate` now writes `proposed.md`** with the winning rewrite (was a stub that
   wrote nothing).
 - **`--max-runtime-min` is enforced** via a wall-clock deadline between optimization steps.

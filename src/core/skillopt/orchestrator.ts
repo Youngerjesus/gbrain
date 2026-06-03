@@ -92,7 +92,7 @@ import { withSkilloptLock } from './lock.ts';
 import { resolveLrSchedule } from './lr-schedule.ts';
 import { preflight, formatPreflightReport } from './preflight.ts';
 import { isRejected, loadRejectedBuffer, makeRejectedEntry, saveRejectedBuffer } from './rejected-buffer.ts';
-import { runReflect, runOneShotRewrite } from './reflect.ts';
+import { runReflect, runOneShotRewrite, describeJudges } from './reflect.ts';
 import { acceptCandidate, bestPath, revertAllPending, skillPath, writeProposed } from './version-store.ts';
 import { runValidationGate, scoreSkillOnTasks } from './validate-gate.ts';
 import { ROLLOUT_SUCCESS_THRESHOLD } from './types.ts';
@@ -248,6 +248,15 @@ async function runOptimizationLoop(
   const { skillName, skillsDir } = opts;
   const skillFile = skillPath(skillsDir, skillName);
 
+  // Plain-English success criteria from the benchmark judges, fed to the
+  // optimizer's reflect step so it targets WHAT the scorer rewards instead of
+  // guessing from a bare pass/fail score. Without this, rule-judged benchmarks
+  // (e.g. "must include a Confidence: line") are near-unoptimizable: the
+  // optimizer proposes plausible-but-off edits, the candidate scores 0, the gate
+  // rejects it, and the skill never changes. The held-out gate defends against
+  // the optimizer gaming these criteria at the expense of real quality.
+  const benchmarkCriteria = describeJudges([...split.train, ...split.sel, ...split.test]);
+
   // Crash-recovery sweep (D8): revert any pending rows from a prior crashed run.
   revertAllPending(skillsDir, skillName);
 
@@ -369,6 +378,7 @@ async function runOptimizationLoop(
           successes: fwd.scoredRollouts.filter((r) => r.score >= ROLLOUT_SUCCESS_THRESHOLD),
           failures: fwd.scoredRollouts.filter((r) => r.score < ROLLOUT_SUCCESS_THRESHOLD),
           rejected: [],
+          criteria: benchmarkCriteria,
           optimizerModel: opts.optimizerModel,
         });
         if (rewrite.newBody) {
@@ -456,6 +466,7 @@ async function runOptimizationLoop(
             successes,
             failures,
             rejected,
+            criteria: benchmarkCriteria,
             optimizerModel: opts.optimizerModel,
             ...(opts.reflectMode ? { reflectMode: opts.reflectMode } : {}),
             abortSignal: undefined,

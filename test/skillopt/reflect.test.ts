@@ -18,7 +18,7 @@
  */
 
 import { describe, expect, test } from 'bun:test';
-import { parseEditsResponse, runReflect, runOneShotRewrite } from '../../src/core/skillopt/reflect.ts';
+import { parseEditsResponse, runReflect, runOneShotRewrite, describeJudge, describeJudges } from '../../src/core/skillopt/reflect.ts';
 import type { ChatOpts, ChatResult } from '../../src/core/ai/gateway.ts';
 import type { ScoredRollout, Trajectory } from '../../src/core/skillopt/types.ts';
 
@@ -325,5 +325,75 @@ describe('runOneShotRewrite', () => {
     });
     expect(r.newBody).toBe('');
     expect(r.error).toContain('one_shot_rewrite_failed');
+  });
+});
+
+// ─── Success criteria threading (v0.42.9.0) ──────────────────────────────────
+// The optimizer must be TOLD how its output is scored, or it optimizes blind:
+// on a rule-judged benchmark it proposes plausible-but-off edits, every
+// candidate scores 0, the gate rejects them, and the skill never changes. These
+// pin that the judge criteria render to plain English AND reach the reflect prompt.
+describe('describeJudge / criteria threading', () => {
+  test('describeJudge renders each rule check as a plain requirement', () => {
+    const d = describeJudge({ kind: 'rule', checks: [
+      { op: 'section_present', arg: 'Key Risks' },
+      { op: 'regex', arg: '[Cc]onfidence\\s*[:=]' },
+      { op: 'max_chars', arg: 1200 },
+      { op: 'tool_called', arg: 'search' },
+    ] });
+    expect(d).toContain('Key Risks');
+    expect(d).toContain('[Cc]onfidence');
+    expect(d).toContain('1200');
+    expect(d).toContain('search');
+  });
+
+  test('describeJudge renders an llm rubric', () => {
+    expect(describeJudge({ kind: 'llm', rubric: 'reward genuine substance' }))
+      .toContain('reward genuine substance');
+  });
+
+  test('describeJudges dedupes identical judge shapes across tasks', () => {
+    const j = { kind: 'rule' as const, checks: [{ op: 'contains' as const, arg: 'X' }] };
+    const out = describeJudges([{ judge: j }, { judge: j }, { judge: j }]);
+    // One distinct shape → one block, not three.
+    expect(out.match(/contain the exact text/g)).toHaveLength(1);
+  });
+
+  test('runReflect injects the criteria block into the optimizer prompt', async () => {
+    let seenUser = '';
+    const chatFn = async (opts: ChatOpts): Promise<ChatResult> => {
+      const u = opts.messages[0]?.content;
+      seenUser = typeof u === 'string' ? u : '';
+      return makeChatResult(JSON.stringify({ edits: [] }));
+    };
+    await runReflect({
+      skillBodyText: '# Test',
+      successes: [],
+      failures: [makeScored('f-1', 0.0)],
+      rejected: [],
+      criteria: 'CRITERIA: must include a Confidence: line',
+      optimizerModel: 'anthropic:claude-opus-4-7',
+      chatFn,
+    });
+    expect(seenUser).toContain('SUCCESS CRITERIA');
+    expect(seenUser).toContain('must include a Confidence: line');
+  });
+
+  test('runReflect omits the criteria block when none is given', async () => {
+    let seenUser = '';
+    const chatFn = async (opts: ChatOpts): Promise<ChatResult> => {
+      const u = opts.messages[0]?.content;
+      seenUser = typeof u === 'string' ? u : '';
+      return makeChatResult(JSON.stringify({ edits: [] }));
+    };
+    await runReflect({
+      skillBodyText: '# Test',
+      successes: [],
+      failures: [makeScored('f-1', 0.0)],
+      rejected: [],
+      optimizerModel: 'anthropic:claude-opus-4-7',
+      chatFn,
+    });
+    expect(seenUser).not.toContain('SUCCESS CRITERIA');
   });
 });
