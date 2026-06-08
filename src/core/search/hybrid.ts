@@ -981,6 +981,23 @@ export async function hybridSearch(
     titleBoost: resolvedMode.title_boost,
   };
 
+  // v0.43 — build the relational recall arm ONCE here, before any return
+  // path, so typed-edge answers contribute on ALL THREE paths: the
+  // no-embedding-provider path, the embed-failed keyword fallback, and the
+  // main RRF path. Parsed from the original query (deterministic); empty for
+  // non-relational queries → pure no-op. (Modality gate lives on the main
+  // path; the parser only matches text-shaped relational queries anyway.)
+  let relationalList: SearchResult[] = [];
+  if (resolvedMode.relationalRetrieval) {
+    relationalList = await buildRelationalArm(engine, query, {
+      sourceId: opts?.sourceId,
+      sourceIds: opts?.sourceIds,
+      depth: resolvedMode.relational_retrieval_depth,
+      limit: opts?.limit ?? resolvedMode.searchLimit,
+      onMeta: opts?.onRelationalMeta,
+    });
+  }
+
   // Skip vector search entirely if the gateway has no embedding provider configured (Codex C3).
   // v0.36 (D10): ask "is the RESOLVED column's provider reachable?" rather
   // than "is the global default reachable?" — otherwise an unreachable
@@ -989,13 +1006,24 @@ export async function hybridSearch(
   const { isAvailable } = await import('../ai/gateway.ts');
   const providerProbe = resolvedCol.embeddingModel || undefined;
   if (!isAvailable('embedding', providerProbe)) {
-    if (keywordResults.length > 0) {
-      await runPostFusionStages(engine, keywordResults, postFusionOpts);
-      keywordResults.sort((a, b) => b.score - a.score);
+    // v0.43 — fuse the relational arm with keyword so typed-edge answers
+    // survive on the no-embedding-provider path (the relational win is most
+    // valuable exactly when vector is unavailable).
+    let noEmbedResults = keywordResults;
+    if (relationalList.length > 0) {
+      const fk = opts?.rrfK ?? RRF_K;
+      noEmbedResults = rrfFusionWeighted(
+        [{ list: keywordResults, k: fk }, { list: relationalList, k: fk }],
+        detailResolved !== 'high',
+      );
+    }
+    if (noEmbedResults.length > 0) {
+      await runPostFusionStages(engine, noEmbedResults, postFusionOpts);
+      noEmbedResults.sort((a, b) => b.score - a.score);
     }
     // T3/T4 — alias hop + evidence stamp even without an embedding provider
     // (the named-thing fix is most valuable exactly when vector is unavailable).
-    const noEmbedHopped = await applyAliasHop(engine, dedupResults(keywordResults), query, {
+    const noEmbedHopped = await applyAliasHop(engine, dedupResults(noEmbedResults), query, {
       sourceId: opts?.sourceId,
       sourceIds: opts?.sourceIds,
     });
@@ -1213,11 +1241,21 @@ export async function hybridSearch(
     // v0.29.1 codex pass-2 #4: this is the third return path. Apply
     // post-fusion stages here too — without it, salience='on' silently
     // does nothing on embed failures.
-    if (keywordResults.length > 0) {
-      await runPostFusionStages(engine, keywordResults, postFusionOpts);
-      keywordResults.sort((a, b) => b.score - a.score);
+    // v0.43: fuse the relational arm with keyword via RRF so typed-edge
+    // answers survive even when vector is unavailable.
+    let fallbackResults = keywordResults;
+    if (relationalList.length > 0) {
+      const fk = opts?.rrfK ?? RRF_K;
+      fallbackResults = rrfFusionWeighted(
+        [{ list: keywordResults, k: fk }, { list: relationalList, k: fk }],
+        detail !== 'high',
+      );
     }
-    const kwHopped = await applyAliasHop(engine, dedupResults(keywordResults), query, {
+    if (fallbackResults.length > 0) {
+      await runPostFusionStages(engine, fallbackResults, postFusionOpts);
+      fallbackResults.sort((a, b) => b.score - a.score);
+    }
+    const kwHopped = await applyAliasHop(engine, dedupResults(fallbackResults), query, {
       sourceId: opts?.sourceId,
       sourceIds: opts?.sourceIds,
     });
@@ -1276,25 +1314,13 @@ export async function hybridSearch(
       { list: keywordResults, k: keywordK },
     ];
 
-  // v0.43 — relational recall arm (fourth RRF arm). Fires only when the mode
-  // enables it AND the query is text-shaped (E4: no-op in image-only mode).
-  // Parsed from the ORIGINAL query (never expanded variants) so it's
-  // deterministic. Empty list = pure no-op for non-relational queries. Rides
-  // every downstream stage (cosine re-score, post-fusion boosts, dedup,
-  // reranker, autocut, token budget) like any other arm.
-  if (resolvedMode.relationalRetrieval && effectiveModality !== 'image') {
-    const relationalList = await buildRelationalArm(engine, query, {
-      sourceId: opts?.sourceId,
-      sourceIds: opts?.sourceIds,
-      depth: resolvedMode.relational_retrieval_depth,
-      limit: opts?.limit ?? resolvedMode.searchLimit,
-      onMeta: opts?.onRelationalMeta,
-    });
-    if (relationalList.length > 0) {
-      // Neutral weight: competes evenly with keyword/vector (baseRrfK), not
-      // dominating. Calibrated against the Commit 5 A/B.
-      allLists.push({ list: relationalList, k: baseRrfK });
-    }
+  // v0.43 — relational recall arm (fourth RRF arm), built above so it also
+  // contributes on the keyword-only fallback path. Neutral weight (baseRrfK):
+  // competes evenly with keyword/vector, not dominating. Empty for
+  // non-relational queries → pure no-op. Rides every downstream stage (cosine
+  // re-score, post-fusion boosts, dedup, reranker, autocut, token budget).
+  if (relationalList.length > 0 && effectiveModality !== 'image') {
+    allLists.push({ list: relationalList, k: baseRrfK });
   }
 
   let fused = rrfFusionWeighted(allLists, detail !== 'high');
