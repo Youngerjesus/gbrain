@@ -8,6 +8,7 @@
  * shape the serve IPC / host ctx.brainQuery supply).
  */
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from 'bun:test';
+import { withEnv } from './helpers/with-env.ts';
 import { PGLiteEngine } from '../src/core/pglite-engine.ts';
 import { normalizeAlias } from '../src/core/search/alias-normalize.ts';
 import { resolveEntitiesToPointers } from '../src/core/context/retrieval-reflex.ts';
@@ -108,68 +109,77 @@ describe('resolveEntitiesToPointers', () => {
 });
 
 describe('context-engine assemble() — Retrieval Reflex integration', () => {
-  beforeEach(() => {
-    process.env.GBRAIN_RETRIEVAL_REFLEX = 'true';
-  });
+  // R1 isolation: scope the reflex flag to each test via withEnv (the prior
+  // beforeEach mutated process.env for the whole shard and never restored it).
+  const withReflexOn = (fn: () => Promise<void>) =>
+    withEnv({ GBRAIN_RETRIEVAL_REFLEX: 'true' }, fn);
 
   test('regression: a named entity with a page surfaces a pointer (host resolver path)', async () => {
-    await seed('people/alice-example', 'Alice Example', 'Alice is a founder.');
-    // Inject a resolver the way the OpenClaw host (ctx.brainQuery) or serve IPC would.
-    const ce = createGBrainContextEngine({
-      workspaceDir: '/tmp/rr-test-ws',
-      resolveEntities: (candidates, opts) =>
-        resolveEntitiesToPointers(engine, 'default', candidates, opts),
+    await withReflexOn(async () => {
+      await seed('people/alice-example', 'Alice Example', 'Alice is a founder.');
+      // Inject a resolver the way the OpenClaw host (ctx.brainQuery) or serve IPC would.
+      const ce = createGBrainContextEngine({
+        workspaceDir: '/tmp/rr-test-ws',
+        resolveEntities: (candidates, opts) =>
+          resolveEntitiesToPointers(engine, 'default', candidates, opts),
+      });
+      const res = await ce.assemble({
+        sessionId: 's1',
+        messages: [{ role: 'user', content: 'what do you think about Alice Example?' }],
+      });
+      expect(res.systemPromptAddition).toContain('Brain pages mentioned this turn');
+      expect(res.systemPromptAddition).toContain('people/alice-example');
+      expect(res.systemPromptAddition).toContain('use get_page');
     });
-    const res = await ce.assemble({
-      sessionId: 's1',
-      messages: [{ role: 'user', content: 'what do you think about Alice Example?' }],
-    });
-    expect(res.systemPromptAddition).toContain('Brain pages mentioned this turn');
-    expect(res.systemPromptAddition).toContain('people/alice-example');
-    expect(res.systemPromptAddition).toContain('use get_page');
   });
 
   test('no resolver available (PGLite, no serve/host) → no throw, live context still present', async () => {
-    const ce = createGBrainContextEngine({ workspaceDir: '/tmp/rr-test-ws-2' });
-    const res = await ce.assemble({
-      sessionId: 's2',
-      messages: [{ role: 'user', content: 'what about Alice Example?' }],
+    await withReflexOn(async () => {
+      const ce = createGBrainContextEngine({ workspaceDir: '/tmp/rr-test-ws-2' });
+      const res = await ce.assemble({
+        sessionId: 's2',
+        messages: [{ role: 'user', content: 'what about Alice Example?' }],
+      });
+      // Live Context block always ships; no pointer block (nothing resolved).
+      expect(res.systemPromptAddition).toContain('Live Context');
+      expect(res.systemPromptAddition).not.toContain('Brain pages mentioned this turn');
     });
-    // Live Context block always ships; no pointer block (nothing resolved).
-    expect(res.systemPromptAddition).toContain('Live Context');
-    expect(res.systemPromptAddition).not.toContain('Brain pages mentioned this turn');
   });
 
   test('zero salient candidates → no brain touch, no pointer block', async () => {
-    let called = false;
-    const ce = createGBrainContextEngine({
-      workspaceDir: '/tmp/rr-test-ws-3',
-      resolveEntities: async () => { called = true; return null; },
+    await withReflexOn(async () => {
+      let called = false;
+      const ce = createGBrainContextEngine({
+        workspaceDir: '/tmp/rr-test-ws-3',
+        resolveEntities: async () => { called = true; return null; },
+      });
+      const res = await ce.assemble({
+        sessionId: 's3',
+        messages: [{ role: 'user', content: 'can you help me with this?' }],
+      });
+      expect(called).toBe(false);
+      expect(res.systemPromptAddition).not.toContain('Brain pages mentioned this turn');
     });
-    const res = await ce.assemble({
-      sessionId: 's3',
-      messages: [{ role: 'user', content: 'can you help me with this?' }],
-    });
-    expect(called).toBe(false);
-    expect(res.systemPromptAddition).not.toContain('Brain pages mentioned this turn');
   });
 
   test('suppression uses PRIOR turns only, not the current message', async () => {
-    await seed('people/alice-example', 'Alice Example', 'A founder.');
-    const ce = createGBrainContextEngine({
-      workspaceDir: '/tmp/rr-test-ws-4',
-      resolveEntities: (candidates, opts) =>
-        resolveEntitiesToPointers(engine, 'default', candidates, opts),
+    await withReflexOn(async () => {
+      await seed('people/alice-example', 'Alice Example', 'A founder.');
+      const ce = createGBrainContextEngine({
+        workspaceDir: '/tmp/rr-test-ws-4',
+        resolveEntities: (candidates, opts) =>
+          resolveEntitiesToPointers(engine, 'default', candidates, opts),
+      });
+      // The current message names Alice Example; prior context does NOT. Must fire.
+      const res = await ce.assemble({
+        sessionId: 's4',
+        messages: [
+          { role: 'user', content: 'hello' },
+          { role: 'assistant', content: 'hi there' },
+          { role: 'user', content: 'what do you think about Alice Example?' },
+        ],
+      });
+      expect(res.systemPromptAddition).toContain('people/alice-example');
     });
-    // The current message names Alice Example; prior context does NOT. Must fire.
-    const res = await ce.assemble({
-      sessionId: 's4',
-      messages: [
-        { role: 'user', content: 'hello' },
-        { role: 'assistant', content: 'hi there' },
-        { role: 'user', content: 'what do you think about Alice Example?' },
-      ],
-    });
-    expect(res.systemPromptAddition).toContain('people/alice-example');
   });
 });
