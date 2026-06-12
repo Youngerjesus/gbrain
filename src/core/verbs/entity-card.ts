@@ -103,7 +103,11 @@ export async function buildEntityCard(
 
   const norm = normalizeAlias(trimmed);
   const titleLc = trimmed.toLowerCase();
+  // Two exact-slug candidates: the slugified form for free-text names AND the
+  // raw input — a caller passing an already-namespaced slug
+  // ("people/alice-example") must hit exactly (slugify flattens the slash).
   const slug = slugify(trimmed);
+  const exactSlugs = [...new Set([slug, trimmed].filter(Boolean))];
 
   // Candidate slugs with their best arm rank.
   const rankBySlug = new Map<string, number>();
@@ -133,9 +137,9 @@ export async function buildEntityCard(
         WHERE deleted_at IS NULL
           AND source_id = $1
           AND ( lower(title) = $2
-             OR slug = $3
+             OR slug = ANY($3::text[])
              OR slug LIKE $4 )`,
-      [sourceId, titleLc, slug || trimmed, `%/${slug || trimmed}`],
+      [sourceId, titleLc, exactSlugs, `%/${slug || trimmed}`],
     );
   } catch {
     rows = [];
@@ -143,7 +147,7 @@ export async function buildEntityCard(
   const rowBySlug = new Map<string, CardPageRow>();
   for (const r of rows) {
     rowBySlug.set(r.slug, r);
-    const isExact = (r.title ?? '').toLowerCase() === titleLc || r.slug === slug;
+    const isExact = (r.title ?? '').toLowerCase() === titleLc || exactSlugs.includes(r.slug);
     consider(r.slug, isExact ? ARM_EXACT : ARM_SUFFIX);
   }
 

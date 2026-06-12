@@ -44,7 +44,7 @@ for (const op of operations) {
 }
 
 // CLI-only commands that bypass the operation layer
-const CLI_ONLY = new Set(['init', 'reinit-pglite', 'upgrade', 'post-upgrade', 'check-update', 'integrations', 'publish', 'check-backlinks', 'lint', 'report', 'import', 'export', 'files', 'embed', 'serve', 'call', 'config', 'doctor', 'migrate', 'eval', 'sync', 'extract', 'extract-conversation-facts', 'enrich', 'features', 'autopilot', 'graph-query', 'jobs', 'agent', 'apply-migrations', 'skillpack-check', 'skillpack', 'resolvers', 'integrity', 'repair-jsonb', 'orphans', 'sources', 'mounts', 'dream', 'check-resolvable', 'routing-eval', 'skillify', 'smoke-test', 'providers', 'storage', 'repos', 'code-def', 'code-refs', 'reindex', 'reindex-code', 'reindex-frontmatter', 'code-callers', 'code-callees', 'frontmatter', 'auth', 'friction', 'claw-test', 'book-mirror', 'takes', 'think', 'salience', 'anomalies', 'transcripts', 'models', 'remote', 'recall', 'forget', 'edges-backfill', 'cache', 'ze-switch', 'founder', 'brainstorm', 'lsd', 'schema', 'capture', 'onboard', 'conversation-parser', 'status', 'connect', 'skillopt', 'quarantine', 'self-upgrade']);
+const CLI_ONLY = new Set(['init', 'reinit-pglite', 'upgrade', 'post-upgrade', 'check-update', 'integrations', 'publish', 'check-backlinks', 'lint', 'report', 'import', 'export', 'files', 'embed', 'serve', 'call', 'config', 'doctor', 'migrate', 'eval', 'sync', 'extract', 'extract-conversation-facts', 'enrich', 'features', 'autopilot', 'graph-query', 'jobs', 'agent', 'apply-migrations', 'skillpack-check', 'skillpack', 'resolvers', 'integrity', 'repair-jsonb', 'orphans', 'sources', 'mounts', 'dream', 'check-resolvable', 'routing-eval', 'skillify', 'smoke-test', 'providers', 'storage', 'repos', 'code-def', 'code-refs', 'reindex', 'reindex-code', 'reindex-frontmatter', 'code-callers', 'code-callees', 'frontmatter', 'auth', 'friction', 'claw-test', 'book-mirror', 'takes', 'think', 'salience', 'anomalies', 'transcripts', 'models', 'remote', 'recall', 'forget', 'edges-backfill', 'cache', 'ze-switch', 'founder', 'brainstorm', 'lsd', 'schema', 'capture', 'onboard', 'conversation-parser', 'status', 'connect', 'skillopt', 'quarantine', 'self-upgrade', 'protocol']);
 // CLI-only commands whose handlers print their own --help text. These are
 // excluded from the generic short-circuit so detailed per-command and
 // per-subcommand usage stays reachable.
@@ -92,6 +92,9 @@ const CLI_ONLY_SELF_HELP = new Set([
   // `gbrain connect --help` prints its own usage (flags + examples) from
   // runConnect; route around the generic one-line short-circuit.
   'connect',
+  // MEMORY_VERBS v1 (Cathedral 1): protocol ships its own detailed HELP
+  // (subcommands, conformance targets, the cost-gated --synthesize flag).
+  'protocol',
 ]);
 
 // v114 (#1941): alias -> operation lookup, kept separate from `cliOps` so
@@ -1042,6 +1045,14 @@ async function handleCliOnly(command: string, args: string[]) {
   if (command === 'schema') {
     const { runSchema } = await import('./commands/schema.ts');
     await runSchema(args);
+    return;
+  }
+  // MEMORY_VERBS v1 (Cathedral 1): protocol introspection + conformance +
+  // local usage stats. No pre-bound engine — conformance spawns its own
+  // server; stats reads the local JSONL sidecar.
+  if (command === 'protocol') {
+    const { runProtocol } = await import('./commands/protocol.ts');
+    await runProtocol(args);
     return;
   }
   if (command === 'init') {
@@ -2288,9 +2299,13 @@ ADMIN
   features [--json] [--auto-fix]     Scan usage + recommend unused features
   autopilot [--repo] [--interval N]  Self-maintaining brain daemon
   config [show|get|set] <key> [val]  Brain config
+  protocol [conformance|stats]       MEMORY_VERBS v1: schemas, conformance
+                                     certification, local usage stats + TTHW
   storage status [--repo <path>]     Storage tier status and health
         [--json]                     (git-tracked vs supabase-only)
   serve                              MCP server (stdio)
+    --surface verbs|full             Tool surface: the 5 memory verbs only, or
+                                     every op (default full; verbs = quickstart)
   serve --http [--port N]            HTTP MCP server with OAuth 2.1
     --token-ttl N                    Access token TTL in seconds (default: 3600)
     --enable-dcr                     Enable Dynamic Client Registration
