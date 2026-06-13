@@ -1,6 +1,6 @@
 # TODOS
 
-## BrainBench follow-ups (filed v0.43.0.0, Cathedral 2)
+## BrainBench follow-ups (filed v0.44.0.0, Cathedral 2)
 
 Deferred from the BrainBench wave (eng-reviewed; plan + GSTACK REVIEW REPORT at
 `~/.claude/plans/system-instruction-you-are-working-bright-firefly.md`).

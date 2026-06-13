@@ -2,7 +2,7 @@
 
 All notable changes to GBrain will be documented in this file.
 
-## [0.43.0.0] - 2026-06-12
+## [0.44.0.0] - 2026-06-12
 
 **BrainBench: agent memory now has a scorecard.** `gbrain eval brainbench` is a public, reproducible, cross-harness conformance suite for the four ways agent memory fails — and from this release forward, every memory PR must hold or move its numbers against a committed baseline that CI compares against master's own copy.
 
@@ -15,7 +15,7 @@ Four suites, scored per harness seam:
 
 Plus two cross-cutting measures: `source_isolation_violations` (gates at zero, every run — cross-source leakage is the data-leak invariant) and `avg_injected_tokens` (the intrusion budget, reported per harness).
 
-Every scoreboard row carries a `seam` label: the `openclaw` row exercises the shipped context-engine pipeline byte-for-byte (`production`); the `claude-code` and `codex` rows grade the same gbrain primitives through those harnesses' injection-shape contracts (`contract`) — the exported wire types are the contracts future integrations implement, and the rows flip to `production` with continuous numbers when they land. At v0.43.0.0 the production seam reads: know-to-ask failure 0.15 (the documented v1 reflex limits, now measured), push recall 0.81 at precision 1.0, write-back fidelity 1.0, continuity 1.0, zero isolation violations.
+Every scoreboard row carries a `seam` label: the `openclaw` row exercises the shipped context-engine pipeline byte-for-byte (`production`); the `claude-code` and `codex` rows grade the same gbrain primitives through those harnesses' injection-shape contracts (`contract`) — the exported wire types are the contracts future integrations implement, and the rows flip to `production` with continuous numbers when they land. At v0.44.0.0 the production seam reads: know-to-ask failure 0.15 (the documented v1 reflex limits, now measured), push recall 0.81 at precision 1.0, write-back fidelity 1.0, continuity 1.0, zero isolation violations.
 
 ### Added
 
@@ -37,7 +37,7 @@ Every scoreboard row carries a `seam` label: the `openclaw` row exercises the sh
 
 - CLI exit codes for the new command route through the shared write-fence + aliveness-grace exit seam, so PGLite's WASM exit-code stomping and Bun's exit-time stdout discard can't corrupt the CI contract.
 
-To take advantage of v0.43.0.0: run `gbrain eval brainbench` — no setup, no keys, no brain required. If it ever reports something broken after an upgrade, `bun evals/brainbench/generator/gen.ts` rebuilds the corpus byte-identically and `gbrain eval brainbench --update-baseline` re-derives the baseline from an actual run; both are safe to re-run any time.
+To take advantage of v0.44.0.0: run `gbrain eval brainbench` — no setup, no keys, no brain required. If it ever reports something broken after an upgrade, `bun evals/brainbench/generator/gen.ts` rebuilds the corpus byte-identically and `gbrain eval brainbench --update-baseline` re-derives the baseline from an actual run; both are safe to re-run any time.
 
 ## [0.42.42.0] - 2026-06-12
 
