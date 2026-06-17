@@ -3394,12 +3394,45 @@ export async function checkSyncFreshness(
     let hasWarnings = false;
     let hasFailures = false;
 
+    // BUG 4 (v0.42.x): a source with a LIVE, non-expired per-source sync lock is
+    // actively syncing RIGHT NOW — it must not read as stale or never-synced.
+    // The live lock is the only honest "in progress" signal. Checkpoint banking
+    // is NOT usable: a blocked sync banks the good files then writes no anchor
+    // (test/sync-resumable-import.serial.test.ts), so banking can't tell
+    // in-progress from wedged. A blocked/failed sync's process has exited (no
+    // lock row) and a wedged holder stops refreshing (TTL lapses), so either
+    // correctly falls through to the stale path and is NEVER masked. Same
+    // dynamic import as the stale_locks check; any throw (stub engine in unit
+    // tests, pre-lock-table brain) is swallowed to false, so this can only ADD
+    // an in-progress verdict, never suppress a real stale one.
+    let isActivelySyncing: (sourceId: string) => Promise<boolean> = async () => false;
+    try {
+      const { inspectLock, syncLockId } = await import('../core/db-lock.ts');
+      isActivelySyncing = async (sourceId: string): Promise<boolean> => {
+        try {
+          const snap = await inspectLock(engine, syncLockId(sourceId));
+          return !!snap && !snap.ttl_expired;
+        } catch {
+          return false;
+        }
+      };
+    } catch {
+      /* db-lock unavailable — skip in-progress detection, staleness stands. */
+    }
+
     for (const source of sources) {
       // Embed source.id in user-visible messages so `gbrain sync --source <id>`
       // matches what the user copy-pastes. Show display name in parens when set.
       const display = source.name && source.name !== source.id
         ? `'${source.id}' (${source.name})`
         : `'${source.id}'`;
+
+      // BUG 4: actively syncing (live lock) → healthy, count as synced_recently
+      // and skip the staleness checks. Keeps the 3-bucket invariant intact.
+      if (await isActivelySyncing(source.id)) {
+        synced_recently_count++;
+        continue;
+      }
 
       if (!source.last_sync_at) {
         issues.push(`Source ${display} has never been synced`);
