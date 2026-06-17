@@ -108,8 +108,9 @@ function defaultSleep(ms: number, signal?: AbortSignal): Promise<void> {
       cleanup();
       resolve();
     }, ms);
-    // Don't keep the event loop alive purely for a pacing sleep.
-    (timer as { unref?: () => void }).unref?.();
+    // NOTE: do NOT unref() this timer. The bulk loop is awaiting it, so if it
+    // were unref'd and no other referenced handle existed, the process could
+    // exit mid-sleep and truncate the backfill (Codex P1).
     const onAbort = () => {
       cleanup();
       reject(new AbortError(abortReason(signal)));

@@ -81,13 +81,14 @@ async function resolveBackfillPacer(
     const jobPace = (jobData.pace && typeof jobData.pace === 'object'
       ? jobData.pace
       : {}) as { perCallMode?: string; perCall?: Record<string, number | boolean> };
+    // Codex P2: serialized job pace sits at the CONFIG tier (job choice beats
+    // standing config, but env beats both) so GBRAIN_PACE_* on the worker is a
+    // real incident escape hatch for an already-queued job.
     const knobs = resolvePaceMode({
-      mode: cfg.mode,
-      configOverrides: cfg.configOverrides,
+      mode: jobPace.perCallMode ?? cfg.mode,
+      configOverrides: { ...cfg.configOverrides, ...(jobPace.perCall ?? {}) },
       envMode,
       envOverrides,
-      perCallMode: jobPace.perCallMode,
-      perCall: jobPace.perCall,
     });
     if (!knobs.enabled) return { pacer: createNoopPacer() };
     return { pacer: createDbPacer({ bundle: knobs }), concurrency: knobs.maxConcurrency };

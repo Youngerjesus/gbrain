@@ -92,6 +92,13 @@ export interface EmbedOpts {
     perCall?: PaceKeyOverrides;
   };
   /**
+   * When the pace overrides were SERIALIZED from a background-job payload (not
+   * typed at an interactive CLI), resolve them at the config tier so
+   * `GBRAIN_PACE_*` on the worker still overrides at execution (Codex P2). Set
+   * by the `embed` job handler; unset for interactive CLI runs.
+   */
+  paceFromBackground?: boolean;
+  /**
    * E-2 (paced-backfill): single-flight the stale run by taking the SAME
    * per-source lock the `embed-backfill` minion handler uses, so a hand-run CLI
    * backfill and a queued job can't grind the same source at once (closing the
@@ -308,13 +315,21 @@ export async function runEmbedCore(engine: BrainEngine, opts: EmbedOpts): Promis
       try {
         const cfg = await loadPaceModeConfig(engine);
         const { envMode, envOverrides } = readPaceEnv();
+        // Codex P2: an interactive CLI flag (--pace) is the most immediate
+        // intent and sits at the per-call tier (beats env). But a flag
+        // SERIALIZED into a background job payload must sit at the CONFIG tier
+        // so GBRAIN_PACE_* on the worker can still override it at execution
+        // (incident escape hatch). paceFromBackground distinguishes the two.
+        const fromBg = !!opts.paceFromBackground;
         const knobs = resolvePaceMode({
-          mode: cfg.mode,
-          configOverrides: cfg.configOverrides,
+          mode: fromBg ? (opts.pace?.perCallMode ?? cfg.mode) : cfg.mode,
+          configOverrides: fromBg
+            ? { ...cfg.configOverrides, ...(opts.pace?.perCall ?? {}) }
+            : cfg.configOverrides,
           envMode,
           envOverrides,
-          perCallMode: opts.pace?.perCallMode,
-          perCall: opts.pace?.perCall,
+          perCallMode: fromBg ? undefined : opts.pace?.perCallMode,
+          perCall: fromBg ? undefined : opts.pace?.perCall,
         });
         if (knobs.enabled) {
           pacer = createDbPacer({ bundle: knobs });
@@ -393,6 +408,7 @@ export function parsePaceArgs(
     } else if (a === '--pace-max-concurrency') {
       const n = parseInt(args[i + 1] ?? '', 10);
       if (Number.isFinite(n) && n >= 1) (perCall ??= {}).maxConcurrency = n;
+      i++; // consume the value token so positional parsing can't read it as a slug (Codex P2)
     }
   }
   if (perCallMode === undefined && perCall === undefined) return undefined;
@@ -659,9 +675,12 @@ async function embedAll(
   // avoids overwhelming postgres connection pools. Users can tune via
   // GBRAIN_EMBED_CONCURRENCY env var based on their tier/infra.
   // Paced runs lower this to the resolved cap (the real lever vs pooler-slot
-  // starvation); unpaced keeps the env/default 20.
+  // starvation); unpaced keeps the env/default 20. Codex P2: only ever LOWER —
+  // never raise above an operator's existing env cap.
+  const BASE_CONCURRENCY = parseInt(process.env.GBRAIN_EMBED_CONCURRENCY || '20', 10);
   const CONCURRENCY = staleOpts?.paceMaxConcurrency
-    ?? parseInt(process.env.GBRAIN_EMBED_CONCURRENCY || '20', 10);
+    ? Math.min(BASE_CONCURRENCY, staleOpts.paceMaxConcurrency)
+    : BASE_CONCURRENCY;
 
   async function embedOnePage(page: typeof pages[number]) {
     // #1737: bail before doing any work for this page if the run was aborted.
@@ -834,9 +853,12 @@ async function embedAllStale(
   // v0.41.18.0 (A13): --batch-size N CLI flag overrides hardcoded 2000 default.
   const PAGE_SIZE = staleOpts?.batchSize ?? 2000;
   // Paced runs lower concurrency to the resolved cap (E-1: worker count IS the
-  // lever on this single pool, no separate permit). Unpaced keeps env/default.
+  // lever on this single pool, no separate permit). Codex P2: pacing only ever
+  // LOWERS concurrency — never raise above an operator's existing env cap.
+  const BASE_CONCURRENCY = parseInt(process.env.GBRAIN_EMBED_CONCURRENCY || '20', 10);
   const CONCURRENCY = staleOpts?.paceMaxConcurrency
-    ?? parseInt(process.env.GBRAIN_EMBED_CONCURRENCY || '20', 10);
+    ? Math.min(BASE_CONCURRENCY, staleOpts.paceMaxConcurrency)
+    : BASE_CONCURRENCY;
   const pacer = staleOpts?.pacer ?? createNoopPacer();
 
   // D3 + D3a + D8: wall-clock budget. 30 min default; env override.
@@ -1022,10 +1044,13 @@ async function embedAllStale(
         // pagination starts, but directionally correct).
         onProgress?.(totalProcessedPages, Math.ceil(staleCount / PAGE_SIZE) * keys.length, result.embedded);
         // Cooperative DB-contention pace between keys (no-op when unpaced).
-        // pace() throws AbortError on cancel; the pool stops claiming on the
-        // shared effectiveSignal, so swallow it here.
+        // E-4 (Codex P1): pace() is subject to the EXTERNAL abort only, NOT the
+        // wall-clock budget — a contended DB's sleep must not be cut by the
+        // budget timer before its time is credited. Re-arm the budget right
+        // after each sleep so accrued sleep never eats into work time.
         try {
-          await pacer.pace(effectiveSignal);
+          await pacer.pace(externalSignal);
+          rearmBudgetForPacing();
         } catch (e) {
           if (!(e instanceof AbortError)) throw e;
         }

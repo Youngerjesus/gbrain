@@ -1404,7 +1404,12 @@ export async function registerBuiltinHandlers(
       // only; runEmbedCore re-resolves env > config > bundle at execution so
       // GBRAIN_PACE_* still wins during an incident.
       ...(job.data.pace && typeof job.data.pace === 'object'
-        ? { pace: job.data.pace as { perCallMode?: string; perCall?: PaceKeyOverrides } }
+        ? {
+            pace: job.data.pace as { perCallMode?: string; perCall?: PaceKeyOverrides },
+            // Serialized from the queued payload → config tier so GBRAIN_PACE_*
+            // on the worker still wins at execution (Codex P2 escape hatch).
+            paceFromBackground: true,
+          }
         : {}),
       onProgress: (done, total, embedded) => {
         // Fire-and-forget: progress updates are best-effort and must not
