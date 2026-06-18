@@ -431,7 +431,15 @@ async function buildThinClientReport(
     try {
       const payload = await withSectionDeadline(
         (async () => {
-          const raw = await callRemoteTool(cfg!, 'get_status_snapshot', {});
+          // #1984: pass the budget as the request timeout so the LOSING side of
+          // the race actually cancels the in-flight MCP call instead of leaking
+          // it (the section deadline only abandons the promise locally).
+          const raw = await callRemoteTool(
+            cfg!,
+            'get_status_snapshot',
+            {},
+            opts.deadlineMs && opts.deadlineMs > 0 ? { timeoutMs: opts.deadlineMs } : {},
+          );
           return unpackToolResult<{
             schema_version: number;
             version?: string;
@@ -442,7 +450,14 @@ async function buildThinClientReport(
         opts.deadlineMs && opts.deadlineMs > 0 ? opts.deadlineMs : undefined,
         () => {
           report.partial = true;
-          report.stale_sections = [...(report.stale_sections ?? []), 'sync', 'cycle'];
+          // Only name the sections the caller actually requested; the remote
+          // fetch backs both sync+cycle, but `--section sync` must not report
+          // `cycle` (a section it excluded) as stale. Matches the local path.
+          const elided: Section[] = [
+            ...(want('sync') ? (['sync'] as Section[]) : []),
+            ...(want('cycle') ? (['cycle'] as Section[]) : []),
+          ];
+          report.stale_sections = [...(report.stale_sections ?? []), ...elided];
           warnings.push('remote snapshot exceeded the --deadline-ms budget (returned stale)');
         },
       );
@@ -618,7 +633,14 @@ export function parseDeadlineFlag(args: string[]): number | undefined | 'usage_e
   let raw: string | undefined;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === '--deadline-ms' && i + 1 < args.length) { raw = args[i + 1]; break; }
+    if (a === '--deadline-ms') {
+      // #1984: a bare `--deadline-ms` with no following value is a usage error,
+      // not a silent fall-through to no-budget / --fast (which would mask a
+      // typo'd budget and let a poller hang it never meant to).
+      if (i + 1 >= args.length) return 'usage_error';
+      raw = args[i + 1];
+      break;
+    }
     if (a.startsWith('--deadline-ms=')) { raw = a.slice('--deadline-ms='.length); break; }
   }
   if (raw == null) {

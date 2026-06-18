@@ -46,6 +46,11 @@ describe('parseDeadlineFlag (#1984)', () => {
     expect(parseDeadlineFlag(['--deadline-ms', '-5'])).toBe('usage_error');
     expect(parseDeadlineFlag(['--deadline-ms', 'soon'])).toBe('usage_error');
   });
+
+  test('bare --deadline-ms with no value → usage_error (not a silent no-budget fallthrough)', () => {
+    expect(parseDeadlineFlag(['--deadline-ms'])).toBe('usage_error');
+    expect(parseDeadlineFlag(['--fast', '--deadline-ms'])).toBe('usage_error');
+  });
 });
 
 describe('withSectionDeadline (#1984)', () => {
