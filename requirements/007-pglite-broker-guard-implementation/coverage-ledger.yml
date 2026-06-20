@@ -1,0 +1,188 @@
+requirement_id: 007-pglite-broker-guard-implementation
+ledger_version: 1
+ledger_required: true
+status: planned
+last_updated_by_gate: requirement-clarifier
+last_updated_at: "2026-06-20T15:25:41Z"
+closure_policy:
+  allowed_closed_statuses:
+    - verified
+    - not_required_with_reason
+    - deferred_with_user_acceptance
+  blocking_statuses:
+    - planned
+    - missing
+    - blocked
+    - stale_needs_recheck
+  evidence_rule: typed_evidence_required
+coverage_rows:
+  - row_id: inventory.contract_consumed
+    required: true
+    obligation_type: artifact_contract
+    description: Requirement 007 consumes the accepted requirement 006 inventory without row loss, stale fingerprints, or silent class changes.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC1
+      - requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml
+    data_condition: inventory validator passes and implementation mapping covers all accepted rows or records approved requirement impact
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: planned
+    evidence_refs:
+      - type: schema_validation
+        ref: "bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: implementation.broker_success_read
+    required: true
+    obligation_type: regression_fixture
+    description: All broker_success_read rows have owner-routed read/diagnostic behavior under a live local owner, with row-id keyed representative manifest coverage.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC2
+    data_condition: representative CLI call, CLI read, stdio MCP, HTTP MCP, and existing query/search/think controls prove owner route decisions, owner IPC receipt, no direct PGLite open, and no raw timeout
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: planned
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: "row-id keyed broker-success representative manifest and targeted tests"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: implementation.serialized_owner_mutation
+    required: true
+    obligation_type: regression_fixture
+    description: Serialized owner mutation rows execute through owner-owned serialization for allowed callers, with no guard-only downgrade.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC3
+    data_condition: mutating local CLI and allowed MCP operation representatives prove owner-owned dispatch, no second-process direct open, no guard-only downgrade, completion_unknown re-entry behavior, and no hidden retry/resume after accepted timeout
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: planned
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: "row-id keyed serialized-mutation representative manifest and targeted tests"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: implementation.typed_guard_fail_fast
+    required: true
+    obligation_type: regression_fixture
+    description: Typed guard fail-fast rows return bounded typed errors before direct PGLite open under live-owner conditions.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC4
+    data_condition: maintenance, migration, schema-exclusive, local-only remote, stale owner, and unavailable owner representatives produce stable typed errors without raw timeout
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: planned
+    evidence_refs:
+      - type: expected_error_assertions
+        ref: "targeted typed-guard tests"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: trust_boundary.remote_and_filesystem
+    required: true
+    obligation_type: workflow_policy
+    description: Remote MCP authority, OperationContext.remote, local-only checks, and filesystem confinement remain at least as strict as before.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC5
+    data_condition: remote local-only and filesystem-sensitive representatives fail closed at proxy and owner-side bypass layers while local allowed callers still use owner behavior; local filesystem-sensitive owner dispatch proves owner-side canonicalization/confinement across relative, symlink/out-of-scope, and deleted-before-dispatch payloads
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: planned
+    evidence_refs:
+      - type: structured_contract_fixture
+        ref: "proxy-side and owner-side trust-boundary implementation tests"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: owner_state.deterministic_failures
+    required: true
+    obligation_type: verification_contract
+    description: Healthy owner, no owner, stale/dead recoverable lock, live missing socket, live unreachable socket, corrupt/unknown lock, duplicate owner startup, owner timeout, owner unreachable, owner crash/restart-after-accept, wrong owner identity, and IPC version skew map to deterministic outcomes.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC6
+    data_condition: owner-state matrix has distinct route evidence, mandatory request/status correlation for operator-actionable outcomes, no raw PGLite lock/connect timeout text, no live lock deletion, and safe direct-open only for eligible no-owner/dead-stale states
+    required_evidence:
+      - targeted_validator_command
+    status: planned
+    evidence_refs:
+      - type: targeted_validator_command
+        ref: "owner-state, duplicate-owner, completion-unknown, wrong-owner, and protocol-skew tests"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: compatibility.public_surface
+    required: true
+    obligation_type: workflow_policy
+    description: Public CLI commands, MCP tools, argument shapes, JSON envelopes, and exit-code semantics remain compatible except for improved typed errors.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC7
+    data_condition: compatibility-sensitive tests assert existing command/tool names and response envelopes, including HTTP MCP auth/source/logging/envelope preservation and partial command/IPC response behavior
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: planned
+    evidence_refs:
+      - type: positive_negative_trigger_tests
+        ref: "CLI/MCP compatibility tests"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: gauntlet.expected_red_replaced
+    required: true
+    obligation_type: regression_fixture
+    description: Requirement 006 expected-red rows are replaced with implemented owner behavior or typed guards.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC8
+      - requirements/006-pglite-access-path-inventory/evidence.md
+    data_condition: previously raw-timeout row representatives no longer emit raw PGLite lock/connect timeout
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: planned
+    evidence_refs:
+      - type: expected_error_assertions
+        ref: "updated gauntlet or successor manifest"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: verification.class_complete_regression
+    required: true
+    obligation_type: verification_contract
+    description: Requirement 007 provides class-complete targeted regression coverage and leaves only full repeated matrix proof to requirement 008.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC9
+    data_condition: all three behavior classes, trust-boundary variants, and scenario-brake additions have row-id keyed targeted tests plus manifest evidence of representative coverage; requirement 008 remains final all-row matrix owner
+    required_evidence:
+      - targeted_validator_command
+    status: planned
+    evidence_refs:
+      - type: targeted_validator_command
+        ref: "requirement 007 targeted verification suite"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - row_id: handoff.requirement_008
+    required: true
+    obligation_type: artifact_contract
+    description: Closeout records implementation evidence, residual verification-only risks, and the handoff to requirement 008.
+    source_refs:
+      - requirements/007-pglite-broker-guard-implementation/requirements.md#AC10
+    data_condition: requirement 008 can run final repeated named matrix without rediscovering implementation scope
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: planned
+    evidence_refs:
+      - type: artifact_role_test
+        ref: "requirements/007-pglite-broker-guard-implementation/evidence.md"
+        recorded_in: requirements/007-pglite-broker-guard-implementation/evidence.md
+    recorded_in:
+      - requirements/007-pglite-broker-guard-implementation/evidence.md

@@ -1,0 +1,22 @@
+requirement_id: 007-pglite-broker-guard-implementation
+decision_version: 1
+ledger_required: true
+ledger_path: coverage-ledger.yml
+trigger_evaluation:
+  signals:
+    subtask_count: 10
+    module_count: 8
+    acceptance_criteria_count: 10
+    many_acceptance_criteria: true
+    multiple_workflow_skills: true
+    validator_and_fixture_foundation: true
+    bulk_data_migration: false
+    multi_state_ui: false
+    low_risk_mechanical_edits: false
+  rationale: Requirement 007 changes concurrency behavior across hundreds of inventoried CLI/MCP rows, multiple runtime modules, trust-boundary paths, typed errors, and gauntlet evidence.
+source_refs:
+  - requirements/007-pglite-broker-guard-implementation/requirements.md#Acceptance-Criteria
+  - requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml
+  - goal-requirements/002-pglite-all-access-concurrency/sequence.md
+decided_by_gate: requirement-clarifier
+decided_at: "2026-06-20T15:25:41Z"

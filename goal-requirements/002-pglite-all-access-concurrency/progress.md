@@ -3,9 +3,9 @@
 ## Current State
 
 - Current requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
-- Current gate: requirement-clarifier
-- Status: requirement 006 closeout completed and sequence item checked; broad verify had only unrelated baseline test-isolation failure
-- Next action: start requirement 007 clarification for broker/guard implementation.
+- Current gate: implementation-preflight
+- Status: requirement 007 secondary-plan completed; accepted primary and secondary plans are ready
+- Next action: complete isolated worktree preflight.
 
 ## Outcome Contract
 
@@ -135,3 +135,52 @@
 - Gate: closeout
 - Result: closeout completed; requirement 006 sequence checkbox marked complete. Context Sync not required because no durable repo-level policy, public CLI behavior, or runtime contract changed beyond requirement-local artifacts and validation scripts. No safe/useful touched-area green refactor candidate found.
 - Next: start requirement 007.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: requirement-clarifier
+- Result: requirement 007 draft accepted after post-draft reviewer returned `SHIP`; coverage ledger readiness/schema validation passed.
+- Next: run research.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: research
+- Result: completed with decisions for inventory-as-contract, generalized owner IPC, preflight direct-open guard, owner-side operation dispatch, serialized owner mutations, typed broker errors, trust-boundary enforcement, and requirement 008 handoff.
+- Next: run technical-design.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: technical-design
+- Result: completed with architecture artifact because local owner handoffs cross CLI, MCP, IPC, lock inspection, owner dispatch, and evidence validators.
+- Next: create draft plan and run plan reviews.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: plan-devex-review
+- Result: `GO WITH CHANGES`; draft plan updated with fast feedback loop, typed error examples, and docs/help/changelog impact check.
+- Next: run plan-eng-review.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: plan-eng-review
+- Result: `GO WITH CHANGES`; draft plan, technical design, architecture, and coverage ledger updated with scenario-brake requirement, row-id keyed representative manifest, owner-route proof, owner-side trust-boundary proof, HTTP MCP live-owner scope, additive IPC default, surface-id keyed command adapters, inventory successor-manifest rule, and observability obligations.
+- Next: run scenario-brake.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: scenario-brake
+- Result: `[SCENARIOS MISSING]`; draft plan, technical design, and coverage ledger updated with duplicate owner startup, separated owner-state matrix, serialized mutation `completion_unknown` re-entry, owner crash/restart after accept, command adapter partial/misleading success, filesystem payload drift, caller/owner IPC version skew, wrong-owner home/profile/source identity, mandatory request/status correlation, and inventory fingerprint coverage.
+- Next: run secondary-plan.
+
+### 2026-06-21 00:25 KST
+
+- Requirement: `requirements/007-pglite-broker-guard-implementation/requirements.md`
+- Gate: secondary-plan
+- Result: accepted primary plan and secondary guardrail handoff created under `plans/007-pglite-broker-guard-implementation/`.
+- Next: complete isolated worktree preflight.
