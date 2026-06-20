@@ -44,6 +44,18 @@ function writeLiveLock(dbPath: string, command = 'test owner'): void {
   }));
 }
 
+function writeDeadLock(dbPath: string, command = 'dead owner'): void {
+  const lockDir = join(dbPath, '.gbrain-lock');
+  mkdirSync(lockDir, { recursive: true });
+  const old = Date.now() - 120_000;
+  writeFileSync(join(lockDir, 'lock'), JSON.stringify({
+    pid: 99999999,
+    acquired_at: old,
+    refreshed_at: old,
+    command,
+  }));
+}
+
 function writeCorruptLock(dbPath: string): void {
   const lockDir = join(dbPath, '.gbrain-lock');
   mkdirSync(lockDir, { recursive: true });
@@ -171,6 +183,14 @@ describe('CLI PGLite operation broker routing', () => {
     expect(combined).not.toContain('queued');
     expect(combined).not.toContain('completed');
     expect(combined).not.toContain('successfully run');
+  }
+
+  function expectNoPrivateDiagnosticEcho(text: string): void {
+    expect(text).not.toContain('PRIVATE_QUERY_SENTINEL_DO_NOT_LOG');
+    expect(text).not.toContain('PRIVATE_PARAM_SENTINEL_DO_NOT_LOG');
+    expect(text).not.toContain('PRIVATE_CWD_SENTINEL_DO_NOT_LOG');
+    expect(text).not.toContain('PRIVATE_AUTH_SENTINEL_DO_NOT_LOG');
+    expect(text).not.toContain('PRIVATE_SOURCE_SENTINEL_DO_NOT_LOG');
   }
 
   test('CLI-owned broker dispatch preserves MCP invalid_params envelope', async () => {
@@ -342,6 +362,24 @@ describe('CLI PGLite operation broker routing', () => {
     }
   }, 30_000);
 
+  test('dead or stale PGLite lock recovers into normal direct-open CLI behavior', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeDeadLock(dbPath);
+
+      const result = await runCli(['query', 'stale-lock-direct-open'], home);
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('No results.');
+      expect(result.stderr).not.toContain('PGLite owner broker error');
+      expect(result.stderr).not.toContain('owner_unreachable');
+      expect(result.stderr).not.toContain('lock_safety_blocked');
+      expectNoRawPgliteLockFailure(result);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   test('CLI caller reports owner_unreachable when a live owner lock has no broker socket', async () => {
     const { home, dbPath } = makeHome();
     try {
@@ -378,11 +416,105 @@ describe('CLI PGLite operation broker routing', () => {
       expect(result.stderr).toContain('completion_unknown');
       expect(result.stderr).toContain('completion is unknown');
       expect(result.stdout).not.toContain('No results.');
+
+      const next = await runCli(['query', 'after-completion-unknown'], home);
+      expect(next.status).toBe(0);
+      expect(next.stdout).toContain('No results.');
+      expect(next.stderr).not.toContain('completion_unknown');
+      expectNoRawPgliteLockFailure(next);
     } finally {
       release?.();
       rmSync(home, { recursive: true, force: true });
     }
   });
+
+  test('interactive caller during owner startup election gets deterministic non-lock status', async () => {
+    const { home, dbPath } = makeHome();
+    const startup = tryAcquireOperationStartup(dbPath);
+    expect(startup).not.toBeNull();
+    try {
+      const result = await runCliBounded(['--timeout=300ms', 'query', 'startup-election-interactive'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('owner_unreachable');
+      expect(result.stderr).not.toContain('owner_starting');
+      expectNoRawPgliteLockFailure(result);
+    } finally {
+      releaseOperationStartup(startup);
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('broker failure diagnostics do not echo private query params source env or auth sentinels', async () => {
+    const { home, dbPath } = makeHome();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    try {
+      writeLiveLock(dbPath);
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async () => {
+        await gate;
+        return { ok: true, result: [] };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const timeout = await runCli(
+        ['--timeout=20ms', 'query', 'PRIVATE_QUERY_SENTINEL_DO_NOT_LOG'],
+        home,
+        process.cwd(),
+        {
+          GBRAIN_SOURCE: 'PRIVATE_SOURCE_SENTINEL_DO_NOT_LOG',
+          GBRAIN_FEDERATED_READ: 'default,PRIVATE_AUTH_SENTINEL_DO_NOT_LOG',
+        },
+      );
+      release();
+      expect(timeout.status).toBe(124);
+      expect(timeout.stderr).toContain('completion_unknown');
+      expectNoPrivateDiagnosticEcho(`${timeout.stdout}\n${timeout.stderr}`);
+    } finally {
+      release?.();
+      rmSync(home, { recursive: true, force: true });
+    }
+
+    const unreachable = makeHome();
+    try {
+      writeLiveLock(unreachable.dbPath);
+      const result = await runCli(
+        ['--timeout=300ms', 'query', 'PRIVATE_PARAM_SENTINEL_DO_NOT_LOG'],
+        unreachable.home,
+        process.cwd(),
+        { GBRAIN_SOURCE: 'PRIVATE_SOURCE_SENTINEL_DO_NOT_LOG' },
+      );
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('owner_unreachable');
+      expectNoPrivateDiagnosticEcho(`${result.stdout}\n${result.stderr}`);
+    } finally {
+      rmSync(unreachable.home, { recursive: true, force: true });
+    }
+
+    const corrupt = makeHome();
+    try {
+      writeCorruptLock(corrupt.dbPath);
+      const result = await runCli(['query', 'PRIVATE_QUERY_SENTINEL_DO_NOT_LOG'], corrupt.home);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('lock_safety_blocked');
+      expectNoPrivateDiagnosticEcho(`${result.stdout}\n${result.stderr}`);
+    } finally {
+      rmSync(corrupt.home, { recursive: true, force: true });
+    }
+
+    const maintenance = makeHome();
+    try {
+      writeLiveLock(maintenance.dbPath, 'PRIVATE_CWD_SENTINEL_DO_NOT_LOG');
+      const result = await runCliBounded(['sync', '--no-pull', '--no-embed', '--no-extract', '--yes', '--no-hard-deadline'], maintenance.home, 2000);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('maintenance_deferred');
+      expectNoPrivateDiagnosticEcho(`${result.stdout}\n${result.stderr}`);
+    } finally {
+      rmSync(maintenance.home, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test('five simultaneous mixed CLI and MCP callers share the live owner broker', async () => {
     const { home, dbPath } = makeHome();

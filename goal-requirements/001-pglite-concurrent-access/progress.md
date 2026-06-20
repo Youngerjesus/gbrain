@@ -2,10 +2,10 @@
 
 ## Current State
 
-- Current requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Current requirement: `requirements/005-pglite-concurrent-access-production-readiness/requirements.md`
 - Current gate: requirement-clarifier
-- Status: requirement_003_closed_requirement_004_pending
-- Next action: Create and accept requirement 004 for end-to-end concurrency, stale-owner recovery, diagnostics, and documentation coverage.
+- Status: requirement_004_closed_committed
+- Next action: Start requirement 005 production readiness.
 
 ## Outcome Contract
 
@@ -177,3 +177,52 @@
 - Gate: closeout
 - Result: Closeout completed with `[CLOSED_COMMITTED]`; sequence item 3 checked complete. Verification passed with 99 related tests and `tsc --noEmit`.
 - Next: Start `requirements/004-pglite-concurrency-verification/requirements.md` with requirement-clarifier.
+
+### 2026-06-20 21:55 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: requirement-clarifier-post-draft-review
+- Result: First reviewer findings were reconciled; reviewer rerun returned `reviewer_result_status: SHIP`; requirement 004 is accepted for research.
+- Next: Research real subprocess harness, recovery diagnostics coverage, and docs updates.
+
+### 2026-06-20 22:05 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: research
+- Result: Completed `requirements/004-pglite-concurrency-verification/research.md`; no blocking open questions. Research selected a new real-subprocess serial test plus docs alignment.
+- Next: Write technical design.
+
+### 2026-06-20 22:15 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: technical-design
+- Result: Completed `requirements/004-pglite-concurrency-verification/technical-design.md`; design covers real subprocess E2E owner/proxy test, diagnostic evidence matrix, and docs updates.
+- Next: Create draft plan and run plan reviews.
+
+### 2026-06-20 22:35 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: draft-plan / plan-devex-review / plan-eng-review / scenario-brake / secondary-plan
+- Result: Created and accepted `plans/004-pglite-concurrency-verification/plan.md` and `secondary_plan.md`. Reviews returned `GO WITH CHANGES` and `[SCENARIOS MISSING]`; findings were reconciled into plan/design with proxy `search`, positive owner/proxy proof, hermetic PGLite env, post-teardown re-entry, stale-lock direct-open, post-timeout queue, privacy diagnostics, README update, and status-ownership obligations.
+- Next: Implement in the task worktree.
+
+### 2026-06-20 23:25 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: implementation
+- Result: Added real subprocess PGLite concurrent access E2E, strengthened command-level recovery/diagnostic tests, and updated README/ENGINES/serve-sync docs. Verification passed: serial E2E 1 pass, CLI broker suite 27 pass, related suite 103 pass, and `tsc --noEmit`.
+- Next: Run conformance review and implementation-brake.
+
+### 2026-06-20 23:35 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: conformance-review / implementation-brake
+- Result: Conformance reviewer found AC1-AC7 covered and AC8 pending closeout matrix. `implementation-brake.md` accepted AC8 as a closeout-gate obligation and returned `[SHIP]`.
+- Next: Close out requirement 004 with required AC8 evidence matrix and commit.
+
+### 2026-06-20 23:45 KST
+
+- Requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
+- Gate: closeout
+- Result: Closeout created the AC8 evidence matrix and checked sequence item 4 complete. Local commit created in the task worktree.
+- Next: Start production readiness requirement 005.

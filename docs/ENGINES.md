@@ -170,17 +170,21 @@ free-text `search`, and `think` route over `~/.gbrain/brain.db/.gbrain-operation
 instead of trying to open PGLite directly. Requests are queued by the owner and
 interactive work (`query` / `search` / `think`) has priority over maintenance-class
 work in the broker contract. If no owner is present, CLI commands keep the old
-direct-open behavior.
+direct-open behavior. Maintenance commands (`sync`, `embed`, and `extract`) are
+not broker-executed; under a live owner they return `maintenance_deferred` and
+should be rerun after the owner exits.
 
 Verification recipe:
 
 ```bash
+bun test test/pglite-concurrent-access.serial.test.ts
 bun test test/pglite-lock.test.ts test/pglite-operation-ipc.test.ts test/cli-pglite-operation-broker.test.ts
 ```
 
-The CLI broker test starts a live owner socket and runs concurrent CLI and stdio
-MCP `query` / `search` / `think` callers, asserting that they are served through
-the broker and do not hit `Timed out waiting for PGLite lock`.
+The real subprocess concurrency test starts a stdio MCP owner and a second stdio
+MCP proxy, then runs mixed CLI and MCP `query` / `search` / `think` callers
+against a seeded PGLite brain. The broker tests cover the recovery/status matrix
+and assert callers do not hit `Timed out waiting for PGLite lock`.
 
 **When to use PGLite vs Postgres:**
 
@@ -238,7 +242,7 @@ Every method in `BrainEngine`. The full interface. No optional methods, no featu
 | Graph traversal | Recursive CTE | Recursive CTE | Same SQL |
 | Transactions | Full ACID | Full ACID | Both support this |
 | JSONB queries | GIN index | GIN index | Identical |
-| Concurrent access | Connection pooling | Single DB owner; local `query` / `search` / `think` callers queue through owner broker | Maintenance forwarding/yield behavior is tracked separately |
+| Concurrent access | Connection pooling | Single DB owner; local `query` / `search` / `think` callers queue through owner broker; `sync` / `embed` / `extract` defer under a live owner | Broker is local-only; no mandatory daemon when no owner exists |
 | Hosting | Supabase, self-hosted, Docker | Local file | |
 | Migration methods | runMigration, getChunksWithEmbeddings | Same | Added v0.7 |
 
