@@ -5,8 +5,11 @@ import net from 'net';
 export const OPERATION_IPC_UNAVAILABLE = Symbol.for('gbrain.operationIpc.unavailable');
 
 export type OperationIpcCaller = 'cli' | 'mcp-stdio';
-export type OperationIpcOperation = 'query' | 'search' | 'think';
+export type OperationIpcOperation = string;
 export type OperationIpcClass = 'interactive' | 'maintenance';
+export type OperationIpcTarget =
+  | { kind: 'operation'; name: string }
+  | { kind: 'cli_command'; surfaceId: string; command: string; args: string[]; profile?: string };
 export type OperationIpcStatus =
   | 'served'
   | 'owner_unreachable'
@@ -14,6 +17,7 @@ export type OperationIpcStatus =
   | 'broker_timeout'
   | 'completion_unknown'
   | 'stale_socket_recovered'
+  | 'local_only_remote_rejected'
   | 'invalid_request'
   | 'protocol_error'
   | 'handler_error';
@@ -39,6 +43,7 @@ export interface OperationIpcRequest {
   requestId: string;
   caller: OperationIpcCaller;
   operation: OperationIpcOperation;
+  target?: OperationIpcTarget;
   class: OperationIpcClass;
   priority: number;
   params: Record<string, unknown>;
@@ -100,7 +105,6 @@ const DEFAULT_BROKER_TIMEOUT_MS = 30_000;
 const DEFAULT_MAX_RESPONSE_BYTES = 1024 * 1024;
 const LIVE_SOCKET_PROBE_TIMEOUT_MS = 250;
 const PRIORITY_DRAIN_WINDOW_MS = 5;
-const VALID_OPERATIONS = new Set<OperationIpcOperation>(['query', 'search', 'think']);
 const VALID_CALLERS = new Set<OperationIpcCaller>(['cli', 'mcp-stdio']);
 const VALID_CLASSES = new Set<OperationIpcClass>(['interactive', 'maintenance']);
 const STARTUP_LOCK_DIR = '.gbrain-operation-starting';
@@ -434,7 +438,16 @@ function validateRequest(value: unknown): { ok: true; request: OperationIpcReque
   if (candidate.protocolVersion !== 1) return invalidRequest('Unsupported operation broker protocol version.');
   if (typeof candidate.requestId !== 'string' || candidate.requestId.length === 0) return invalidRequest('Missing operation broker request id.');
   if (!VALID_CALLERS.has(candidate.caller as OperationIpcCaller)) return invalidRequest('Unsupported operation broker caller.');
-  if (!VALID_OPERATIONS.has(candidate.operation as OperationIpcOperation)) return invalidRequest('Unsupported operation broker operation.');
+  if (typeof candidate.operation !== 'string' || candidate.operation.length === 0) return invalidRequest('Missing operation broker operation.');
+  if (candidate.operation === '__cli_command__') {
+    const target = candidate.target;
+    if (!target || typeof target !== 'object' || Array.isArray(target)) return invalidRequest('CLI command broker target is required.');
+    if ((target as OperationIpcTarget).kind !== 'cli_command') return invalidRequest('CLI command broker target kind is invalid.');
+    const commandTarget = target as Extract<OperationIpcTarget, { kind: 'cli_command' }>;
+    if (typeof commandTarget.surfaceId !== 'string' || commandTarget.surfaceId.length === 0) return invalidRequest('CLI command broker target surface id is required.');
+    if (typeof commandTarget.command !== 'string' || commandTarget.command.length === 0) return invalidRequest('CLI command broker target command is required.');
+    if (!Array.isArray(commandTarget.args) || !commandTarget.args.every((arg) => typeof arg === 'string')) return invalidRequest('CLI command broker target args must be strings.');
+  }
   if (!VALID_CLASSES.has(candidate.class as OperationIpcClass)) return invalidRequest('Unsupported operation broker request class.');
   if (!Number.isFinite(candidate.priority)) return invalidRequest('Operation broker priority must be numeric.');
   if (!candidate.params || typeof candidate.params !== 'object' || Array.isArray(candidate.params)) return invalidRequest('Operation broker params must be an object.');

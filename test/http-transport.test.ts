@@ -212,6 +212,9 @@ describe('http-transport: auth', () => {
     const body = await r.json();
     expect(body.result.tools).toBeArray();
     expect(body.result.tools.length).toBeGreaterThan(0);
+    const names = body.result.tools.map((tool: any) => tool.name);
+    expect(names).toContain('list_pages');
+    expect(names).not.toContain('file_upload');
     expect(body.jsonrpc).toBe('2.0');
   });
 
@@ -317,6 +320,21 @@ describe('http-transport: tools/call dispatch', () => {
     expect(body.result.isError).toBe(true);
     const text = body.result.content[0].text;
     expect(text).toContain('invalid_params');
+  });
+
+  test('8b. tools/call rejects localOnly ops before remote handler execution', async () => {
+    const r = await fetch(`${srv.url}/mcp`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${TOK}`, 'Content-Type': 'application/json' },
+      body: rpc('tools/call', { name: 'file_upload', arguments: { path: '/tmp/private.txt', dry_run: true } }),
+    });
+    expect(r.status).toBe(200);
+    const body = await r.json();
+    expect(body.result.isError).toBe(true);
+    const parsed = JSON.parse(body.result.content[0].text);
+    expect(parsed.error).toBe('local_only_remote_rejected');
+    expect(parsed.message).toContain('localOnly');
+    expect(JSON.stringify(parsed)).not.toContain('/tmp/private.txt');
   });
 
   test('9. /mcp response has Content-Type: application/json (not SSE)', async () => {

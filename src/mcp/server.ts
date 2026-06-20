@@ -25,6 +25,7 @@ import {
 import { dispatchBrokeredOperation } from './pglite-operation-dispatch.ts';
 
 export const GBRAIN_FEDERATED_READ_ENV = 'GBRAIN_FEDERATED_READ';
+const remoteMcpOperations = operations.filter((op) => !op.localOnly);
 
 export interface StdioSourceScope {
   sourceId: string;
@@ -85,7 +86,7 @@ export async function startMcpServer(engine: BrainEngine) {
   // the subagent tool registry (v0.15+) can call the same mapper against a
   // filtered OPERATIONS subset instead of duplicating this shape.
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: buildToolDefs(operations),
+    tools: buildToolDefs(remoteMcpOperations),
   }));
 
   // Dispatch tool calls via shared dispatch.ts (parity with HTTP transport).
@@ -214,7 +215,8 @@ export async function startMcpOperationProxyServer(socketPath: string): Promise<
     { name: 'gbrain', version: VERSION },
     { capabilities: { tools: {} } },
   );
-  const brokerOps = operations.filter((op) => ['query', 'search', 'think'].includes(op.name));
+  const brokerOperationNames = new Set(operations.filter((op) => !op.localOnly).map((op) => op.name));
+  const brokerOps = operations.filter((op) => brokerOperationNames.has(op.name));
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: buildToolDefs(brokerOps),
@@ -222,7 +224,7 @@ export async function startMcpOperationProxyServer(socketPath: string): Promise<
 
   server.setRequestHandler(CallToolRequestSchema, async (request: any): Promise<any> => {
     const { name, arguments: params } = request.params;
-    if (!['query', 'search', 'think'].includes(name)) {
+    if (!brokerOperationNames.has(name)) {
       return {
         content: [{ type: 'text', text: JSON.stringify({ error: 'unknown_tool', message: `Unknown tool: ${name}` }, null, 2) }],
         isError: true,

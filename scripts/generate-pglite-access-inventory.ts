@@ -56,6 +56,19 @@ const LIVE_RUNNABLE_ROWS = new Set([
   'call:list_pages:local-cli',
 ]);
 
+const CLI_LIVE_OWNER_TYPED_GUARD_PREFIXES = [
+  'cli:autopilot',
+  'cli:claw-test',
+  'cli:frontmatter',
+  'cli:init',
+  'cli:integrity',
+  'cli:mounts',
+  'cli:reinit-pglite',
+  'cli:repair-jsonb',
+  'cli:schema',
+  'cli:watch',
+];
+
 function scopeFor(id: string, candidate?: { scope?: string }): string {
   if (candidate?.scope) return candidate.scope;
   if (/query|search|list|get|find|stats|health|whoami|refs|def|callers|callees|trajectory|anomalies|salience|recall|skills|schema_(stats|lint|graph|explain|review)|sources_list|status|versions|chunks|links|tags|timeline|takes/.test(id)) {
@@ -75,6 +88,7 @@ function behaviorFor(id: string, candidate?: { scope?: string; mutating?: boolea
     id.startsWith('cli:extract') ||
     id.startsWith('cli:apply-migrations') ||
     id.startsWith('cli:upgrade') ||
+    CLI_LIVE_OWNER_TYPED_GUARD_PREFIXES.some((prefix) => id.startsWith(prefix)) ||
     id.startsWith('serve:duplicate')
   ) {
     return 'typed_guard_fail_fast';

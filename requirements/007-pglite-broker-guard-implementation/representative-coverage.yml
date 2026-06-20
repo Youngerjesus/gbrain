@@ -1,0 +1,119 @@
+requirement_id: 007-pglite-broker-guard-implementation
+status: in_progress
+inventory_ref: requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml
+purpose: >
+  Row-id keyed representative implementation evidence for requirement 007.
+  This is targeted implementation coverage only; requirement 008 owns the full
+  repeated all-row named matrix.
+representatives:
+  - row_id: call:list_pages:local-cli
+    behavior_class: broker_success_read
+    surface: gbrain-call
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::gbrain call list_pages proxies to the live owner without PGLite lock timeout
+  - row_id: cli:list:operation-cli
+    behavior_class: broker_success_read
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::direct operation CLI commands proxy to the live owner without PGLite lock timeout
+  - row_id: mcp-stdio:list_pages
+    behavior_class: broker_success_read
+    surface: mcp-stdio
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second stdio MCP serve proxies broker-success read tools through the live owner
+  - row_id: mcp-http:list_pages
+    behavior_class: broker_success_read
+    surface: mcp-http
+    owner_state: remote_transport
+    evidence: test/http-transport.test.ts::valid token tools/list returns ops
+  - row_id: cli:config:show
+    behavior_class: broker_success_read
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::gbrain config show proxies a CLI command target to the live owner and renders owner output
+  - row_id: cli:files:list
+    behavior_class: broker_success_read
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::gbrain files list proxies a filesystem-sensitive CLI command target to the live owner
+  - row_id: cli:sources:list
+    behavior_class: broker_success_read
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::multiplexed CLI command families proxy typed targets to the live owner
+  - row_id: cli:cache:stats
+    behavior_class: broker_success_read
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::multiplexed CLI command families proxy typed targets to the live owner
+  - row_id: call:think:local-cli
+    behavior_class: serialized_owner_mutation
+    surface: gbrain-call
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::five simultaneous mixed CLI and MCP callers share the live owner broker
+  - row_id: cli:config:set
+    behavior_class: serialized_owner_mutation
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::gbrain config set proxies a serialized CLI command target to the live owner
+  - row_id: cli:lint:module-open-site
+    behavior_class: serialized_owner_mutation
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::owner-side CLI command adapters execute relative paths from caller cwd and restore owner cwd
+  - row_id: cli:auth:module-open-site
+    behavior_class: serialized_owner_mutation
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::owner-side auth CLI adapter uses the owner engine instead of opening PGLite directly
+  - row_id: mcp-stdio:think
+    behavior_class: serialized_owner_mutation
+    surface: mcp-stdio
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::five simultaneous mixed CLI and MCP callers share the live owner broker
+  - row_id: cli:sync:maintenance
+    behavior_class: typed_guard_fail_fast
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second sync maintenance caller defers under live PGLite owner
+  - row_id: cli:apply-migrations:pglite-surface
+    behavior_class: typed_guard_fail_fast
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second apply-migrations typed-guard caller defers under live PGLite owner
+  - row_id: cli:extract-conversation-facts:pglite-surface
+    behavior_class: typed_guard_fail_fast
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second extract-conversation-facts typed-guard caller defers under live PGLite owner
+  - row_id: cli:autopilot:pglite-surface
+    behavior_class: typed_guard_fail_fast
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second autopilot typed-guard caller defers under live PGLite owner
+  - row_id: cli:reinit-pglite:no-sync
+    behavior_class: typed_guard_fail_fast
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second reinit-pglite typed-guard caller defers under live PGLite owner
+  - row_id: cli:watch:pglite-surface
+    behavior_class: typed_guard_fail_fast
+    surface: local-cli
+    owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts::second watch typed-guard caller defers under live PGLite owner
+  - row_id: mcp-stdio:file_upload:local-only-rejected
+    behavior_class: typed_guard_fail_fast
+    surface: mcp-stdio
+    owner_state: owner_side_bypass
+    evidence: test/cli-pglite-operation-broker.test.ts::CLI-owned broker dispatch rejects localOnly MCP requests before handler execution
+owner_state_representatives:
+  - owner_state: healthy_live_owner
+    evidence: test/cli-pglite-operation-broker.test.ts
+  - owner_state: live_missing_socket
+    evidence: test/cli-pglite-operation-broker.test.ts::second stdio MCP proxy returns owner_unreachable when live owner socket is absent
+  - owner_state: corrupt_lock
+    evidence: test/cli-pglite-operation-broker.test.ts::corrupt lock state fails fast with lock_safety_blocked instead of direct PGLite open
+  - owner_state: owner_starting
+    evidence: test/cli-pglite-operation-broker.test.ts::maintenance caller reports owner_starting when startup election is held
+  - owner_state: completion_unknown
+    evidence: test/cli-pglite-operation-broker.test.ts::CLI caller surfaces completion_unknown after the owner accepts but times out

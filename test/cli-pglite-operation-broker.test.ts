@@ -172,6 +172,20 @@ describe('CLI PGLite operation broker routing', () => {
     { name: 'embed', args: ['embed', '--stale', '--dry-run'] },
     { name: 'extract', args: ['extract', '--stale', '--dry-run'] },
   ];
+  const additionalTypedGuardCommands: Array<{ name: string; args: string[] }> = [
+    { name: 'apply-migrations', args: ['apply-migrations', '--yes', '--non-interactive'] },
+    { name: 'autopilot', args: ['autopilot', '--status'] },
+    { name: 'claw-test', args: ['claw-test', '--list-agents'] },
+    { name: 'frontmatter', args: ['frontmatter', 'audit'] },
+    { name: 'init', args: ['init', '--migrate-only'] },
+    { name: 'integrity', args: ['integrity', 'check', '--limit', '1'] },
+    { name: 'mounts', args: ['mounts', 'list'] },
+    { name: 'extract-conversation-facts', args: ['extract-conversation-facts', '--help'] },
+    { name: 'reinit-pglite', args: ['reinit-pglite', '--help'] },
+    { name: 'repair-jsonb', args: ['repair-jsonb', '--dry-run'] },
+    { name: 'schema', args: ['schema', '--help'] },
+    { name: 'watch', args: ['watch', '--help'] },
+  ];
 
   function expectNoRawPgliteLockFailure(result: { stderr: string }): void {
     expect(result.stderr).not.toContain('Timed out waiting for PGLite lock');
@@ -220,6 +234,26 @@ describe('CLI PGLite operation broker routing', () => {
       }
     } finally {
       rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('CLI-owned broker dispatch rejects localOnly MCP requests before handler execution', async () => {
+    const result = await dispatchBrokeredOperation({} as any, {
+      protocolVersion: 1,
+      requestId: 'local-only-mcp-file-upload',
+      caller: 'mcp-stdio',
+      operation: 'file_upload',
+      class: 'interactive',
+      priority: 100,
+      params: { path: '/tmp/private.txt', dry_run: true },
+      context: { remote: true, sourceId: 'default', output: 'json' },
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe('local_only_remote_rejected');
+      expect(result.message).toContain('localOnly');
+      expect(result.message).not.toContain('/tmp/private.txt');
     }
   });
 
@@ -336,6 +370,435 @@ describe('CLI PGLite operation broker routing', () => {
       rmSync(home, { recursive: true, force: true });
     }
   }, 30_000);
+
+  test('gbrain call list_pages proxies to the live owner without PGLite lock timeout', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: [
+            {
+              slug: 'owner/page',
+              type: 'note',
+              title: 'Owner page',
+              updated_at: '2026-06-21T00:00:00.000Z',
+            },
+          ],
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCli(['call', 'list_pages', '{}'], home);
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('"slug": "owner/page"');
+      expectNoRawPgliteLockFailure(result);
+      expect(seen).toHaveLength(1);
+      expect(seen[0].operation).toBe('list_pages');
+      expect(seen[0].caller).toBe('cli');
+      expect(seen[0].context.remote).toBe(false);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test('direct operation CLI commands proxy to the live owner without PGLite lock timeout', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: [{
+            slug: 'example/page',
+            type: 'person',
+            updated_at: '2026-06-21T00:00:00.000Z',
+            title: 'Example Page',
+          }],
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCliBounded(['list'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('example/page\tperson\t2026-06-21\tExample Page');
+      expect(result.stderr).toBe('');
+      expectNoRawPgliteLockFailure(result);
+      expect(seen).toHaveLength(1);
+      expect(seen[0].operation).toBe('list_pages');
+      expect(seen[0].target).toBeUndefined();
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('gbrain config show proxies a CLI command target to the live owner and renders owner output', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: {
+            stdout: 'owner config stdout\n',
+            stderr: 'owner config stderr\n',
+            exitCode: 0,
+          },
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCliBounded(['config', 'show'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('owner config stdout\n');
+      expect(result.stderr).toBe('owner config stderr\n');
+      expectNoRawPgliteLockFailure(result);
+      expect(seen).toHaveLength(1);
+      expect(seen[0].operation).toBe('__cli_command__');
+      expect((seen[0] as any).target).toEqual({
+        kind: 'cli_command',
+        surfaceId: 'cli:config:show',
+        command: 'config',
+        args: ['show'],
+      });
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('CLI command owner dispatch adapter captures config show stdout stderr and exit code', async () => {
+    const { home } = makeHome();
+    const oldHome = process.env.GBRAIN_HOME;
+    try {
+      process.env.GBRAIN_HOME = home;
+      const result = await dispatchBrokeredOperation({} as any, {
+        protocolVersion: 1,
+        requestId: 'cli-config-show',
+        caller: 'cli',
+        operation: '__cli_command__',
+        class: 'interactive',
+        priority: 100,
+        params: {},
+        context: { remote: false, output: 'text' },
+        target: {
+          kind: 'cli_command',
+          surfaceId: 'cli:config:show',
+          command: 'config',
+          args: ['show'],
+        },
+      } as any);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.result).toMatchObject({
+          stderr: '',
+          exitCode: 0,
+        });
+        expect((result.result as any).stdout).toContain('GBrain config:');
+        expect((result.result as any).stdout).toContain('engine: pglite');
+      }
+    } finally {
+      if (oldHome === undefined) delete process.env.GBRAIN_HOME;
+      else process.env.GBRAIN_HOME = oldHome;
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('gbrain config set proxies a serialized CLI command target to the live owner', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: {
+            stdout: 'Set spend.posture = gated\n',
+            stderr: '',
+            exitCode: 0,
+          },
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCliBounded(['config', 'set', 'spend.posture', 'gated'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('Set spend.posture = gated\n');
+      expect(result.stderr).toBe('');
+      expectNoRawPgliteLockFailure(result);
+      expect(seen).toHaveLength(1);
+      expect((seen[0] as any).target).toEqual({
+        kind: 'cli_command',
+        surfaceId: 'cli:config:set',
+        command: 'config',
+        args: ['set', 'spend.posture', 'gated'],
+      });
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('CLI command owner dispatch adapter executes config set through the owner engine', async () => {
+    const calls: Array<[string, string]> = [];
+    const result = await dispatchBrokeredOperation({
+      setConfig: async (key: string, value: string) => {
+        calls.push([key, value]);
+      },
+    } as any, {
+      protocolVersion: 1,
+      requestId: 'cli-config-set',
+      caller: 'cli',
+      operation: '__cli_command__',
+      class: 'interactive',
+      priority: 100,
+      params: {},
+      context: { remote: false, output: 'text' },
+      target: {
+        kind: 'cli_command',
+        surfaceId: 'cli:config:set',
+        command: 'config',
+        args: ['set', 'spend.posture', 'gated'],
+      },
+    } as any);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(calls).toEqual([['spend.posture', 'gated']]);
+      expect(result.result).toMatchObject({
+        stdout: 'Set spend.posture = gated\n',
+        stderr: '',
+        exitCode: 0,
+      });
+    }
+  });
+
+  test('gbrain files list proxies a filesystem-sensitive CLI command target to the live owner', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: {
+            stdout: 'owner files stdout\n',
+            stderr: '',
+            exitCode: 0,
+          },
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCliBounded(['files', 'list'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('owner files stdout\n');
+      expect(result.stderr).toBe('');
+      expectNoRawPgliteLockFailure(result);
+      expect(seen).toHaveLength(1);
+      expect((seen[0] as any).target).toEqual({
+        kind: 'cli_command',
+        surfaceId: 'cli:files:list',
+        command: 'files',
+        args: ['list'],
+      });
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('CLI command owner dispatch adapter executes files list through the owner engine', async () => {
+    const queries: string[] = [];
+    const result = await dispatchBrokeredOperation({
+      executeRaw: async (sql: string) => {
+        queries.push(sql);
+        return [{
+          page_slug: 'example/page',
+          filename: 'deck.pdf',
+          size_bytes: 2048,
+          mime_type: 'application/pdf',
+        }];
+      },
+    } as any, {
+      protocolVersion: 1,
+      requestId: 'cli-files-list',
+      caller: 'cli',
+      operation: '__cli_command__',
+      class: 'interactive',
+      priority: 100,
+      params: {},
+      context: { remote: false, output: 'text' },
+      target: {
+        kind: 'cli_command',
+        surfaceId: 'cli:files:list',
+        command: 'files',
+        args: ['list'],
+      },
+    } as any);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(queries[0]).toContain('FROM files');
+      expect(result.result).toMatchObject({
+        stderr: '',
+        exitCode: 0,
+      });
+      expect((result.result as any).stdout).toContain('1 file(s):');
+      expect((result.result as any).stdout).toContain('example/page / deck.pdf');
+    }
+  });
+
+  test('multiplexed CLI command families proxy typed targets to the live owner', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: {
+            stdout: 'owner sources stdout\n',
+            stderr: '',
+            exitCode: 0,
+          },
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCliBounded(['sources', 'list'], home, 2000);
+      const cache = await runCliBounded(['cache', 'stats'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('owner sources stdout\n');
+      expect(result.stderr).toBe('');
+      expect(cache.timedOut).toBe(false);
+      expect(cache.status).toBe(0);
+      expect(cache.stdout).toBe('owner sources stdout\n');
+      expect(cache.stderr).toBe('');
+      expectNoRawPgliteLockFailure(result);
+      expectNoRawPgliteLockFailure(cache);
+      expect(seen).toHaveLength(2);
+      expect((seen[0] as any).target).toEqual({
+        kind: 'cli_command',
+        surfaceId: 'cli:sources:list',
+        command: 'sources',
+        args: ['list'],
+      });
+      expect((seen[1] as any).target).toEqual({
+        kind: 'cli_command',
+        surfaceId: 'cli:cache:stats',
+        command: 'cache',
+        args: ['stats'],
+      });
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('owner-side CLI command adapters execute relative paths from caller cwd and restore owner cwd', async () => {
+    const callerCwd = mkdtempSync('/tmp/gbrain-cli-cwd-');
+    const originalCwd = process.cwd();
+    try {
+      writeFileSync(join(callerCwd, 'page.md'), [
+        '---',
+        'slug: cwd-page',
+        'title: Cwd Page',
+        'type: note',
+        '---',
+        '',
+        'A clean page.',
+        '',
+      ].join('\n'));
+
+      const result = await dispatchBrokeredOperation({} as any, {
+        protocolVersion: 1,
+        requestId: 'cli-lint-cwd',
+        caller: 'cli',
+        operation: '__cli_command__',
+        class: 'interactive',
+        priority: 100,
+        params: {},
+        context: { remote: false, output: 'text', cwd: callerCwd },
+        target: {
+          kind: 'cli_command',
+          surfaceId: 'cli:lint:module-open-site',
+          command: 'lint',
+          args: ['page.md'],
+        },
+      } as any);
+
+      expect(process.cwd()).toBe(originalCwd);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const output = result.result as { stdout: string; stderr: string; exitCode: number };
+        expect(output.exitCode).toBe(0);
+        expect(output.stderr).toContain('[lint.pages]');
+        expect(output.stdout).toContain('1 pages scanned.');
+      }
+    } finally {
+      rmSync(callerCwd, { recursive: true, force: true });
+    }
+  });
+
+  test('owner-side auth CLI adapter uses the owner engine instead of opening PGLite directly', async () => {
+    const queries: string[] = [];
+    const result = await dispatchBrokeredOperation({
+      executeRaw: async (sql: string) => {
+        queries.push(sql);
+        return [];
+      },
+    } as any, {
+      protocolVersion: 1,
+      requestId: 'cli-auth-list',
+      caller: 'cli',
+      operation: '__cli_command__',
+      class: 'interactive',
+      priority: 100,
+      params: {},
+      context: { remote: false, output: 'text' },
+      target: {
+        kind: 'cli_command',
+        surfaceId: 'cli:auth:module-open-site',
+        command: 'auth',
+        args: ['list'],
+      },
+    } as any);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const output = result.result as { stdout: string; stderr: string; exitCode: number };
+      expect(output.exitCode).toBe(0);
+      expect(output.stderr).toBe('');
+      expect(output.stdout).toContain('No tokens found.');
+      expect(queries).toHaveLength(1);
+      expect(queries[0]).toContain('FROM access_tokens');
+    }
+  });
 
   test('no-owner query search and think keep direct-open CLI behavior', async () => {
     const { home } = makeHome();
@@ -659,6 +1122,26 @@ describe('CLI PGLite operation broker routing', () => {
     }, 10_000);
   }
 
+  for (const command of additionalTypedGuardCommands) {
+    test(`second ${command.name} typed-guard caller defers under live PGLite owner`, async () => {
+      const { home, dbPath } = makeHome();
+      try {
+        writeLiveLock(dbPath, `gbrain ${command.name}`);
+
+        const result = await runCliBounded(command.args, home, 2000);
+
+        expect(result.timedOut).toBe(false);
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('maintenance_deferred');
+        expect(result.stderr).toContain(`gbrain ${command.name}`);
+        expectNoRawPgliteLockFailure(result);
+        expectNoMisleadingMaintenanceSuccess(result);
+      } finally {
+        rmSync(home, { recursive: true, force: true });
+      }
+    }, 10_000);
+  }
+
   test('maintenance caller reports owner_starting when startup election is held', async () => {
     const { home, dbPath } = makeHome();
     const startup = tryAcquireOperationStartup(dbPath);
@@ -698,7 +1181,7 @@ describe('CLI PGLite operation broker routing', () => {
     test(`no-owner ${command.name} maintenance caller reaches direct command path`, async () => {
       const { home } = makeHome();
       try {
-        const result = await runCliBounded(command.args, home, 5000);
+        const result = await runCliBounded(command.args, home, command.name === 'sync' ? 10_000 : 5000);
 
         expect(result.timedOut).toBe(false);
         expect(result.stderr).not.toContain('maintenance_deferred');
@@ -996,7 +1479,7 @@ describe('CLI PGLite operation broker routing', () => {
     }
   });
 
-  test('second stdio MCP serve proxies query search and think tools through the live owner', async () => {
+  test('second stdio MCP serve proxies broker-success read tools through the live owner', async () => {
     const { home, dbPath } = makeHome();
     let child: ReturnType<typeof spawn> | null = null;
     try {
@@ -1039,7 +1522,11 @@ describe('CLI PGLite operation broker routing', () => {
       sendJson(child, { jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} });
       const tools = await waitForJsonLine(child, 2);
       const names = tools.result.tools.map((tool: any) => tool.name).sort();
-      expect(names).toEqual(['query', 'search', 'think']);
+      expect(names).toContain('list_pages');
+      expect(names).toContain('query');
+      expect(names).toContain('search');
+      expect(names).toContain('think');
+      expect(names).not.toContain('file_upload');
 
       sendJson(child, {
         jsonrpc: '2.0',
@@ -1066,7 +1553,15 @@ describe('CLI PGLite operation broker routing', () => {
       });
       const thinkCall = await waitForJsonLine(child, 5);
       expect(thinkCall.result.content[0].text).toBe('[]');
-      expect(seen.map((r) => r.operation).sort()).toEqual(['query', 'search', 'think']);
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 6,
+        method: 'tools/call',
+        params: { name: 'list_pages', arguments: {} },
+      });
+      const listPagesCall = await waitForJsonLine(child, 6);
+      expect(listPagesCall.result.content[0].text).toBe('[]');
+      expect(seen.map((r) => r.operation).sort()).toEqual(['list_pages', 'query', 'search', 'think']);
       expect(seen.every((r) => r.caller === 'mcp-stdio')).toBe(true);
     } finally {
       if (child) {

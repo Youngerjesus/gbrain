@@ -2,12 +2,12 @@
 
 ## Current State
 
-- Current gate: implementation-preflight
-- Status: secondary-plan completed; accepted primary and secondary plans are ready
+- Current gate: implementation
+- Status: complete; implementation-brake returned `[SHIP]`, coverage-ledger closure passed, and closeout completed
 - Plan artifact: plans/007-pglite-broker-guard-implementation/plan.md
 - Secondary plan artifact: plans/007-pglite-broker-guard-implementation/secondary_plan.md
 - Plan status: accepted
-- Next action: complete isolated worktree preflight before implementation.
+- Next action: proceed to requirement 008 repeated named command matrix verification.
 
 ## Plan Review State
 
@@ -50,6 +50,25 @@
 - Result: accepted primary plan and secondary guardrail handoff created
 - Blockers: none
 - Required plan changes: primary plan status set to accepted; secondary plan preserves RALPLAN-DR, ADR, implementation guardrails, files to inspect, tests to add/run, review notes, and scenario-brake additions.
+
+### devex-review
+
+- Gate: devex-review
+- Gate status: completed
+- Artifact path: requirements/007-pglite-broker-guard-implementation/reviews/devex-review.md
+- Result: PASS WITH NON-BLOCKING FOLLOW-UPS
+- Blockers: none
+- Follow-ups: requirement 009 should decide final public docs/help/changelog recovery guidance for live-owner typed guards; requirement 008 should own the repeated N-attempt named matrix.
+
+### implementation-brake
+
+- Gate: implementation-brake
+- Gate status: completed
+- Artifact path: requirements/007-pglite-broker-guard-implementation/reviews/implementation-brake.md
+- Result: `[SHIP]`
+- Conformance evidence: `FALLBACK_SELF_REVIEW_USED`, `conformance_result_status: CONFORMANT`; external companion unavailable under current subagent policy because the user did not explicitly request a subagent for this gate.
+- Coverage ledger closure: passed
+- Blockers: none
 
 ## Delegated Subagent Lifecycle
 
@@ -165,16 +184,16 @@
 - Current cwd: `/Users/jeongmin/Documents/garrytan-gbrain`
 - Git repository root: `/Users/jeongmin/Documents/garrytan-gbrain`
 - Branch: master
-- HEAD SHA: pending refresh before implementation
-- Dirty status: pending refresh before implementation
+- HEAD SHA: `01692b60678d4dac6d941c3a59211565a355ad8b`
+- Dirty status: clean tracked files before preflight state update; ignored `node_modules/` and copied local `plans/007-pglite-broker-guard-implementation/`
 - Isolated worktree execution required: yes before product/test source implementation
-- Task worktree path: pending
-- Task worktree branch: pending
-- Task worktree HEAD SHA: pending
-- Task worktree dirty status: pending
+- Task worktree path: `/Users/jeongmin/Documents/garrytan-gbrain-007-pglite-broker-guard`
+- Task worktree branch: `codex/007-pglite-broker-guard-implementation`
+- Task worktree HEAD SHA: `01692b60678d4dac6d941c3a59211565a355ad8b`
+- Task worktree dirty status: clean tracked files before preflight state update; ignored `node_modules/` and copied local `plans/007-pglite-broker-guard-implementation/`
 - Binding source or setup owner: `scripts/init_worktree.sh` when implementation gates are reached
-- Mismatch status: not_evaluated
-- Next action or blocker: requirement clarification and planning may continue in base worktree; implementation must use isolated task worktree.
+- Mismatch status: none
+- Next action or blocker: worktree initialized; postinstall migration hit local PGLite lock timeout, so implementation verification must continue to use isolated temporary `GBRAIN_HOME` fixtures and avoid the user's live brain.
 
 ## Requirement Review And Conformance State
 
@@ -209,7 +228,51 @@
 
 ## Implementation State
 
-- Implementation status: not_started
-- Product behavior change status: required after accepted plan
-- Remaining gates before implementation: worktree preflight, context-loading
-- Remaining gates after implementation: devex-review, implementation-brake, closeout
+- Implementation status: in_progress
+- Product behavior change status: partial implementation landed in task worktree
+- Remaining gates before implementation: none
+- Remaining gates after implementation: none
+- Current implementation evidence:
+  - Full inventory policy parity test covers 468 accepted rows with matching behavior class and local-only flags.
+  - Live-owner `gbrain call list_pages {}` now forwards to owner IPC and avoids raw PGLite lock timeout.
+  - Live-owner stdio MCP proxy advertises non-localOnly operation rows, including `list_pages`, and excludes `file_upload`.
+  - Shared MCP dispatch and owner-side broker dispatch reject remote localOnly `file_upload` with `local_only_remote_rejected` before handler execution.
+  - Standalone HTTP MCP transport omits localOnly operations from `tools/list` and rejects direct remote localOnly `tools/call`.
+  - Live-owner typed guard now covers `apply-migrations` and `extract-conversation-facts` representatives in addition to existing `sync`/`embed`/`extract`.
+  - Row-id keyed representative coverage manifest validates against accepted inventory and covers required behavior classes, surfaces, and owner states.
+  - True CLI command adapter execution path covers `cli:config:show` and `cli:config:set`, including caller-side forwarding, owner-side stdout/stderr/exitCode capture, output rendering, and owner-engine mutation for `setConfig`.
+  - Filesystem-sensitive read CLI adapter execution path covers `cli:files:list` with caller-side forwarding and owner-side `runFiles(engine, ['list'])` execution.
+  - Direct shared-operation CLI commands now use owner IPC for every registered operation, with `cli:list:operation-cli` proving `gbrain list` routes as `operation: "list_pages"` under a live owner.
+  - Multiplexed CLI command adapter routing now covers `config`, `files`, `jobs`, `sources`, `repos`, `takes`, `search`, `eval`, `doctor`, `storage`, `status`, and `cache` families; `cli:sources:list` and `cli:cache:stats` prove the widened surface-id resolver.
+  - One-shot DB-bound CLI command adapters now cover many single-command rows with owner-engine-compatible command entrypoints, including `reindex-frontmatter`.
+  - Owner-side CLI adapter execution now preserves/restores caller cwd and captures `process.stdout.write` / `process.stderr.write` in the brokered output envelope.
+  - `auth` DB-backed subcommands can reuse the live owner engine through `runAuth(args, ownerEngine?)`; `cli:auth:module-open-site` is covered by a targeted owner-side adapter test.
+  - Local lifecycle/session/heavy commands that should not run inside the owner handler now return typed `maintenance_deferred` under a live owner: `autopilot`, `claw-test`, `frontmatter`, `init`, `integrity`, `mounts`, `reinit-pglite`, `repair-jsonb`, `schema`, and `watch`.
+  - Accepted inventory class counts are now 217 `broker_success_read`, 223 `serialized_owner_mutation`, and 28 `typed_guard_fail_fast`.
+- Latest verification:
+  - `bun test test/cli-pglite-operation-broker.test.ts` -> 51 pass, 0 fail, 420 expectations.
+  - `bun test test/http-transport.test.ts test/pglite-owner-policy.test.ts test/pglite-operation-ipc.test.ts test/e2e/mcp.test.ts test/pglite-broker-representative-coverage.test.ts` -> 43 pass, 0 fail, 2498 expectations.
+  - `bun run typecheck` -> pass.
+  - `bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json` -> ok.
+  - `bun test test/pglite-broker-representative-coverage.test.ts` -> 1 pass, 0 fail, 73 expectations.
+  - `python3 scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/007-pglite-broker-guard-implementation` -> pass.
+  - `python3 scripts/coverage_ledger.py validate --mode schema --requirement-dir requirements/007-pglite-broker-guard-implementation` -> pass.
+- Remaining implementation gaps:
+  - Coverage ledger closure passed.
+  - Implementation-brake returned `[SHIP]`.
+  - Closeout completed; sequence checkbox marked complete.
+
+## Context Loading State
+
+- Gate: context-loading
+- Gate status: completed
+- Path: context-loader
+- Agent id or handle: `019ee5c2-4f89-7653-90cd-e52684ea982a` (`Lagrange`)
+- Trigger: mandatory; implementation crosses CLI, MCP stdio/HTTP, IPC, PGLite lock, operation dispatch, trust-boundary, persistence/state, and verification contracts.
+- Report fields complete: yes
+- Inspected files/directories: AGENTS.md, CLAUDE.md, docs/architecture/KEY_FILES.md, requirement 007 artifacts, plan artifacts, requirement 006 inventory, IPC/lock/dispatch/operations/CLI/MCP/HTTP files, broker tests, gauntlet tests, inventory scripts.
+- Core findings: current broker covers only query/search/think; `gbrain call list_pages {}` is representative current red; existing IPC already supplies socket transport, queueing, statuses, request correlation, and owner dispatch patterns; runtime must not import inventory YAML; HTTP MCP needs separate coverage.
+- Change candidate files: `src/core/pglite-operation-ipc.ts`, `src/mcp/pglite-operation-dispatch.ts`, `src/cli.ts`, `src/mcp/server.ts`, `src/commands/serve-http.ts`, possible new owner policy/routing modules, and broker/IPC/gauntlet tests.
+- Test strategy: start with failing `call:list_pages` live-owner test, then policy parity, IPC target compatibility, routing state matrix, trust-boundary bypass tests, stdio/HTTP MCP coverage, and gauntlet successor update.
+- Residual context risk: command adapter registry boundaries remain the largest implementation-time unknown.
+- `close_agent` cleanup status: completed

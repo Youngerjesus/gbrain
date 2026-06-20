@@ -41,7 +41,13 @@ function generateToken(): string {
  */
 async function withConfiguredSql<T>(
   fn: (sql: SqlQuery, engine: BrainEngine) => Promise<T>,
+  ownerEngine?: BrainEngine,
 ): Promise<T> {
+  if (ownerEngine) {
+    const sql = sqlQueryForEngine(ownerEngine);
+    return fn(sql, ownerEngine);
+  }
+
   const config = loadConfig();
   if (!config) {
     console.error('No GBrain config found. Run `gbrain init` first, or set DATABASE_URL / GBRAIN_DATABASE_URL.');
@@ -66,7 +72,7 @@ async function withConfiguredSql<T>(
   }
 }
 
-async function create(name: string, opts: { takesHolders?: string[] } = {}) {
+async function create(name: string, opts: { takesHolders?: string[] } = {}, ownerEngine?: BrainEngine) {
   if (!name) { console.error('Usage: auth create <name> [--takes-holders world,garry]'); process.exit(1); }
   const token = generateToken();
   const hash = hashToken(token);
@@ -96,7 +102,7 @@ async function create(name: string, opts: { takesHolders?: string[] } = {}) {
       console.log('Save this token — it will not be shown again.');
       console.log(`Revoke with: gbrain auth revoke "${name}"`);
       console.log(`Update visibility: gbrain auth permissions "${name}" set-takes-holders world,garry`);
-    });
+    }, ownerEngine);
   } catch (e: any) {
     if (e.code === '23505') {
       console.error(`A token named "${name}" already exists. Revoke it first or use a different name.`);
@@ -107,7 +113,7 @@ async function create(name: string, opts: { takesHolders?: string[] } = {}) {
   }
 }
 
-async function permissions(name: string, action: string, value: string | undefined) {
+async function permissions(name: string, action: string, value: string | undefined, ownerEngine?: BrainEngine) {
   if (!name || action !== 'set-takes-holders' || !value) {
     console.error('Usage: auth permissions <name> set-takes-holders world,garry,brain');
     process.exit(1);
@@ -135,14 +141,14 @@ async function permissions(name: string, action: string, value: string | undefin
         process.exit(1);
       }
       console.log(`Updated "${name}": takes_holders = ${JSON.stringify(list)}`);
-    });
+    }, ownerEngine);
   } catch (e: any) {
     console.error('Error:', e.message);
     process.exit(1);
   }
 }
 
-async function list() {
+async function list(ownerEngine?: BrainEngine) {
   await withConfiguredSql(async (sql) => {
     const rows = await sql`
       SELECT name, created_at, last_used_at, revoked_at
@@ -162,10 +168,10 @@ async function list() {
       const status = r.revoked_at ? 'REVOKED' : 'active';
       console.log(`${name}  ${created}  ${lastUsed}  ${status}`);
     }
-  });
+  }, ownerEngine);
 }
 
-async function revoke(name: string) {
+async function revoke(name: string, ownerEngine?: BrainEngine) {
   if (!name) { console.error('Usage: auth revoke <name>'); process.exit(1); }
   await withConfiguredSql(async (sql) => {
     const rows = await sql`
@@ -178,7 +184,7 @@ async function revoke(name: string) {
       process.exit(1);
     }
     console.log(`Token "${name}" revoked.`);
-  });
+  }, ownerEngine);
 }
 
 async function test(url: string, token: string) {
@@ -301,7 +307,7 @@ async function test(url: string, token: string) {
   console.log(`\n🧠 Your brain is live! (${elapsed}s)`);
 }
 
-async function revokeClient(clientId: string) {
+async function revokeClient(clientId: string, ownerEngine?: BrainEngine) {
   if (!clientId) {
     console.error('Usage: auth revoke-client <client_id>');
     process.exit(1);
@@ -321,7 +327,7 @@ async function revokeClient(clientId: string) {
       }
       console.log(`OAuth client revoked: "${rows[0].client_name}" (${clientId})`);
       console.log('Tokens and authorization codes purged via cascade.');
-    });
+    }, ownerEngine);
   } catch (e: any) {
     console.error('Error:', e.message);
     process.exit(1);
@@ -403,7 +409,7 @@ export function parseRegisterClientArgs(args: string[]): RegisterClientArgs {
   return out;
 }
 
-async function registerClient(name: string, args: string[]) {
+async function registerClient(name: string, args: string[], ownerEngine?: BrainEngine) {
   if (!name) {
     console.error('Usage: auth register-client <name> [--grant-types G] [--scopes S] [--source SOURCE] [--federated-read SRC1,SRC2,...] [--redirect-uri URI ...] [--token-endpoint-auth-method client_secret_post|client_secret_basic|none]');
     process.exit(1);
@@ -448,7 +454,7 @@ async function registerClient(name: string, args: string[]) {
         console.log('Public client (PKCE-only) — no secret needed.');
       }
       console.log(`Revoke with: gbrain auth revoke-client "${clientId}"`);
-    });
+    }, ownerEngine);
   } catch (e: any) {
     console.error('Error:', e.message);
     process.exit(1);
@@ -479,24 +485,24 @@ export function parseAuthCreateArgs(rest: string[]): { name: string; takesHolder
   return { name: positional || '', takesHolders };
 }
 
-export async function runAuth(args: string[]): Promise<void> {
+export async function runAuth(args: string[], ownerEngine?: BrainEngine): Promise<void> {
   const [cmd, ...rest] = args;
   switch (cmd) {
     case 'create': {
       // v0.28: optional --takes-holders world,garry,brain (default: world only)
       const parsed = parseAuthCreateArgs(rest);
-      await create(parsed.name, { takesHolders: parsed.takesHolders });
+      await create(parsed.name, { takesHolders: parsed.takesHolders }, ownerEngine);
       return;
     }
-    case 'list': await list(); return;
-    case 'revoke': await revoke(rest[0]); return;
+    case 'list': await list(ownerEngine); return;
+    case 'revoke': await revoke(rest[0], ownerEngine); return;
     case 'permissions': {
       // gbrain auth permissions <name> set-takes-holders world,garry
-      await permissions(rest[0] || '', rest[1] || '', rest[2]);
+      await permissions(rest[0] || '', rest[1] || '', rest[2], ownerEngine);
       return;
     }
-    case 'register-client': await registerClient(rest[0], rest.slice(1)); return;
-    case 'revoke-client': await revokeClient(rest[0]); return;
+    case 'register-client': await registerClient(rest[0], rest.slice(1), ownerEngine); return;
+    case 'revoke-client': await revokeClient(rest[0], ownerEngine); return;
     case 'test': {
       const tokenIdx = rest.indexOf('--token');
       const url = rest.find(a => !a.startsWith('--') && a !== rest[tokenIdx + 1]);

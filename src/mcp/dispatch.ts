@@ -10,6 +10,7 @@ import type { BrainEngine } from '../core/engine.ts';
 import { operations, OperationError } from '../core/operations.ts';
 import type { Operation, OperationContext, AuthInfo } from '../core/operations.ts';
 import { loadConfig } from '../core/config.ts';
+import { resolvePgliteOwnerPolicy } from '../core/pglite-owner-policy.ts';
 
 export interface ToolResult {
   content: { type: 'text'; text: string }[];
@@ -234,6 +235,19 @@ export async function dispatchToolCall(
     // transport bug.
     return {
       content: [{ type: 'text', text: JSON.stringify({ error: 'unknown_tool', message: `Unknown tool: ${name}` }, null, 2) }],
+      isError: true,
+    };
+  }
+
+  const remote = opts.remote ?? true;
+  const policy = resolvePgliteOwnerPolicy({
+    surfaceId: `dispatch:${name}`,
+    target: { kind: 'operation', name },
+    caller: 'mcp-http',
+  });
+  if (remote && policy?.behaviorClass === 'typed_guard_fail_fast') {
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ error: policy.guardStatusWhenLiveOwner, message: `Operation ${name} is localOnly and cannot be called by remote MCP clients.` }, null, 2) }],
       isError: true,
     };
   }

@@ -13,6 +13,7 @@
 
 import { loadConfig, toEngineConfig } from '../core/config.ts';
 import { createEngine } from '../core/engine-factory.ts';
+import type { BrainEngine } from '../core/engine.ts';
 import { SemanticQueryCache, loadCacheConfig } from '../core/search/query-cache.ts';
 
 function printHelp(): void {
@@ -32,22 +33,27 @@ Flags:
 `);
 }
 
-export async function runCache(args: string[]): Promise<void> {
+export async function runCache(args: string[], ownerEngine?: BrainEngine): Promise<void> {
   const sub = args[0];
   if (!sub || sub === '--help' || sub === '-h') {
     printHelp();
     return;
   }
 
-  const config = loadConfig();
-  if (!config) {
-    // eslint-disable-next-line no-console
-    console.error('gbrain cache: no brain configured. Run `gbrain init` first.');
-    process.exit(1);
+  let ownsEngine = false;
+  let engine = ownerEngine;
+  if (!engine) {
+    const config = loadConfig();
+    if (!config) {
+      // eslint-disable-next-line no-console
+      console.error('gbrain cache: no brain configured. Run `gbrain init` first.');
+      process.exit(1);
+    }
+    const engineConfig = toEngineConfig(config);
+    engine = await createEngine(engineConfig);
+    await engine.connect(engineConfig);
+    ownsEngine = true;
   }
-  const engineConfig = toEngineConfig(config);
-  const engine = await createEngine(engineConfig);
-  await engine.connect(engineConfig);
 
   try {
     const cacheCfg = await loadCacheConfig(engine);
@@ -104,6 +110,8 @@ export async function runCache(args: string[]): Promise<void> {
     console.error(`gbrain cache: unknown subcommand "${sub}". See \`gbrain cache --help\`.`);
     process.exit(1);
   } finally {
-    try { await engine.disconnect(); } catch { /* ignore */ }
+    if (ownsEngine) {
+      try { await engine.disconnect(); } catch { /* ignore */ }
+    }
   }
 }

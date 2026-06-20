@@ -89,7 +89,7 @@ Requirement source: requirements/007-pglite-broker-guard-implementation/requirem
 - Evidence:
   - `startPgliteOperationIpcServer` already queues requests with priority and class.
   - Requirement 007 AC3 forbids silently downgrading `serialized_owner_mutation` rows to guard-only behavior.
-  - Requirement 006 inventory class count includes 236 `serialized_owner_mutation` rows.
+  - Requirement 006 inventory class count includes 223 `serialized_owner_mutation` rows after the approved lifecycle/heavy/session typed-guard reclassification.
 
 ### RD-006: Typed guards should reuse and extend existing broker error vocabulary
 

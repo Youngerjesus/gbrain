@@ -95,7 +95,7 @@ This requirement fails if any accepted inventory row still bypasses owner routin
 
 - Scope is local PGLite-backed gbrain behavior.
 - The accepted inventory path is `requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml`.
-- Current accepted inventory count is 468 rows: 217 `broker_success_read`, 236 `serialized_owner_mutation`, and 15 `typed_guard_fail_fast`.
+- Current accepted inventory count is 468 rows: 217 `broker_success_read`, 223 `serialized_owner_mutation`, and 28 `typed_guard_fail_fast`.
 - The later sequence standard remains N=3 repeated concurrent attempts with `raw_lock_timeout_allowed: false`.
 - Product runtime may add internal dispatch/serialization APIs, but requirement artifacts and test validators must not become runtime dependencies.
 - Remote-MCP security boundaries are compatibility-sensitive and must be preserved by default.
@@ -178,7 +178,7 @@ Update `progress.md`, `evidence.md`, and `decisions.md` after requirement review
   confidence: high
 - source_type: artifact
   location_or_reference: `requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml`
-  extracted_fact: The accepted inventory contains 468 rows with 217 `broker_success_read`, 236 `serialized_owner_mutation`, 15 `typed_guard_fail_fast`, and N=3 later sequence attempts with raw lock timeout disallowed.
+  extracted_fact: The accepted inventory contains 468 rows with 217 `broker_success_read`, 223 `serialized_owner_mutation`, 28 `typed_guard_fail_fast`, and N=3 later sequence attempts with raw lock timeout disallowed.
   confidence: high
 - source_type: evidence
   location_or_reference: `requirements/006-pglite-access-path-inventory/evidence.md`

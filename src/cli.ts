@@ -44,6 +44,7 @@ import {
   tryAcquireOperationStartup,
   type OperationStartupHandle,
   type OperationIpcOperation,
+  type OperationIpcTarget,
 } from './core/pglite-operation-ipc.ts';
 
 // Build CLI name -> operation lookup
@@ -835,8 +836,25 @@ async function makeContext(engine: BrainEngine, params: Record<string, unknown>)
   };
 }
 
-const BROKERED_OPERATIONS = new Set<OperationIpcOperation>(['query', 'search', 'think']);
-const PGLITE_MAINTENANCE_COMMANDS = new Set(['sync', 'embed', 'extract']);
+const BROKERED_OPERATIONS = new Set<OperationIpcOperation>(operations.map((op) => op.name));
+const PGLITE_TYPED_GUARD_COMMANDS = new Set([
+  'apply-migrations',
+  'autopilot',
+  'claw-test',
+  'embed',
+  'extract',
+  'extract-conversation-facts',
+  'frontmatter',
+  'init',
+  'integrity',
+  'mounts',
+  'reinit-pglite',
+  'repair-jsonb',
+  'schema',
+  'sync',
+  'upgrade',
+  'watch',
+]);
 let operationStartupHandle: OperationStartupHandle | null = null;
 
 async function maybeRunBrokeredOperation(
@@ -912,13 +930,156 @@ async function maybeRunBrokeredThink(args: string[]): Promise<boolean> {
   return true;
 }
 
+async function maybeRunBrokeredCall(args: string[]): Promise<boolean> {
+  const parsed = parseCallBrokerParams(args);
+  if (!parsed) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'absent') {
+    operationStartupHandle = tryAcquireOperationStartup(cfg.database_path);
+    if (operationStartupHandle) return false;
+  } else if (lock.status === 'dead_or_stale_recoverable') {
+    return false;
+  } else if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for brokered call.`,
+    });
+    return true;
+  }
+
+  const response = await forwardToLivePgliteOwner(parsed.operation, parsed.params, {
+    output: 'json',
+    ...(parsed.sourceId ? { sourceId: parsed.sourceId } : {}),
+  });
+  if (response === false) return false;
+  if (response.ok) {
+    process.stdout.write(`${JSON.stringify(response.result, null, 2)}\n`);
+    return true;
+  }
+  emitBrokerFailure(response);
+  return true;
+}
+
+async function maybeRunBrokeredCliCommand(command: string, args: string[]): Promise<boolean> {
+  const target = brokeredCliCommandTarget(command, args);
+  if (!target) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'absent') {
+    operationStartupHandle = tryAcquireOperationStartup(cfg.database_path);
+    if (operationStartupHandle) return false;
+  } else if (lock.status === 'dead_or_stale_recoverable') {
+    return false;
+  } else if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for gbrain ${command}.`,
+    });
+    return true;
+  }
+
+  const response = await forwardToLivePgliteOwner('__cli_command__', {}, {
+    output: 'text',
+    target,
+  });
+  if (response === false) return false;
+  if (response.ok) {
+    renderBrokeredCliCommandResult(response.result);
+    return true;
+  }
+  emitBrokerFailure(response);
+  return true;
+}
+
+function brokeredCliCommandTarget(command: string, args: string[]): OperationIpcTarget | null {
+  const surfaceId = brokeredCliCommandSurfaceId(command, args);
+  return surfaceId ? { kind: 'cli_command', surfaceId, command, args } : null;
+}
+
+function brokeredCliCommandSurfaceId(command: string, args: string[]): string | null {
+  const sub = args[0];
+  if (command === 'config' && ['get', 'show', 'set', 'unset'].includes(sub ?? '')) return `cli:config:${sub}`;
+  if (command === 'files' && [
+    'clean', 'list', 'mirror', 'redirect', 'restore', 'signed-url', 'status',
+    'sync', 'unmirror', 'upload', 'upload-raw', 'verify',
+  ].includes(sub ?? '')) return `cli:files:${sub}`;
+  if (command === 'jobs' && [
+    'cancel', 'delete', 'get', 'list', 'prune', 'retry', 'smoke', 'stats',
+    'submit', 'supervisor', 'watch', 'work',
+  ].includes(sub ?? '')) return `cli:jobs:${sub}`;
+  if (command === 'sources' && [
+    'add', 'archive', 'archived', 'attach', 'audit', 'current', 'default',
+    'detach', 'federate', 'harden', 'list', 'pull', 'purge', 'remove',
+    'rename', 'restore', 'set-cr-mode', 'status', 'tracked-branch',
+    'unfederate', 'unharden', 'webhook',
+  ].includes(sub ?? '')) return `cli:sources:${sub}`;
+  if (command === 'repos') return 'cli:repos:pglite-surface';
+  if (command === 'takes' && [
+    'add', 'calibration', 'extract', 'list', 'resolve', 'revisit',
+    'scorecard', 'search', 'supersede', 'update',
+  ].includes(sub ?? '')) return `cli:takes:${sub}`;
+  if (command === 'search') {
+    if (sub === 'modes' && args.includes('--reset')) return 'cli:search:modes-reset';
+    if (sub === 'tune' && args.includes('--apply')) return 'cli:search:tune-apply';
+    if (['diagnose', 'modes', 'stats', 'tune'].includes(sub ?? '')) return `cli:search:${sub}`;
+  }
+  if (command === 'cache' && ['clear', 'prune', 'stats'].includes(sub ?? '')) return `cli:cache:${sub}`;
+  if (command === 'eval' && [
+    'brainstorm', 'code-retrieval', 'compare', 'export', 'gate', 'prune',
+    'replay', 'retrieval-quality', 'run-all', 'suspected-contradictions',
+    'takes-quality', 'trajectory', 'whoknows',
+  ].includes(sub ?? '')) return `cli:eval:${sub}`;
+  if (command === 'doctor') {
+    if (args.includes('--fix')) return 'cli:doctor:fix';
+    if (args.includes('--remediate')) return 'cli:doctor:remediate';
+    if (args.includes('--remediation-plan')) return 'cli:doctor:remediation-plan';
+    if (args.includes('--locks')) return 'cli:doctor:locks';
+    if (args.includes('--fast')) return 'cli:doctor:fast';
+    return 'cli:doctor:default';
+  }
+  if (command === 'storage' && sub === 'status') return 'cli:storage:status';
+  if (command === 'status') return 'cli:status:pglite-surface';
+  if (command === 'lint') return 'cli:lint:module-open-site';
+  if (command === 'auth') return 'cli:auth:module-open-site';
+  if ([
+    'advisor', 'agent', 'anomalies', 'book-mirror', 'brainstorm', 'capture',
+    'code-callees', 'code-callers', 'code-def', 'code-refs', 'dream',
+    'edges-backfill', 'enrich', 'export', 'features', 'forget', 'founder',
+    'graph-query', 'import', 'lsd', 'migrate', 'models', 'onboard',
+    'orphans', 'quarantine', 'recall', 'reindex', 'reindex-code',
+    'reindex-frontmatter', 'repos',
+    'salience', 'skillopt', 'transcripts', 'ze-switch',
+  ].includes(command)) return `cli:${command}:pglite-surface`;
+  return null;
+}
+
+function renderBrokeredCliCommandResult(result: unknown): void {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    emitBrokerFailure({ status: 'protocol_error', message: 'Brokered CLI command returned an invalid result.' });
+    return;
+  }
+  const candidate = result as { stdout?: unknown; stderr?: unknown; exitCode?: unknown };
+  if (typeof candidate.stdout !== 'string' || typeof candidate.stderr !== 'string' || typeof candidate.exitCode !== 'number') {
+    emitBrokerFailure({ status: 'protocol_error', message: 'Brokered CLI command returned an invalid output shape.' });
+    return;
+  }
+  if (candidate.stdout) process.stdout.write(candidate.stdout);
+  if (candidate.stderr) process.stderr.write(candidate.stderr);
+  setCliExitVerdict(candidate.exitCode);
+}
+
 function emitBrokerFailure(response: { status: string; message: string }): void {
   console.error(`PGLite owner broker error [${response.status}]: ${response.message}`);
   setCliExitVerdict(response.status === 'broker_timeout' || response.status === 'completion_unknown' ? 124 : 1);
 }
 
 async function maybeDeferPgliteMaintenanceCommand(command: string): Promise<boolean> {
-  if (!PGLITE_MAINTENANCE_COMMANDS.has(command)) return false;
+  if (!PGLITE_TYPED_GUARD_COMMANDS.has(command)) return false;
   const cfg = loadConfig();
   if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
 
@@ -946,6 +1107,15 @@ async function maybeDeferPgliteMaintenanceCommand(command: string): Promise<bool
     message: `Another PGLite owner is live; gbrain ${command} was not started. Run it again after the owner exits. Interactive query/search/think calls can use the owner broker while the owner is live.`,
   });
   return true;
+}
+
+async function runCliOnlyWithStartupRelease(fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+  } finally {
+    releaseOperationStartup(operationStartupHandle);
+    operationStartupHandle = null;
+  }
 }
 
 async function maybeStartCliOperationBroker(engine: BrainEngine): Promise<import('node:net').Server | null> {
@@ -989,7 +1159,7 @@ async function maybeRunBrokeredMcpServe(args: string[]): Promise<boolean> {
 async function forwardToLivePgliteOwner(
   operation: OperationIpcOperation,
   params: Record<string, unknown>,
-  opts: { output: 'json' | 'text' },
+  opts: { output: 'json' | 'text'; sourceId?: string; target?: OperationIpcTarget },
 ): Promise<false | Exclude<Awaited<ReturnType<typeof forwardOperationViaIpc>>, typeof OPERATION_IPC_UNAVAILABLE>> {
   const cfg = loadConfig();
   if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
@@ -1001,12 +1171,14 @@ async function forwardToLivePgliteOwner(
       requestId: `cli-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       caller: 'cli',
       operation,
+      ...(opts.target ? { target: opts.target } : {}),
       class: 'interactive',
       priority: 100,
       params,
       context: {
         remote: false,
         cwd: process.cwd(),
+        ...(opts.sourceId ? { sourceId: opts.sourceId } : {}),
         ...(process.env.GBRAIN_SOURCE ? { envSourceId: process.env.GBRAIN_SOURCE } : {}),
         output: opts.output,
       },
@@ -1018,6 +1190,42 @@ async function forwardToLivePgliteOwner(
     ok: false,
     status: 'owner_unreachable',
     message: 'PGLite lock state requires owner-broker routing, but the operation broker is not reachable.',
+  };
+}
+
+function parseCallBrokerParams(args: string[]): { operation: OperationIpcOperation; params: Record<string, unknown>; sourceId?: string } | null {
+  let explicitSource: string | undefined;
+  const rest: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--source') {
+      const next = args[i + 1];
+      if (!next || next.startsWith('--')) return null;
+      explicitSource = next;
+      i++;
+      continue;
+    }
+    if (arg.startsWith('--source=')) {
+      explicitSource = arg.slice('--source='.length);
+      continue;
+    }
+    rest.push(arg);
+  }
+  const operation = rest[0] as OperationIpcOperation | undefined;
+  if (!operation || !operations.some((op) => op.name === operation)) return null;
+  const jsonStr = rest[1];
+  let params: Record<string, unknown>;
+  try {
+    const parsed = jsonStr ? JSON.parse(jsonStr) : {};
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    params = parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+  return {
+    operation,
+    params,
+    ...(explicitSource ? { sourceId: explicitSource } : {}),
   };
 }
 
@@ -1301,6 +1509,9 @@ async function handleCliOnly(command: string, args: string[]) {
   }
 
   if (command === 'serve' && await maybeRunBrokeredMcpServe(args)) return;
+  if (command === 'call' && await maybeRunBrokeredCall(args)) return;
+  if (await maybeRunBrokeredCliCommand(command, args)) return;
+  if (await maybeDeferPgliteMaintenanceCommand(command)) return;
 
   // Commands that don't need a database connection
   if (command === 'schema') {
@@ -1342,7 +1553,7 @@ async function handleCliOnly(command: string, args: string[]) {
   }
   if (command === 'upgrade') {
     const { runUpgrade } = await import('./commands/upgrade.ts');
-    await runUpgrade(args);
+    await runCliOnlyWithStartupRelease(() => runUpgrade(args));
     return;
   }
   if (command === 'post-upgrade') {
@@ -1466,7 +1677,7 @@ async function handleCliOnly(command: string, args: string[]) {
     // connecting a second time when the orchestrator shells out to
     // `gbrain init --migrate-only` and `gbrain jobs smoke`.
     const { runApplyMigrations } = await import('./commands/apply-migrations.ts');
-    await runApplyMigrations(args);
+    await runCliOnlyWithStartupRelease(() => runApplyMigrations(args));
     return;
   }
   if (command === 'repair-jsonb') {
@@ -1784,8 +1995,6 @@ async function handleCliOnly(command: string, args: string[]) {
     }
     return;
   }
-
-  if (await maybeDeferPgliteMaintenanceCommand(command)) return;
 
   // #1633: out-of-band hard-deadline watchdog for `gbrain sync`. Installed
   // BEFORE connectEngine so a connect-phase hang (the reported zombie class) is

@@ -15,8 +15,10 @@ import { operations } from '../../src/core/operations.ts';
 
 describe('E2E: MCP Tool Generation', () => {
   test('operations generate valid MCP tool definitions', () => {
-    // This replicates exactly what server.ts does in the tools/list handler
-    const tools = operations.map(op => ({
+    // This replicates exactly what server.ts does in the tools/list handler:
+    // remote MCP surfaces do not advertise localOnly operations.
+    const visibleOps = operations.filter(op => !op.localOnly);
+    const tools = visibleOps.map(op => ({
       name: op.name,
       description: op.description,
       inputSchema: {
@@ -35,7 +37,7 @@ describe('E2E: MCP Tool Generation', () => {
       },
     }));
 
-    expect(tools.length).toBe(operations.length);
+    expect(tools.length).toBe(visibleOps.length);
     expect(tools.length).toBeGreaterThanOrEqual(30);
 
     for (const tool of tools) {
@@ -54,8 +56,8 @@ describe('E2E: MCP Tool Generation', () => {
     expect(names).toContain('query');
     expect(names).toContain('add_link');
     expect(names).toContain('get_health');
-    expect(names).toContain('sync_brain');
-    expect(names).toContain('file_upload');
+    expect(names).not.toContain('sync_brain');
+    expect(names).not.toContain('file_upload');
   });
 
   test('MCP server module can be imported', async () => {

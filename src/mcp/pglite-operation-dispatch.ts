@@ -5,15 +5,33 @@ import { resolveSourceId } from '../core/source-resolver.ts';
 import { dispatchToolCall, buildOperationContext, validateParams } from './dispatch.ts';
 import { getBrainHotMemoryMeta } from '../core/facts/meta-hook.ts';
 import type { OperationIpcContext, OperationIpcRequest } from '../core/pglite-operation-ipc.ts';
+import { resolvePgliteOwnerPolicy } from '../core/pglite-owner-policy.ts';
+import { dispatchBrokeredCliCommand } from './pglite-cli-command-dispatch.ts';
 
 export async function dispatchBrokeredOperation(
   engine: BrainEngine,
   request: OperationIpcRequest,
-): Promise<{ ok: true; result: unknown } | { ok: false; status: 'invalid_request' | 'handler_error'; message: string }> {
+): Promise<{ ok: true; result: unknown } | { ok: false; status: 'invalid_request' | 'handler_error' | 'local_only_remote_rejected'; message: string }> {
+  if (request.operation === '__cli_command__') {
+    return dispatchBrokeredCliCommand(engine, request);
+  }
+
   const op = operations.find((candidate) => candidate.name === request.operation);
   if (!op) return { ok: false, status: 'invalid_request', message: 'Unknown brokered operation.' };
 
   if (request.caller === 'mcp-stdio') {
+    const policy = resolvePgliteOwnerPolicy({
+      surfaceId: `broker:${request.operation}:mcp-stdio`,
+      target: { kind: 'operation', name: request.operation },
+      caller: 'mcp-stdio',
+    });
+    if (policy?.behaviorClass === 'typed_guard_fail_fast') {
+      return {
+        ok: false,
+        status: 'local_only_remote_rejected',
+        message: `Operation ${request.operation} is localOnly and cannot be called by remote MCP clients.`,
+      };
+    }
     return {
       ok: true,
       result: await dispatchToolCall(engine, request.operation, request.params, {
@@ -46,6 +64,7 @@ async function resolveBrokeredCliSourceId(
   request: OperationIpcRequest,
 ): Promise<string> {
   const explicit = (request.params.source as string | undefined) ?? null;
+  if (!explicit && typeof request.context.sourceId === 'string') return request.context.sourceId;
   const cwd = typeof request.context.cwd === 'string' ? request.context.cwd : process.cwd();
   const envSourceId = typeof request.context.envSourceId === 'string' ? request.context.envSourceId : null;
   return resolveSourceId(engine, explicit ?? envSourceId, cwd);

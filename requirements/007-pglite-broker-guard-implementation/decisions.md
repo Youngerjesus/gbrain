@@ -105,3 +105,11 @@
 - Applies to: worktree preflight, context-loading, implementation, implementation-brake
 - Status: accepted
 - Requirement Impact: none
+
+### 2026-06-21 00:25 KST - Lifecycle, daemon, reset, and heavy local commands use typed guards under live owner
+
+- Decision: Reclassify live-owner handling for local lifecycle/session/heavy commands that cannot safely run inside the owner broker as `typed_guard_fail_fast` instead of `serialized_owner_mutation`: `autopilot`, `claw-test`, `frontmatter`, `init`, `integrity`, `mounts`, `reinit-pglite`, `repair-jsonb`, `schema`, and `watch` variants. Keep `serve` on the owner-startup/proxy path.
+- Rationale: These commands either start long-lived sessions, manage lifecycle/reset/schema/repair state, or execute local harness/config flows where running them inside the owner IPC handler would risk blocking the owner, destructive side effects, or misleading partial success. The user approved this treatment after asking how mutating/heavy maintenance commands should behave.
+- Applies to: inventory, runtime policy, CLI live-owner guard, tests, requirement counts
+- Status: accepted
+- Requirement Impact: accepted inventory class counts changed from 217/236/15 to 217/223/28 for `broker_success_read` / `serialized_owner_mutation` / `typed_guard_fail_fast`.

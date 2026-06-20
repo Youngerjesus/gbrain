@@ -16,8 +16,8 @@ later_sequence_standard:
     - typed_guard_fail_fast
 source_fingerprints:
   src/core/operations.ts: 857e728c6d5077f4e354597963f29e388070b59dd3d60fef520d5d37a3d17110
-  src/cli.ts: 369bcfe9693a3394e5842aa6939202af051aea865ef4a62c45b71b43ac5feb12
-  src/mcp/server.ts: 8a4450039abeebf3aa947063ef3d0b3bb836e9c90b38bbc4a3c001a28515b351
+  src/cli.ts: c8ac2dd0db675ebc71734dda85bbb345a667faada063603b27c6c2637e44657b
+  src/mcp/server.ts: e929eff679a704885366e22bc420a5aa5dc1580955cac9b45bc723803ab0045f
   src/commands/serve-http.ts: 2a0778331f39c75a7d1cc8c5ebacdcbc1932b0733b8153c6cd02c76782ff8568
 required_surface_ids:
   - 'call:add_link:local-cli'
@@ -3302,7 +3302,7 @@ rows:
     database_open_site: 'src/commands/autopilot.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -3316,7 +3316,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/autopilot.ts:module-open-site'
   - id: 'cli:autopilot:pglite-surface'
@@ -3330,7 +3330,7 @@ rows:
     database_open_site: 'src/core/pglite-engine.ts:PGLiteEngine.connect'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -3344,7 +3344,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/cli.ts:CLI_ONLY'
   - id: 'cli:backlinks:operation-cli'
@@ -3613,7 +3613,7 @@ rows:
     database_open_site: 'src/commands/claw-test.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -3627,7 +3627,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/claw-test.ts:module-open-site'
   - id: 'cli:code-callees:pglite-surface'
@@ -5241,7 +5241,7 @@ rows:
     database_open_site: 'src/commands/frontmatter.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -5255,7 +5255,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/frontmatter.ts:module-open-site'
   - id: 'cli:get:operation-cli'
@@ -5437,7 +5437,7 @@ rows:
     database_open_site: 'src/commands/init.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -5451,7 +5451,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/init.ts:module-open-site'
   - id: 'cli:integrity:module-open-site'
@@ -5465,7 +5465,7 @@ rows:
     database_open_site: 'src/commands/integrity.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -5479,7 +5479,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/integrity.ts:module-open-site'
   - id: 'cli:jobs:cancel'
@@ -6037,7 +6037,7 @@ rows:
     database_open_site: 'src/commands/mounts.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -6051,7 +6051,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/mounts.ts:module-open-site'
   - id: 'cli:onboard:pglite-surface'
@@ -6489,7 +6489,7 @@ rows:
     database_open_site: 'src/commands/reinit-pglite.ts:createEngine'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -6522,7 +6522,7 @@ rows:
     database_open_site: 'src/commands/reinit-pglite.ts:createEngine'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -6555,7 +6555,7 @@ rows:
     database_open_site: 'src/commands/repair-jsonb.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -6569,7 +6569,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/repair-jsonb.ts:module-open-site'
   - id: 'cli:repos:pglite-surface'
@@ -6726,7 +6726,7 @@ rows:
     database_open_site: 'src/commands/schema.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -6740,7 +6740,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/schema.ts:module-open-site'
   - id: 'cli:search-by-image:operation-cli'
@@ -8592,7 +8592,7 @@ rows:
     database_open_site: 'src/commands/watch.ts:module-open-site'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -8606,7 +8606,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/commands/watch.ts:module-open-site'
   - id: 'cli:watch:pglite-surface'
@@ -8620,7 +8620,7 @@ rows:
     database_open_site: 'src/core/pglite-engine.ts:PGLiteEngine.connect'
     current_owner_behavior: source_open_site_classified_without_live_execution
     no_owner_baseline: direct_open_valid_when_no_owner_where_command_supports_it
-    accepted_behavior_class: serialized_owner_mutation
+    accepted_behavior_class: typed_guard_fail_fast
     scope: admin
     local_only: true
     mcp_exposed: false
@@ -8634,7 +8634,7 @@ rows:
     gauntlet:
       mode: fixture_only
       current_expected_outcome: classified_from_source_inventory
-      future_required_outcome: serialized_owner_mutation
+      future_required_outcome: typed_guard_fail_fast
     evidence_refs:
       - 'src/cli.ts:CLI_ONLY'
   - id: 'cli:whoami:operation-cli'
