@@ -4,8 +4,9 @@
  * validateModelId reads the recipe REGISTRY (not gateway _config), so it works without
  * configureGateway — that's the property makeJudgeClient + tryBuildGatewayClient rely on
  * (C1 #6). probeChatModel adds the key layer via hasAnthropicKey (env OR gbrain config
- * file — also gateway-config-independent). Non-Anthropic providers pass the probe (lazy
- * key check deferred to gateway.chat).
+ * file — also gateway-config-independent). Google chat also gets a construction-time
+ * env-key probe because `gbrain think` defaults to Gemini. Other non-Anthropic providers
+ * keep the lazy key check deferred to gateway.chat.
  *
  * Hermetic: key-sensitive cases isolate env + GBRAIN_HOME via withEnv (R1) so the dev
  * machine's real ~/.gbrain/config.json never leaks in.
@@ -15,7 +16,7 @@ import { describe, test, expect, afterEach } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { validateModelId, probeChatModel } from '../../src/core/ai/gateway.ts';
+import { configureGateway, resetGateway, validateModelId, probeChatModel } from '../../src/core/ai/gateway.ts';
 import { normalizeModelId } from '../../src/core/model-id.ts';
 import { withEnv } from '../helpers/with-env.ts';
 
@@ -28,15 +29,16 @@ function emptyHome(): string {
   return d;
 }
 afterEach(() => {
+  resetGateway();
   while (tmpDirs.length) {
     try { rmSync(tmpDirs.pop()!, { recursive: true, force: true }); } catch { /* best effort */ }
   }
 });
 
-// No-key env: ANTHROPIC_API_KEY unset + GBRAIN_HOME pointed at an empty dir so the
+// No-key env: hosted chat keys unset + GBRAIN_HOME pointed at an empty dir so the
 // config-file branch of hasAnthropicKey finds nothing.
-const noKeyEnv = () => ({ ANTHROPIC_API_KEY: undefined, GBRAIN_HOME: emptyHome() });
-const withKeyEnv = () => ({ ANTHROPIC_API_KEY: 'sk-test', GBRAIN_HOME: emptyHome() });
+const noKeyEnv = () => ({ ANTHROPIC_API_KEY: undefined, GOOGLE_GENERATIVE_AI_API_KEY: undefined, GBRAIN_HOME: emptyHome() });
+const withKeyEnv = () => ({ ANTHROPIC_API_KEY: 'sk-test', GOOGLE_GENERATIVE_AI_API_KEY: 'sk-google-test', GBRAIN_HOME: emptyHome() });
 
 describe('validateModelId (#1698 C1 core)', () => {
   test('ok for a real model id, returns parsed + recipe', () => {
@@ -79,6 +81,32 @@ describe('probeChatModel (#1698 = validity + key, config-independent)', () => {
   test('ok: anthropic + key set (no configureGateway needed)', async () => {
     await withEnv(withKeyEnv(), async () => {
       expect(probeChatModel(REAL).ok).toBe(true);
+    });
+  });
+
+  test('unavailable: google + no Gemini API key', async () => {
+    await withEnv(noKeyEnv(), async () => {
+      resetGateway();
+      const p = probeChatModel('google:gemini-3.5-flash');
+      expect(p.ok).toBe(false);
+      if (!p.ok) expect(p.reason).toBe('unavailable');
+    });
+  });
+
+  test('ok: google + GOOGLE_GENERATIVE_AI_API_KEY set', async () => {
+    await withEnv(withKeyEnv(), async () => {
+      expect(probeChatModel('google:gemini-3.5-flash').ok).toBe(true);
+    });
+  });
+
+  test('ok: google key can come from configured gateway env even when process env is unset', async () => {
+    await withEnv(noKeyEnv(), async () => {
+      configureGateway({
+        chat_model: 'google:gemini-3.5-flash',
+        env: { GOOGLE_GENERATIVE_AI_API_KEY: 'configured-google-key' },
+      });
+
+      expect(probeChatModel('google:gemini-3.5-flash').ok).toBe(true);
     });
   });
 

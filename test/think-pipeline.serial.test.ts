@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
 import { PGLiteEngine } from '../src/core/pglite-engine.ts';
 import { operationsByName } from '../src/core/operations.ts';
-import { runThink, persistSynthesis, type ThinkLLMClient } from '../src/core/think/index.ts';
+import { __thinkAdapter, runThink, persistSynthesis, type ThinkLLMClient } from '../src/core/think/index.ts';
 import { sanitizeTakeForPrompt, renderTakesBlock } from '../src/core/think/sanitize.ts';
 import { resolveCitations, parseInlineCitations, normalizeStructuredCitations } from '../src/core/think/cite-render.ts';
 import { runGather } from '../src/core/think/gather.ts';
@@ -142,6 +142,36 @@ describe('runGather', () => {
 });
 
 describe('runThink (with stub client)', () => {
+  test('defaults think synthesis to Google Gemini 3.5 Flash', async () => {
+    let capturedModel = '';
+    const stubClient: ThinkLLMClient = {
+      create: async (params) => {
+        capturedModel = params.model;
+        return {
+          id: 'msg_gemini_default',
+          type: 'message',
+          role: 'assistant',
+          model: params.model,
+          stop_reason: 'end_turn',
+          stop_sequence: null,
+          usage: { input_tokens: 1, output_tokens: 1, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, server_tool_use: null, service_tier: null },
+          content: [{
+            type: 'text',
+            text: JSON.stringify({ answer: 'ok', citations: [], gaps: [] }),
+          }],
+        };
+      },
+    };
+
+    const result = await runThink(engine, {
+      question: 'default model smoke',
+      client: stubClient,
+    });
+
+    expect(capturedModel).toBe('google:gemini-3.5-flash');
+    expect(result.modelUsed).toBe('google:gemini-3.5-flash');
+  });
+
   test('full pipeline: gather → stub synthesize → result', async () => {
     const stubClient: ThinkLLMClient = {
       create: async () => ({
@@ -207,14 +237,29 @@ describe('runThink (with stub client)', () => {
     expect(result.citations.length).toBeGreaterThanOrEqual(2);
   });
 
-  test('degrades gracefully without ANTHROPIC_API_KEY', async () => {
-    // Hermetic: neutralize BOTH the env var AND ~/.gbrain config key, else a
-    // developer/CI machine with a configured key fires a real LLM call and this
-    // assertion flips to LLM_OUTPUT_NOT_JSON.
+  test('degrades gracefully without GOOGLE_GENERATIVE_AI_API_KEY', async () => {
+    // Hermetic: neutralize hosted think keys, else a developer/CI machine with
+    // configured credentials fires a real LLM call and this assertion flips.
     const result = await withoutAnthropicKey(() => runThink(engine, { question: 'no key test' }));
-    expect(result.warnings).toContain('NO_ANTHROPIC_API_KEY');
+    expect(result.warnings).toContain('NO_GOOGLE_GENERATIVE_AI_API_KEY');
     expect(result.answer).toContain('no LLM available');
     expect(result.rounds).toBe(0);
+  });
+
+  test('late no-LLM sentinel records the Google missing-key warning instead of malformed output', async () => {
+    const stubClient: ThinkLLMClient = {
+      create: async () => __thinkAdapter.buildGracefulMessage('google:gemini-3.5-flash') as never,
+    };
+
+    const result = await runThink(engine, {
+      question: 'late no key sentinel',
+      client: stubClient,
+    });
+
+    expect(result.warnings).toContain('NO_GOOGLE_GENERATIVE_AI_API_KEY');
+    expect(result.warnings).not.toContain('LLM_OUTPUT_NOT_JSON');
+    expect(result.answer).toContain('GOOGLE_GENERATIVE_AI_API_KEY');
+    expect(result.synthesisOk).toBe(false);
   });
 
   test('persistSynthesis writes synthesis page + evidence rows', async () => {
@@ -286,7 +331,7 @@ describe('runThink — #1698 explicit-model hard error', () => {
     // model present but modelExplicit unset → early gate skipped; builder returns null.
     // Hermetic no-key so the assertion can't be perturbed by a configured key.
     const result = await withoutAnthropicKey(() => runThink(engine, { question: 'nonexplicit bad', model: 'bogusprovider:foo' }));
-    expect(result.warnings).toContain('NO_ANTHROPIC_API_KEY');
+    expect(result.warnings).toContain('NO_LLM_AVAILABLE');
     expect(result.synthesisOk).toBe(false);
   });
 });

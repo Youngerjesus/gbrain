@@ -70,6 +70,13 @@ describe('think gateway adapter — model-id normalization', () => {
     });
   });
 
+  test('tryBuildGatewayClient accepts Google Gemini 3.5 Flash for think synthesis', async () => {
+    await withEnv({ GOOGLE_GENERATIVE_AI_API_KEY: 'fake-google' }, async () => {
+      const client = await __thinkAdapter.tryBuildGatewayClient('google:gemini-3.5-flash', { explicitModel: true });
+      expect(client).not.toBeNull();
+    });
+  });
+
   test('tryBuildGatewayClient returns null on unknown provider (AIConfigError → graceful fallback)', async () => {
     const client = await __thinkAdapter.tryBuildGatewayClient('nonexistent-provider:foo-1');
     expect(client).toBeNull();

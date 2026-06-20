@@ -45,6 +45,7 @@ describe('resolveAlias', () => {
     expect(await resolveAlias(null, 'opus')).toBe(DEFAULT_ALIASES.opus);
     expect(await resolveAlias(null, 'sonnet')).toBe(DEFAULT_ALIASES.sonnet);
     expect(await resolveAlias(null, 'haiku')).toBe(DEFAULT_ALIASES.haiku);
+    expect(await resolveAlias(null, 'gemini')).toBe('google:gemini-3.5-flash');
   });
 
   test('unknown alias passes through (treats as full id)', async () => {
@@ -173,6 +174,54 @@ describe('resolveModel — v0.31.12 tier system', () => {
       fallback: 'haiku',
     });
     expect(m).toBe(TIER_DEFAULTS.reasoning);
+  });
+
+  test('per-call tierDefault loses to explicit config/default/tier/env overrides and wins over fallback', async () => {
+    stub.set('models.dream.synthesize', 'haiku');
+    process.env.GBRAIN_MODEL = 'opus';
+    expect(await resolveModel(stub as never, {
+      configKey: 'models.dream.synthesize',
+      tier: 'deep',
+      tierDefault: 'gemini',
+      fallback: 'sonnet',
+    })).toBe(DEFAULT_ALIASES.haiku);
+
+    stub = new StubEngine();
+    stub.set('models.default', 'opus');
+    process.env.GBRAIN_MODEL = 'haiku';
+    expect(await resolveModel(stub as never, {
+      configKey: 'models.dream.synthesize',
+      tier: 'deep',
+      tierDefault: 'gemini',
+      fallback: 'sonnet',
+    })).toBe(DEFAULT_ALIASES.opus);
+
+    stub = new StubEngine();
+    stub.set('models.tier.deep', 'sonnet');
+    process.env.GBRAIN_MODEL = 'haiku';
+    expect(await resolveModel(stub as never, {
+      configKey: 'models.dream.synthesize',
+      tier: 'deep',
+      tierDefault: 'gemini',
+      fallback: 'opus',
+    })).toBe(DEFAULT_ALIASES.sonnet);
+
+    stub = new StubEngine();
+    process.env.GBRAIN_MODEL = 'haiku';
+    expect(await resolveModel(stub as never, {
+      configKey: 'models.dream.synthesize',
+      tier: 'deep',
+      tierDefault: 'gemini',
+      fallback: 'sonnet',
+    })).toBe(DEFAULT_ALIASES.haiku);
+
+    delete process.env.GBRAIN_MODEL;
+    expect(await resolveModel(stub as never, {
+      configKey: 'models.dream.synthesize',
+      tier: 'deep',
+      tierDefault: 'gemini',
+      fallback: 'sonnet',
+    })).toBe(DEFAULT_ALIASES.gemini);
   });
 
   test('v0.38 D7: tier.subagent accepts non-Anthropic models that support tools (with cost warn)', async () => {

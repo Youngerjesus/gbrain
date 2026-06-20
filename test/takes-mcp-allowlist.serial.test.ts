@@ -222,7 +222,7 @@ describe('think op — read-only on remote callers (Lane D landed)', () => {
     expect(env.remote_persisted_blocked).toBe(true);
     expect(env.saved_slug).toBeNull();
     // Without API key, gather succeeds but synthesis is skipped.
-    expect(env.warnings).toContain('NO_ANTHROPIC_API_KEY');
+    expect(env.warnings).toContain('NO_GOOGLE_GENERATIVE_AI_API_KEY');
   });
 
   test('local-CLI think runs full pipeline (gather-only without API key)', async () => {
@@ -235,6 +235,6 @@ describe('think op — read-only on remote callers (Lane D landed)', () => {
     };
     expect(env.remote_persisted_blocked).toBe(false);
     // Without API key, returns gather-only + warning. With key, would actually synthesize.
-    expect(env.warnings).toContain('NO_ANTHROPIC_API_KEY');
+    expect(env.warnings).toContain('NO_GOOGLE_GENERATIVE_AI_API_KEY');
   });
 });

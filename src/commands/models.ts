@@ -30,6 +30,7 @@
 import type { BrainEngine } from '../core/engine.ts';
 import {
   DEFAULT_ALIASES,
+  THINK_SYNTHESIS_DEFAULT_MODEL,
   TIER_DEFAULTS,
   resolveModel,
   type ModelTier,
@@ -37,13 +38,13 @@ import {
 
 const TIERS: ModelTier[] = ['utility', 'reasoning', 'deep', 'subagent'];
 
-const PER_TASK_KEYS: Array<{ key: string; tier: ModelTier; description: string }> = [
+const PER_TASK_KEYS: Array<{ key: string; tier: ModelTier; description: string; tierDefault?: string }> = [
   { key: 'models.dream.synthesize',         tier: 'reasoning', description: 'Dream synthesis (conversation → brain pages)' },
   { key: 'models.dream.synthesize_verdict', tier: 'utility',   description: 'Dream synthesis verdict (Haiku judge)' },
   { key: 'models.dream.patterns',           tier: 'reasoning', description: 'Pattern discovery (cross-take themes)' },
   { key: 'models.drift',                    tier: 'reasoning', description: 'Drift LLM judge (v0.29 scaffold)' },
   { key: 'models.auto_think',               tier: 'deep',      description: 'Auto-think question answering' },
-  { key: 'models.think',                    tier: 'deep',      description: '`gbrain think` synthesis op' },
+  { key: 'models.think',                    tier: 'deep',      description: '`gbrain think` synthesis op', tierDefault: THINK_SYNTHESIS_DEFAULT_MODEL },
   { key: 'models.subagent',                 tier: 'subagent',  description: '`gbrain agent run` subagent loop' },
   { key: 'facts.extraction_model',          tier: 'reasoning', description: 'Real-time facts extraction during sync' },
   { key: 'models.eval.longmemeval',         tier: 'reasoning', description: 'LongMemEval benchmark answer-gen' },
@@ -66,12 +67,16 @@ interface ModelsReport {
   aliases: { defaults: Record<string, string>; user: Record<string, string> };
 }
 
-async function probeSource(engine: BrainEngine, configKey: string, envVar: string): Promise<string | null> {
+async function probeSource(engine: BrainEngine, configKey: string, tier: ModelTier, envVar: string): Promise<string | null> {
   // For per-task probes, return the source the resolver USED (config / env /
   // tier default / hardcoded). The resolver itself is the source of truth;
   // we re-walk a subset of its precedence here to attribute the value.
   const configVal = await engine.getConfig(configKey);
   if (configVal && configVal.trim()) return `config: ${configKey}`;
+  const globalDefault = await engine.getConfig('models.default');
+  if (globalDefault && globalDefault.trim()) return 'config: models.default';
+  const tierVal = await engine.getConfig(`models.tier.${tier}`);
+  if (tierVal && tierVal.trim()) return `config: models.tier.${tier}`;
   if (process.env[envVar] && process.env[envVar]!.trim()) return `env: ${envVar}`;
   return null;
 }
@@ -88,6 +93,8 @@ async function buildReport(engine: BrainEngine): Promise<ModelsReport> {
       source = 'config: models.default';
     } else if (tierOverride && tierOverride.trim()) {
       source = `config: models.tier.${t}`;
+    } else if (process.env.GBRAIN_MODEL && process.env.GBRAIN_MODEL.trim()) {
+      source = 'env: GBRAIN_MODEL';
     } else {
       source = 'default';
     }
@@ -96,10 +103,10 @@ async function buildReport(engine: BrainEngine): Promise<ModelsReport> {
   }
 
   const per_task: ModelsReport['per_task'] = [];
-  for (const { key, tier, description } of PER_TASK_KEYS) {
-    const resolved = await resolveModel(engine, { configKey: key, tier, fallback: TIER_DEFAULTS[tier] });
-    const explicit = await probeSource(engine, key, 'GBRAIN_MODEL');
-    const source = explicit ?? `tier.${tier}`;
+  for (const { key, tier, description, tierDefault } of PER_TASK_KEYS) {
+    const resolved = await resolveModel(engine, { configKey: key, tier, tierDefault, fallback: TIER_DEFAULTS[tier] });
+    const explicit = await probeSource(engine, key, tier, 'GBRAIN_MODEL');
+    const source = explicit ?? (tierDefault ? 'task.default' : `tier.${tier}`);
     per_task.push({ key, tier, resolved, source, description });
   }
 

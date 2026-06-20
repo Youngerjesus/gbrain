@@ -39,11 +39,12 @@ gbrain migrate --to pglite       # Postgres → PGLite (rare)
 
 For shared / large / multi-machine deployments (a team or company brain with multiple users hitting one server over HTTP MCP with OAuth scoping per user), follow the dedicated walkthrough: **[Tutorial: set up GBrain as your company brain](tutorials/company-brain.md)**.
 
-API keys live in `~/.gbrain/config.json` (file plane) or env vars (`OPENAI_API_KEY`, `ZEROENTROPY_API_KEY`, `VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`). Set via CLI:
+API keys live in `~/.gbrain/config.json` (file plane) or env vars (`OPENAI_API_KEY`, `ZEROENTROPY_API_KEY`, `VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`). Set file-plane keys via CLI and provider-native env keys in your shell:
 
 ```bash
 gbrain config set zeroentropy_api_key sk-...
 gbrain config set anthropic_api_key sk-ant-...
+export GOOGLE_GENERATIVE_AI_API_KEY=...
 ```
 
 Common follow-ups:

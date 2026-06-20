@@ -1,9 +1,10 @@
 /**
  * v0.28: `gbrain think` — INTENT → GATHER → SYNTHESIZE → (optional) COMMIT.
  *
- * v0.28.0 ships the full pipeline. The Anthropic call is dependency-injected
- * (MessagesClient interface) so tests can stub it without an API key. Live
- * runs require ANTHROPIC_API_KEY in the environment.
+ * v0.28.0 ships the full pipeline. The synthesis call is dependency-injected
+ * (MessagesClient interface) so tests can stub it without an API key. The
+ * default live model is Google Gemini and requires GOOGLE_GENERATIVE_AI_API_KEY
+ * unless the caller overrides the model.
  *
  * --rounds scaffolding: round 1 is the only round actually exercised in
  * v0.28. Round N+1 fed by gaps from round N is the v0.29 follow-up; the
@@ -23,7 +24,7 @@ import { runGather, renderPagesBlock, takesHitToTakeForPrompt } from './gather.t
 import { renderTakesBlock } from './sanitize.ts';
 import { buildThinkSystemPrompt, buildThinkUserMessage } from './prompt.ts';
 import { resolveCitations, type ParsedCitation } from './cite-render.ts';
-import { resolveModel } from '../model-config.ts';
+import { THINK_SYNTHESIS_DEFAULT_MODEL, resolveModel } from '../model-config.ts';
 import { chat as gatewayChat, probeChatModel, type ChatResult } from '../ai/gateway.ts';
 import { AIConfigError } from '../ai/errors.ts';
 import { normalizeModelId } from '../model-id.ts';
@@ -235,7 +236,8 @@ export async function runThink(
     cliFlag: opts.model,
     configKey: 'models.think',
     tier: 'deep',
-    fallback: 'opus',  // think is the high-stakes synthesis op; opus is the right default
+    tierDefault: THINK_SYNTHESIS_DEFAULT_MODEL,
+    fallback: 'gemini',
   });
 
   // #1698: fail fast on an unresolvable EXPLICIT model (CLI --model, or the MCP op's
@@ -439,11 +441,11 @@ export async function runThink(
     // Closes #952 (think over MCP returns "no LLM available").
     const client = opts.client ?? await tryBuildGatewayClient(modelUsed, { explicitModel: opts.modelExplicit });
     if (!client) {
-      warnings.push('NO_ANTHROPIC_API_KEY');
+      warnings.push(missingModelWarning(modelUsed));
       // Degrade gracefully: return the gather without synthesis. Better than throwing.
       return {
         question: opts.question,
-        answer: '(no LLM available — set ANTHROPIC_API_KEY or pass `client`)',
+        answer: `(no LLM available — configure credentials for ${modelUsed} or pass \`client\`)`,
         citations: [],
         gaps: ['no LLM available; gather succeeded but synthesis skipped'],
         pagesGathered: gather.pages.length,
@@ -471,7 +473,7 @@ export async function runThink(
     const text = block && 'text' in block ? block.text : '';
     const parsed = tryParseJSON(text);
     if (!parsed || typeof parsed !== 'object') {
-      warnings.push('LLM_OUTPUT_NOT_JSON');
+      warnings.push(isGracefulNoLlmMessage(text) ? missingModelWarning(modelUsed) : 'LLM_OUTPUT_NOT_JSON');
       synthesisOk = false;  // #1698: malformed output (and the non-JSON graceful sentinel)
       response = { answer: text, citations: [], gaps: [] };
     } else {
@@ -728,11 +730,33 @@ function mapStopReason(s: ChatResult['stopReason']): 'end_turn' | 'max_tokens' |
   }
 }
 
+function missingModelWarning(modelStr: string): string {
+  const normalized = normalizeModelId(modelStr);
+  if (normalized.startsWith('google:')) return 'NO_GOOGLE_GENERATIVE_AI_API_KEY';
+  if (normalized.startsWith('anthropic:')) return 'NO_ANTHROPIC_API_KEY';
+  return 'NO_LLM_AVAILABLE';
+}
+
+function isGracefulNoLlmMessage(text: string): boolean {
+  return text.startsWith('(no LLM available');
+}
+
+function missingModelSetupHint(modelStr: string): string {
+  const normalized = normalizeModelId(modelStr);
+  if (normalized.startsWith('google:')) {
+    return 'set GOOGLE_GENERATIVE_AI_API_KEY';
+  }
+  if (normalized.startsWith('anthropic:')) {
+    return 'set anthropic_api_key via gbrain config or ANTHROPIC_API_KEY env';
+  }
+  return `configure credentials for ${modelStr}`;
+}
+
 /**
  * Sentinel Message returned when gateway.chat throws AIConfigError (typically
  * missing API key for the resolved provider). The caller's JSON parser will
- * fail on this text, fall through to `LLM_OUTPUT_NOT_JSON`, and surface the
- * sentinel as the answer — matches the legacy graceful-degradation shape.
+ * fail on this text, record a provider-specific no-LLM warning, and surface
+ * the sentinel as the answer — matches the legacy graceful-degradation shape.
  */
 function buildGracefulMessage(modelStr: string): {
   id: string;
@@ -748,7 +772,7 @@ function buildGracefulMessage(modelStr: string): {
     type: 'message',
     role: 'assistant',
     model: modelStr,
-    content: [{ type: 'text', text: '(no LLM available — set anthropic_api_key via gbrain config or ANTHROPIC_API_KEY env)' }],
+    content: [{ type: 'text', text: `(no LLM available — ${missingModelSetupHint(modelStr)})` }],
     usage: { input_tokens: 0, output_tokens: 0 },
     stop_reason: 'end_turn',
   };
@@ -763,5 +787,7 @@ export const __thinkAdapter = {
   chatResultToMessage,
   mapStopReason,
   buildGracefulMessage,
+  missingModelWarning,
+  isGracefulNoLlmMessage,
   hasAnthropicKey,
 };

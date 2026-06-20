@@ -2,7 +2,8 @@
  * v0.28: `gbrain think <question>` CLI.
  *
  * Thin wrapper around runThink + persistSynthesis. Local CLI = remote=false,
- * so --save and --take are honored. Reads ANTHROPIC_API_KEY from the env;
+ * so --save and --take are honored. The default synthesis model reads
+ * GOOGLE_GENERATIVE_AI_API_KEY from the env;
  * degrades to gather-only output with a warning if missing.
  */
 import type { BrainEngine } from '../core/engine.ts';
@@ -43,9 +44,9 @@ the synthesis page is persisted AND printed. If --save is given but no synthesis
 was produced (no LLM available, or empty result), nothing is saved and the command
 exits non-zero.
 
-Set ANTHROPIC_API_KEY (or run: gbrain config set anthropic_api_key ...) to run
-real synthesis. Without it AND without --save, the gather phase still runs and
-prints what would have been the input (exit 0).
+Set GOOGLE_GENERATIVE_AI_API_KEY to run real synthesis with the default Gemini
+model. Without it AND without --save, the gather phase still runs and prints
+what would have been the input (exit 0).
 `);
     return;
   }

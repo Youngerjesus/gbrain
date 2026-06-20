@@ -49,6 +49,10 @@ describe('CANONICAL_PRICING — table integrity', () => {
       CANONICAL_PRICING['google:gemini-2.0-flash'],
     );
   });
+
+  test('Gemini 3.5 Flash present at $1.50/$9.00', () => {
+    expect(CANONICAL_PRICING['google:gemini-3.5-flash']).toEqual({ input: 1.5, output: 9.0 });
+  });
 });
 
 describe('canonicalLookup — id normalization', () => {

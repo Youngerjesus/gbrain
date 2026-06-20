@@ -9,8 +9,10 @@
  *   3. Old-key config (deprecated dream.synthesize.model, dream.patterns.model)
  *      — read with stderr deprecation warning, one-per-process
  *   4. Global default (models.default)
- *   5. Env var (process.env[envVar] or GBRAIN_MODEL)
- *   6. Hardcoded fallback (caller-supplied)
+ *   5. Tier override (models.tier.<tier>)
+ *   6. Env var (process.env[envVar] or GBRAIN_MODEL)
+ *   7. Tier default or per-call tierDefault
+ *   8. Hardcoded fallback (caller-supplied)
  *
  * Aliases (`opus`, `sonnet`, `haiku`, `gemini`, `gpt`) resolve at the end so any
  * tier can use a short name. Unknown alias passes through unchanged so users can
@@ -44,6 +46,13 @@ export interface ResolveModelOpts {
    * with a one-shot stderr warn instead).
    */
   tier?: ModelTier;
+  /**
+   * Optional per-call default for the selected tier. This preserves the
+   * resolution ladder (explicit config/env still win) while letting a specific
+   * task move off the global tier default without changing every consumer of
+   * that tier.
+   */
+  tierDefault?: string;
   /** Hardcoded last-resort fallback. */
   fallback: string;
 }
@@ -58,7 +67,7 @@ export const DEFAULT_ALIASES: Record<string, string> = {
   opus:   'anthropic:claude-opus-4-7',
   sonnet: 'anthropic:claude-sonnet-4-6',
   haiku:  'anthropic:claude-haiku-4-5-20251001',
-  gemini: 'google:gemini-3-pro',
+  gemini: 'google:gemini-3.5-flash',
   gpt:    'openai:gpt-5',
 };
 
@@ -77,6 +86,8 @@ export const TIER_DEFAULTS: Record<ModelTier, string> = {
   deep:      'anthropic:claude-opus-4-7',
   subagent:  'anthropic:claude-sonnet-4-6',
 };
+
+export const THINK_SYNTHESIS_DEFAULT_MODEL = 'google:gemini-3.5-flash';
 
 /**
  * v0.31.12 subagent runtime enforcement (layer 2).
@@ -126,7 +137,7 @@ function emitDeprecationWarning(oldKey: string, newKey: string, ignored: boolean
 }
 
 /**
- * Resolve a model name through the 6-tier precedence chain. Async because it
+ * Resolve a model name through the precedence chain. Async because it
  * reads config from the engine. Pass `engine: null` for callsites that don't
  * have an engine (rare; usually CLI bootstrap before connect).
  */
@@ -192,8 +203,8 @@ export async function resolveModel(
 
   // 7. Tier default (v0.31.12 — when no override beats us, the tier's
   //    canonical model wins over caller-supplied fallback)
-  if (opts.tier && TIER_DEFAULTS[opts.tier]) {
-    return await resolveAlias(engine, TIER_DEFAULTS[opts.tier]);
+  if (opts.tier && (opts.tierDefault || TIER_DEFAULTS[opts.tier])) {
+    return await resolveAlias(engine, opts.tierDefault ?? TIER_DEFAULTS[opts.tier]);
   }
 
   // 8. Hardcoded fallback (caller-supplied)

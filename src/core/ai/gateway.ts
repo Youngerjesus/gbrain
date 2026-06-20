@@ -2454,8 +2454,10 @@ export function validateModelId(modelStr: string): ModelIdValidity {
  * tests, and preserves the historical key-detection source (codex #6; the prior
  * draft used `isAvailable`, which reads gateway `_config.env` and would have
  * regressed the builder + broken every test that skips `configureGateway`).
- * Non-Anthropic providers are checked LAZILY at `gateway.chat()` time (build the
- * client, let the call surface AIConfigError) — matches the deliberate
+ * Google is checked against the same configured gateway env used by
+ * `instantiateChat()` because `gbrain think` defaults to Gemini. Other
+ * non-Anthropic providers are checked LAZILY at `gateway.chat()` time (build
+ * the client, let the call surface AIConfigError) — matches the deliberate
  * per-transcript-degrade contract (test A9: a deepseek judge with no key returns
  * a client, not null).
  */
@@ -2471,6 +2473,17 @@ export function probeChatModel(modelStr: string): ChatModelProbe {
       ok: false,
       reason: 'unavailable',
       detail: 'no Anthropic API key configured (set ANTHROPIC_API_KEY or run: gbrain config set anthropic_api_key ...)',
+    };
+  }
+  if (
+    v.parsed.providerId === 'google'
+    && !process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    && !_config?.env.GOOGLE_GENERATIVE_AI_API_KEY
+  ) {
+    return {
+      ok: false,
+      reason: 'unavailable',
+      detail: 'no Google Gemini API key configured (set GOOGLE_GENERATIVE_AI_API_KEY)',
     };
   }
   return { ok: true };
