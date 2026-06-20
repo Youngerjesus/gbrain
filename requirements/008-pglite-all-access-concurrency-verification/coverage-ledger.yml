@@ -1,0 +1,246 @@
+requirement_id: 008-pglite-all-access-concurrency-verification
+ledger_version: 1
+ledger_required: true
+status: verified
+last_updated_by_gate: implementation
+last_updated_at: "2026-06-21T02:39:31+09:00"
+closure_policy:
+  allowed_closed_statuses:
+    - verified
+    - not_required_with_reason
+    - deferred_with_user_acceptance
+  blocking_statuses:
+    - planned
+    - missing
+    - blocked
+    - stale_needs_recheck
+  evidence_rule: typed_evidence_required
+coverage_rows:
+  - row_id: inputs.inventory_and_implementation_contracts
+    required: true
+    obligation_type: artifact_contract
+    description: Requirement 008 consumes requirement 006 inventory and requirement 007 implementation evidence without rediscovery, row loss, stale fingerprints, or unapproved class drift.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC1
+      - requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+    data_condition: inventory validator passes and requirement 007 closeout artifacts are present before matrix generation
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: artifact_role_test
+        ref: "bun test test/pglite-owner-policy.test.ts"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: matrix.definition_completeness
+    required: true
+    obligation_type: schema_contract
+    description: The named command matrix represents every accepted inventory row with row id, command/tool, caller context, behavior class, execution safety mode, data preconditions, timeout budget, and expected product-boundary result.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC2
+    data_condition: matrix schema and row parity validator fail on missing rows, duplicate row ids, stale fingerprints, or missing safety metadata
+    required_evidence:
+      - schema_validator_test
+      - negative_fixture_test
+    status: verified
+    evidence_refs:
+      - type: schema_validator_test
+        ref: "test/pglite-all-access-matrix-validator.test.ts::generates a matrix row for every accepted inventory row with preserved classes and trust fields"
+        path: pglite-all-access-command-matrix.yml
+        artifact_hash: "sha256:b7bd2fb718d7cc5a14ff4340a16991f56b5c2c0b5d6656401f27aafac06ebcc4"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: negative_fixture_test
+        ref: "test/pglite-all-access-matrix-validator.test.ts::rejects missing rows, class drift, trust-boundary drift, execution downgrades, and ambiguous HTTP evidence"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: matrix.repeated_concurrency_execution
+    required: true
+    obligation_type: verification_contract
+    description: Every live-runnable matrix row runs N=3 concurrent attempts under a healthy live local owner in a temporary PGLite home/source.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC3
+    data_condition: result artifact records per-attempt exit code, stdout, stderr, duration, structured error fields, owner status when available, and cleanup status
+    required_evidence:
+      - targeted_validator_command
+    status: verified
+    evidence_refs:
+      - type: targeted_validator_command
+        ref: "bun run scripts/run-pglite-all-access-matrix.ts --matrix requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-command-matrix.yml --output_dir requirements/008-pglite-all-access-concurrency-verification --run_id req-008-full-local --json"
+        path: pglite-all-access-results.jsonl
+        artifact_hash: "sha256:e55ac536828505191d3e49b6c7dbafbccdc72c9118dc5334c83abd3abdd95d85"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: matrix.zero_raw_timeout
+    required: true
+    obligation_type: regression_fixture
+    description: No in-scope attempt exposes raw PGLite lock/connect timeout or untyped connect-timeout failure at the product boundary.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC4
+    data_condition: raw-timeout classifier fails on known raw timeout fixtures and passes only when every matrix attempt has raw_lock_timeout_observed false
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: verified
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: "test/pglite-all-access-matrix-validator.test.ts::classifies raw PGLite lock text from full streams even when retained tails are clean"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: expected_error_assertions
+        ref: "requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-validation.json summary.raw_timeout_count == 0"
+        path: pglite-all-access-validation.json
+        artifact_hash: "sha256:e1bb34b032f0be4043d4ddbb0c9e5cbd8157e1025afc35a43f830de8bbb7f30f"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: matrix.behavior_class_preservation
+    required: true
+    obligation_type: regression_fixture
+    description: Each row preserves the accepted behavior class instead of passing by weaker typed guard, guard-only downgrade, or unapproved class mismatch.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC5
+      - requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml
+    data_condition: class validator compares observed final outcome against accepted inventory class and blocks unapproved drift
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: verified
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: "test/pglite-all-access-matrix-validator.test.ts::validates result bundles for exact attempts, coherent run identity, no raw timeout, and behavior class preservation"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: expected_error_assertions
+        ref: "bun run scripts/validate-pglite-all-access-matrix.ts --matrix requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-command-matrix.yml --inventory requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --results requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-results.jsonl --manifest requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-run-manifest.json --json"
+        path: pglite-all-access-validation.json
+        artifact_hash: "sha256:e1bb34b032f0be4043d4ddbb0c9e5cbd8157e1025afc35a43f830de8bbb7f30f"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: surfaces.heavy_filesystem_maintenance
+    required: true
+    obligation_type: workflow_policy
+    description: Sync, embed, extract, doctor remediation, migrations, and file upload are included through live, safe fixture, dry-run, or typed-guard verification as appropriate.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC6
+    data_condition: no explicitly scoped surface is omitted because it is destructive, heavy, or filesystem-sensitive; unsafe execution is represented with row-specific safety evidence
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: verified
+    evidence_refs:
+      - type: structured_contract_fixture
+        ref: "requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-command-matrix.yml includes sync, embed, extract, doctor, migrations, and file upload rows with execution modes"
+        path: pglite-all-access-command-matrix.yml
+        artifact_hash: "sha256:b7bd2fb718d7cc5a14ff4340a16991f56b5c2c0b5d6656401f27aafac06ebcc4"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: positive_negative_trigger_tests
+        ref: "test/pglite-all-access-matrix-validator.test.ts required surface and execution-mode tests"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: trust_boundary.preserved_during_matrix
+    required: true
+    obligation_type: workflow_policy
+    description: Local CLI, local MCP, remote MCP, protected operation, local-only operation, and file_upload trust boundaries remain at least as strict during verification.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC7
+    data_condition: verification runner uses temporary homes and cannot broaden remote access, bypass OperationContext.remote, or run filesystem-sensitive operations outside confinement
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: verified
+    evidence_refs:
+      - type: structured_contract_fixture
+        ref: "matrix rows preserve local_only, mcp_exposed, operation_context_remote, filesystem_confinement, caller_surface, and transport"
+        path: pglite-all-access-command-matrix.yml
+        artifact_hash: "sha256:b7bd2fb718d7cc5a14ff4340a16991f56b5c2c0b5d6656401f27aafac06ebcc4"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: positive_negative_trigger_tests
+        ref: "test/pglite-all-access-matrix-validator.test.ts::rejects missing rows, class drift, trust-boundary drift, execution downgrades, and ambiguous HTTP evidence"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: evidence.structured_result_artifacts
+    required: true
+    obligation_type: evidence_contract
+    description: Matrix output is machine-readable and human-readable, with exit code, stdout/stderr evidence, structured error shape, raw-timeout classification, pass/fail reason, attempts, owner lifecycle, environment hygiene, and reproduction command.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC8
+    data_condition: evidence validator rejects route-only summaries, prose-only evidence, missing stderr/error-shape capture, and invalid artifact paths
+    required_evidence:
+      - evidence_compatibility_test
+      - negative_route_only_nested_state_fixture
+      - negative_prose_only_fixture
+    status: verified
+    evidence_refs:
+      - type: evidence_compatibility_test
+        ref: "test/pglite-all-access-concurrency-matrix.serial.test.ts::writes one coherent N=3 result bundle with no raw timeout or behavior-class downgrade"
+        path: pglite-all-access-run-manifest.json
+        artifact_hash: "sha256:2f56297a1ad1326e22c75961af0c71336448cbaa62347d6bf29df66455c4580e"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: negative_route_only_nested_state_fixture
+        ref: "validator rejects stale_or_mixed_artifact, owner_lost, and cleanup_failed result bundles"
+        path: pglite-all-access-validation.json
+        artifact_hash: "sha256:e1bb34b032f0be4043d4ddbb0c9e5cbd8157e1025afc35a43f830de8bbb7f30f"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: negative_prose_only_fixture
+        ref: "validator requires JSONL result fields including stderr_tail, structured_error, hashes, run_id, owner_status, and cleanup_status"
+        path: pglite-all-access-results.jsonl
+        artifact_hash: "sha256:e55ac536828505191d3e49b6c7dbafbccdc72c9118dc5334c83abd3abdd95d85"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: failure_mode.fail_closed
+    required: true
+    obligation_type: closure_contract
+    description: Missing rows, stale inventory, unclassified stderr, cleanup failure, owner uncertainty, partial capture, unsupported safety mode, or row mismatch fail closed and block closeout.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC9
+    data_condition: closure validator has counterexamples proving ambiguous or incomplete matrix results cannot be marked verified
+    required_evidence:
+      - closure_validator_test
+      - status_counterexample_fixture
+    status: verified
+    evidence_refs:
+      - type: closure_validator_test
+        ref: "python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/008-pglite-all-access-concurrency-verification"
+        path: pglite-all-access-validation.json
+        artifact_hash: "sha256:e1bb34b032f0be4043d4ddbb0c9e5cbd8157e1025afc35a43f830de8bbb7f30f"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: status_counterexample_fixture
+        ref: "test/pglite-all-access-matrix-validator.test.ts broken bundle assertions for raw_timeout_observed, behavior_class_mismatch, stale_or_mixed_artifact, owner_lost, cleanup_failed, wrong_attempt_count"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+  - row_id: handoff.production_readiness
+    required: true
+    obligation_type: artifact_contract
+    description: Closeout records exact commands, matrix artifact paths, coverage closure, unresolved risks, approved deferrals, and handoff to requirement 009.
+    source_refs:
+      - requirements/008-pglite-all-access-concurrency-verification/requirements.md#AC10
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md
+    data_condition: requirement 009 can read the evidence package and produce a production-readiness verdict without rerunning requirement discovery
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-summary.md records run id, matrix rows, attempts, validation pass, raw timeout count, cleanup status, and failed rows"
+        path: pglite-all-access-summary.md
+        artifact_hash: "sha256:d880982672e13f4e0753400f43584a44a539ed6b76030a3e69d65e4b2c1789c2"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+      - type: artifact_role_test
+        ref: "requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-run-manifest.json ties run id, matrix hash, inventory hash, results hash, owner session, and cleanup"
+        path: pglite-all-access-run-manifest.json
+        artifact_hash: "sha256:2f56297a1ad1326e22c75961af0c71336448cbaa62347d6bf29df66455c4580e"
+        recorded_in: requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    recorded_in:
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md

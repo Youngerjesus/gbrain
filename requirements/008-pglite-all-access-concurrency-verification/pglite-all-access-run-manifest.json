@@ -1,0 +1,27 @@
+{
+  "run_id": "req-008-full-local",
+  "matrix_sha256": "c747466ca5363011713d66254d62dbfa327ca932c078fb6700a96d7321a986a8",
+  "inventory_sha256": "ad1b15cea9dedb7756431e96edc4101a7a41a839a8de80c53a4954d89eb0675c",
+  "source_fingerprints": {
+    "src/core/operations.ts": "857e728c6d5077f4e354597963f29e388070b59dd3d60fef520d5d37a3d17110",
+    "src/cli.ts": "c8ac2dd0db675ebc71734dda85bbb345a667faada063603b27c6c2637e44657b",
+    "src/mcp/server.ts": "e929eff679a704885366e22bc420a5aa5dc1580955cac9b45bc723803ab0045f",
+    "src/commands/serve-http.ts": "2a0778331f39c75a7d1cc8c5ebacdcbc1932b0733b8153c6cd02c76782ff8568"
+  },
+  "status": "pass",
+  "cleanup_status": "clean",
+  "owner_session": {
+    "id": "d76c4f5baa3c1d5b",
+    "status": "healthy",
+    "owner_process": "gbrain serve",
+    "owner_pid_observed": true,
+    "operation_socket_path_sha256": "c64f0c4366779b839dcefd3c4c4fa6f7b9ae807ad67c7ccef03e8b7870197a65",
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ac3185cbfbde5fed8a29b328c89937a0fe09f2b21edc581515e12f1c5da5489a"
+  },
+  "artifact_hashes": {
+    "results_sha256": "e55ac536828505191d3e49b6c7dbafbccdc72c9118dc5334c83abd3abdd95d85"
+  },
+  "started_at": "2026-06-20T19:07:14.157Z",
+  "completed_at": "2026-06-20T19:07:14.157Z"
+}

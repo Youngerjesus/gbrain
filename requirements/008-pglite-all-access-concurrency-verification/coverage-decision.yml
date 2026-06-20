@@ -1,0 +1,23 @@
+requirement_id: 008-pglite-all-access-concurrency-verification
+decision_version: 1
+ledger_required: true
+ledger_path: coverage-ledger.yml
+trigger_evaluation:
+  signals:
+    subtask_count: 10
+    module_count: 8
+    acceptance_criteria_count: 10
+    many_acceptance_criteria: true
+    multiple_workflow_skills: true
+    validator_and_fixture_foundation: true
+    bulk_data_migration: false
+    multi_state_ui: false
+    low_risk_mechanical_edits: false
+  rationale: Requirement 008 verifies the full 468-row PGLite access matrix across CLI/MCP surfaces, behavior classes, live-owner states, trust boundaries, destructive/heavy safety modes, and structured evidence artifacts.
+source_refs:
+  - requirements/008-pglite-all-access-concurrency-verification/requirements.md#Acceptance-Criteria
+  - requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml
+  - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - goal-requirements/002-pglite-all-access-concurrency/sequence.md
+decided_by_gate: requirement-clarifier
+decided_at: "2026-06-20T17:39:31Z"

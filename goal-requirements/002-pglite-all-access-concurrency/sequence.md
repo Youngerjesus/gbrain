@@ -16,7 +16,7 @@ All PGLite-touching CLI and MCP paths are classified and covered by deterministi
 
 - [x] 1. `requirements/006-pglite-access-path-inventory/requirements.md` - outcome: complete access-path inventory, operation classification, and a minimal failing/reproducing concurrency gauntlet for all PGLite-touching paths.
 - [x] 2. `requirements/007-pglite-broker-guard-implementation/requirements.md` - outcome: implement per-operation broker-success, serialized owner execution, or typed guard-fail-fast behavior according to the accepted inventory classification.
-- [ ] 3. `requirements/008-pglite-all-access-concurrency-verification/requirements.md` - outcome: prove the named command matrix has zero raw PGLite lock/connect timeout failures across repeated concurrent attempts, with exit code, stderr, and error-shape evidence.
+- [x] 3. `requirements/008-pglite-all-access-concurrency-verification/requirements.md` - outcome: prove the named command matrix has zero raw PGLite lock/connect timeout failures across repeated concurrent attempts, with exit code, stderr, and error-shape evidence.
 - [ ] 4. `requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md` - outcome: sequence-level readiness verdict covering trust boundary preservation, operator recovery guidance, documentation, and launch handoff state.
 
 ## State Files

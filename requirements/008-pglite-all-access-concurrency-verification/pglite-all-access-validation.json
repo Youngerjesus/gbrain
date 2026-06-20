@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "executable_row_count": 380,
+    "safe_non_execution_row_count": 88,
+    "result_count": 1140,
+    "raw_timeout_count": 0,
+    "failed_row_ids": []
+  }
+}

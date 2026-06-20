@@ -2,10 +2,10 @@
 
 ## Current State
 
-- Current requirement: `requirements/008-pglite-all-access-concurrency-verification/requirements.md`
+- Current requirement: `requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md`
 - Current gate: not_started
-- Status: requirement 007 complete; sequence item 2 checked off after implementation-brake `[SHIP]`, coverage ledger closure, and closeout.
-- Next action: start requirement 008 requirement acceptance/readiness for the repeated named command matrix.
+- Status: requirement 008 closed and sequence item 3 checked complete after implementation-brake `[SHIP]`, coverage ledger closure, and closeout.
+- Next action: start requirement 009 production-readiness.
 
 ## Outcome Contract
 
@@ -23,6 +23,42 @@
 - Internal blocker: sequence requirements not yet complete
 
 ## Log
+
+### 2026-06-21 02:39 KST
+
+- Requirement: `requirements/008-pglite-all-access-concurrency-verification/requirements.md`
+- Gate: implementation
+- Result: TDD implementation completed for the final all-access matrix generator, matrix/result validator, and full-loop artifact writer. Generated the requirement-local 468-row matrix and full result bundle: 380 executable rows, 1140 N=3 attempts, 88 safe-non-execution rows, zero raw timeout observations, and no failed rows. Coverage-ledger closure passed.
+- Verification: matrix validator tests -> 4 pass; serial matrix runner test -> 1 pass; inventory validator -> pass; owner policy parity -> pass; all-access matrix/result CLI validator -> pass; coverage ledger closure -> pass; broker regression -> 51 pass; inventory validator suite -> 15 pass; `bun run typecheck` -> pass.
+- Requirement Impact: none.
+- Next: run devex-review, implementation-brake, and closeout.
+
+### 2026-06-21 02:39 KST
+
+- Requirement: `requirements/008-pglite-all-access-concurrency-verification/requirements.md`
+- Gate: implementation-brake repair
+- Result: accepted review blockers repaired, including real `gbrain serve` owner evidence for live/typed rows, exact N=3 result validation, stale matrix/result/source fingerprint rejection, full-stream raw timeout classification, typed guard shape enforcement, explicit failure-flag rejection, fixture evidence backed by `resolvePgliteOwnerPolicy(...)` plus controlled dispatch request/output provenance, and recomputed dispatch provenance hashes.
+- Verification: targeted 4-test suite -> 26 pass after final hash test; all-access matrix/result validator -> pass with 380 executable rows, 1140 attempts, raw timeout count 0; inventory validator -> pass; coverage ledger closure -> pass; broker regression -> 51 pass; `bun run typecheck` -> pass.
+- Requirement Impact: none.
+- Next: rerun final implementation-brake companion review, then closeout.
+
+### 2026-06-21 02:39 KST
+
+- Requirement: `requirements/008-pglite-all-access-concurrency-verification/requirements.md`
+- Gate: implementation-brake
+- Result: final implementation-brake reviewer returned `[SHIP]`; no ship-blocking findings remained after controlled-dispatch fixture provenance, explicit failure-state rejection, and stale fixture hash validation.
+- Verification: reviewer reran matrix validator, all-access validator, and coverage ledger closure; independent artifact scan checked 1125 fixture attempts with `fixture_hash_mismatches: 0`.
+- Requirement Impact: none.
+- Next: closeout.
+
+### 2026-06-21 02:39 KST
+
+- Requirement: `requirements/008-pglite-all-access-concurrency-verification/requirements.md`
+- Gate: closeout
+- Result: requirement 008 closed; sequence checkbox marked complete. Context Sync not required because no durable repo-level policy, public CLI behavior, architecture boundary, or user-facing documentation changed beyond requirement-local verification tooling and evidence artifacts. No safe/useful touched-area closeout refactor candidate found.
+- Verification: targeted all-access/inventory/owner-policy suite -> 26 pass; all-access matrix/result validator -> pass; coverage ledger closure -> pass; broker regression -> 51 pass; `bun run typecheck` -> pass.
+- Requirement Impact: none.
+- Next: start requirement 009 production-readiness.
 
 ### 2026-06-20 18:16 KST
 
