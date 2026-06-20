@@ -163,6 +163,29 @@ RRF fusion, multi-query expansion, and 4-layer dedup are engine-agnostic. They o
 - tsvector + ts_rank for full-text search (same as Postgres)
 - pg_trgm for fuzzy slug resolution (same as Postgres)
 
+**Concurrent local callers:** PGLite still has a single embedded database owner,
+but gbrain exposes a local operation broker while a CLI or stdio MCP process owns
+that database. When another local caller sees a live PGLite lock, `query`,
+free-text `search`, and `think` route over `~/.gbrain/brain.db/.gbrain-operation.sock`
+instead of trying to open PGLite directly. Requests are queued by the owner and
+interactive work (`query` / `search` / `think`) has priority over maintenance-class
+work in the broker contract. If no owner is present, CLI commands keep the old
+direct-open behavior. Maintenance commands (`sync`, `embed`, and `extract`) are
+not broker-executed; under a live owner they return `maintenance_deferred` and
+should be rerun after the owner exits.
+
+Verification recipe:
+
+```bash
+bun test test/pglite-concurrent-access.serial.test.ts
+bun test test/pglite-lock.test.ts test/pglite-operation-ipc.test.ts test/cli-pglite-operation-broker.test.ts
+```
+
+The real subprocess concurrency test starts a stdio MCP owner and a second stdio
+MCP proxy, then runs mixed CLI and MCP `query` / `search` / `think` callers
+against a seeded PGLite brain. The broker tests cover the recovery/status matrix
+and assert callers do not hit `Timed out waiting for PGLite lock`.
+
 **When to use PGLite vs Postgres:**
 
 | Factor | PGLite | PostgresEngine + Supabase |
@@ -171,7 +194,7 @@ RRF fusion, multi-query expansion, and 4-layer dedup are engine-agnostic. They o
 | Scale | Good for < 1,000 files | Production-proven at 10K+ |
 | Multi-device | Single machine only | Any device via remote MCP |
 | Cost | Free | Supabase Pro ($25/mo) |
-| Concurrency | Single process | Connection pooling |
+| Concurrency | Single DB owner; local `query`/`search`/`think` callers queue through owner broker | Connection pooling |
 | Backups | Manual (file copy) | Managed by Supabase |
 
 **Migration:** `gbrain migrate --to supabase` exports everything (pages, chunks, embeddings, links, tags, timeline) and imports into Supabase. `gbrain migrate --to pglite` goes the other direction. Bidirectional, lossless.
@@ -219,7 +242,7 @@ Every method in `BrainEngine`. The full interface. No optional methods, no featu
 | Graph traversal | Recursive CTE | Recursive CTE | Same SQL |
 | Transactions | Full ACID | Full ACID | Both support this |
 | JSONB queries | GIN index | GIN index | Identical |
-| Concurrent access | Connection pooling | Single process | PGLite limitation |
+| Concurrent access | Connection pooling | Single DB owner; local `query` / `search` / `think` callers queue through owner broker; `sync` / `embed` / `extract` defer under a live owner | Broker is local-only; no mandatory daemon when no owner exists |
 | Hosting | Supabase, self-hosted, Docker | Local file | |
 | Migration methods | runMigration, getChunksWithEmbeddings | Same | Added v0.7 |
 

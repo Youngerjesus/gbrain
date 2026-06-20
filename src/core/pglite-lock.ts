@@ -56,6 +56,25 @@ export interface LockHandle {
   ownerToken?: string;
 }
 
+export type PgliteLockClassificationStatus =
+  | 'absent'
+  | 'live'
+  | 'dead_or_stale_recoverable'
+  | 'corrupt_recoverable'
+  | 'unknown';
+
+export interface PgliteLockClassification {
+  status: PgliteLockClassificationStatus;
+  lockDir: string;
+  lockPath?: string;
+  pid?: number;
+  acquiredAt?: number;
+  refreshedAt?: number;
+  command?: string;
+  sinceRefreshMs?: number;
+  reason?: string;
+}
+
 /** The on-disk lock identity, used to detect "we were reaped and replaced". */
 function tokenOf(lockData: { pid?: unknown; acquired_at?: unknown }): string {
   return `${lockData.pid}:${lockData.acquired_at}`;
@@ -104,6 +123,98 @@ function isProcessAlive(pid: number): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Inspect the PGLite lock without acquiring, waiting, stealing, or cleaning up.
+ * This is used by broker preflight paths that must decide whether to proxy to
+ * a live owner before any code tries to open the embedded database directly.
+ */
+export function classifyPgliteLock(dataDir: string | undefined): PgliteLockClassification {
+  const lockDir = getLockDir(dataDir);
+  if (!lockDir) return { status: 'absent', lockDir: '' };
+
+  const lockPath = join(lockDir, LOCK_FILE);
+  try {
+    if (!existsSync(lockDir)) return { status: 'absent', lockDir, lockPath };
+    if (!existsSync(lockPath)) {
+      return {
+        status: 'corrupt_recoverable',
+        lockDir,
+        lockPath,
+        reason: 'lock file missing',
+      };
+    }
+
+    const lockData = JSON.parse(readFileSync(lockPath, 'utf-8'));
+    const pid = lockData.pid;
+    const acquiredAt = lockData.acquired_at;
+    const refreshedAt = lockData.refreshed_at ?? acquiredAt;
+    const command = typeof lockData.command === 'string' ? lockData.command : undefined;
+    if (typeof pid !== 'number' || typeof acquiredAt !== 'number' || typeof refreshedAt !== 'number') {
+      return {
+        status: 'corrupt_recoverable',
+        lockDir,
+        lockPath,
+        reason: 'lock file missing numeric owner fields',
+      };
+    }
+
+    const sinceRefreshMs = Date.now() - refreshedAt;
+    if (!isProcessAlive(pid)) {
+      return {
+        status: 'dead_or_stale_recoverable',
+        lockDir,
+        lockPath,
+        pid,
+        acquiredAt,
+        refreshedAt,
+        command,
+        sinceRefreshMs,
+        reason: 'owner process is not alive',
+      };
+    }
+
+    if (sinceRefreshMs > stealGraceMs()) {
+      return {
+        status: 'dead_or_stale_recoverable',
+        lockDir,
+        lockPath,
+        pid,
+        acquiredAt,
+        refreshedAt,
+        command,
+        sinceRefreshMs,
+        reason: 'owner heartbeat is stale',
+      };
+    }
+
+    return {
+      status: 'live',
+      lockDir,
+      lockPath,
+      pid,
+      acquiredAt,
+      refreshedAt,
+      command,
+      sinceRefreshMs,
+    };
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      return {
+        status: 'corrupt_recoverable',
+        lockDir,
+        lockPath,
+        reason: 'lock file is not valid JSON',
+      };
+    }
+    return {
+      status: 'unknown',
+      lockDir,
+      lockPath,
+      reason: err instanceof Error ? err.message : 'unknown lock inspection error',
+    };
   }
 }
 

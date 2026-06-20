@@ -33,6 +33,18 @@ import type { CliOptions } from './core/cli-options.ts';
 import { callRemoteTool, RemoteMcpError, unpackToolResult } from './core/mcp-client.ts';
 import { maybePromptForUpgrade } from './core/thin-client-upgrade-prompt.ts';
 import { VERSION } from './version.ts';
+import { classifyPgliteLock } from './core/pglite-lock.ts';
+import { dispatchBrokeredOperation } from './mcp/pglite-operation-dispatch.ts';
+import {
+  OPERATION_IPC_UNAVAILABLE,
+  forwardOperationViaIpc,
+  operationSocketPath,
+  releaseOperationStartup,
+  startPgliteOperationIpcServer,
+  tryAcquireOperationStartup,
+  type OperationStartupHandle,
+  type OperationIpcOperation,
+} from './core/pglite-operation-ipc.ts';
 
 // Build CLI name -> operation lookup
 const cliOps = new Map<string, Operation>();
@@ -297,6 +309,7 @@ async function main() {
 
   // CLI-only commands
   if (CLI_ONLY.has(command)) {
+    if (command === 'think' && await maybeRunBrokeredThink(subArgs)) return;
     await handleCliOnly(command, subArgs);
     return;
   }
@@ -365,8 +378,11 @@ async function main() {
     return;
   }
 
+  if (await maybeRunBrokeredOperation(op.name as OperationIpcOperation, params)) return;
+
   // Local engine path (unchanged behavior for local installs).
   const engine = await connectEngine();
+  const brokerServer = await maybeStartCliOperationBroker(engine);
   // #2084: the teardown contract (bounded drain of every background-work sink,
   // bounded disconnect, computed-deadline backstop) lives in finishCliTeardown
   // — see src/core/cli-force-exit.ts for the full design. The hard-deadline
@@ -463,6 +479,9 @@ async function main() {
     // 1s per-sink drain budget: read paths with no pending work pay the ~0ms
     // fast path; capture/import that DO enqueue pay up to 1s (+ facts shutdown
     // grace) while in-flight Haiku finishes (#1762 drain-before-disconnect).
+    try { brokerServer?.close(); } catch { /* noop */ }
+    releaseOperationStartup(operationStartupHandle);
+    operationStartupHandle = null;
     await finishCliTeardown({ engine, drainTimeoutMs: 1000 });
   }
 }
@@ -816,6 +835,239 @@ async function makeContext(engine: BrainEngine, params: Record<string, unknown>)
   };
 }
 
+const BROKERED_OPERATIONS = new Set<OperationIpcOperation>(['query', 'search', 'think']);
+const PGLITE_MAINTENANCE_COMMANDS = new Set(['sync', 'embed', 'extract']);
+let operationStartupHandle: OperationStartupHandle | null = null;
+
+async function maybeRunBrokeredOperation(
+  operation: OperationIpcOperation,
+  params: Record<string, unknown>,
+): Promise<boolean> {
+  if (!BROKERED_OPERATIONS.has(operation)) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'absent') {
+    operationStartupHandle = tryAcquireOperationStartup(cfg.database_path);
+    if (operationStartupHandle) return false;
+  } else if (lock.status === 'dead_or_stale_recoverable') {
+    return false;
+  } else if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for brokered operation.`,
+    });
+    return true;
+  }
+
+  const response = await forwardToLivePgliteOwner(operation, params, { output: 'json' });
+  if (response === false) return false;
+  if (response.ok) {
+    const output = formatResult(operation, response.result);
+    if (output) process.stdout.write(output);
+    return true;
+  }
+  emitBrokerFailure(response);
+  return true;
+}
+
+async function maybeRunBrokeredThink(args: string[]): Promise<boolean> {
+  const params = parseThinkBrokerParams(args);
+  if (!params) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'absent') {
+    operationStartupHandle = tryAcquireOperationStartup(cfg.database_path);
+    if (operationStartupHandle) return false;
+  } else if (lock.status === 'dead_or_stale_recoverable') {
+    return false;
+  } else if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for brokered operation.`,
+    });
+    return true;
+  }
+
+  const response = await forwardToLivePgliteOwner('think', params, {
+    output: args.includes('--json') ? 'json' : 'text',
+  });
+  if (response === false) return false;
+  if (response.ok) {
+    if (params.save && !(response.result as any)?.saved_slug) {
+      console.error(
+        'think: --save requested but no synthesis was produced (no LLM available ' +
+        'or empty result) — nothing saved.',
+      );
+      setCliExitVerdict(1);
+      return true;
+    }
+    process.stdout.write(formatBrokeredThinkResult(String(params.question), response.result, args.includes('--json')));
+    return true;
+  }
+  emitBrokerFailure(response);
+  return true;
+}
+
+function emitBrokerFailure(response: { status: string; message: string }): void {
+  console.error(`PGLite owner broker error [${response.status}]: ${response.message}`);
+  setCliExitVerdict(response.status === 'broker_timeout' || response.status === 'completion_unknown' ? 124 : 1);
+}
+
+async function maybeDeferPgliteMaintenanceCommand(command: string): Promise<boolean> {
+  if (!PGLITE_MAINTENANCE_COMMANDS.has(command)) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'absent') {
+    operationStartupHandle = tryAcquireOperationStartup(cfg.database_path);
+    if (operationStartupHandle) return false;
+    emitBrokerFailure({
+      status: 'owner_starting',
+      message: `Another PGLite owner appears to be starting; gbrain ${command} was not started. Run it again after the owner broker is reachable or the owner exits.`,
+    });
+    return true;
+  }
+  if (lock.status === 'dead_or_stale_recoverable') return false;
+  if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for gbrain ${command}.`,
+    });
+    return true;
+  }
+
+  emitBrokerFailure({
+    status: 'maintenance_deferred',
+    message: `Another PGLite owner is live; gbrain ${command} was not started. Run it again after the owner exits. Interactive query/search/think calls can use the owner broker while the owner is live.`,
+  });
+  return true;
+}
+
+async function maybeStartCliOperationBroker(engine: BrainEngine): Promise<import('node:net').Server | null> {
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return null;
+  const server = await startPgliteOperationIpcServer(
+    operationSocketPath(cfg.database_path),
+    (request) => dispatchBrokeredOperation(engine, request),
+    { onDiagnostic: emitBrokerDiagnostic },
+  );
+  releaseOperationStartup(operationStartupHandle);
+  operationStartupHandle = null;
+  return server;
+}
+
+function emitBrokerDiagnostic(event: { status: string; socketPath: string }): void {
+  if (event.status === 'stale_socket_recovered') {
+    console.error(`PGLite owner broker recovered stale operation socket: ${event.socketPath}`);
+  }
+}
+
+async function maybeRunBrokeredMcpServe(args: string[]): Promise<boolean> {
+  if (args.includes('--http')) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for brokered MCP serve.`,
+    });
+    return true;
+  }
+  if (lock.status !== 'live') return false;
+
+  const { startMcpOperationProxyServer } = await import('./mcp/server.ts');
+  await startMcpOperationProxyServer(operationSocketPath(cfg.database_path));
+  return true;
+}
+
+async function forwardToLivePgliteOwner(
+  operation: OperationIpcOperation,
+  params: Record<string, unknown>,
+  opts: { output: 'json' | 'text' },
+): Promise<false | Exclude<Awaited<ReturnType<typeof forwardOperationViaIpc>>, typeof OPERATION_IPC_UNAVAILABLE>> {
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+  const socketPath = operationSocketPath(cfg.database_path);
+  const deadline = Date.now() + (getCliOptions().timeoutMs ?? 30_000);
+  while (Date.now() < deadline) {
+    const response = await forwardOperationViaIpc(socketPath, {
+      protocolVersion: 1,
+      requestId: `cli-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      caller: 'cli',
+      operation,
+      class: 'interactive',
+      priority: 100,
+      params,
+      context: {
+        remote: false,
+        cwd: process.cwd(),
+        ...(process.env.GBRAIN_SOURCE ? { envSourceId: process.env.GBRAIN_SOURCE } : {}),
+        output: opts.output,
+      },
+    }, { connectTimeoutMs: 250, brokerTimeoutMs: getCliOptions().timeoutMs ?? 180_000 });
+    if (response !== OPERATION_IPC_UNAVAILABLE) return response;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return {
+    ok: false,
+    status: 'owner_unreachable',
+    message: 'PGLite lock state requires owner-broker routing, but the operation broker is not reachable.',
+  };
+}
+
+function parseThinkBrokerParams(args: string[]): Record<string, unknown> | null {
+  if (args.length === 0 || args.includes('--help') || args.includes('-h')) return null;
+  const valueOf = (name: string): string | undefined => {
+    const i = args.indexOf(name);
+    return i === -1 ? undefined : args[i + 1];
+  };
+  const flagNames = ['--anchor', '--rounds', '--model', '--since', '--until', '--calibration-holder'];
+  const positional: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (flagNames.includes(a)) { i++; continue; }
+    if (['--save', '--take', '--json', '--with-calibration'].includes(a)) continue;
+    positional.push(a);
+  }
+  const question = positional.join(' ').trim();
+  if (!question) return null;
+  const roundsRaw = valueOf('--rounds');
+  return {
+    question,
+    ...(valueOf('--anchor') ? { anchor: valueOf('--anchor') } : {}),
+    ...(roundsRaw ? { rounds: Math.max(1, parseInt(roundsRaw, 10) || 1) } : {}),
+    ...(valueOf('--model') ? { model: valueOf('--model') } : {}),
+    ...(valueOf('--since') ? { since: valueOf('--since') } : {}),
+    ...(valueOf('--until') ? { until: valueOf('--until') } : {}),
+    ...(args.includes('--save') ? { save: true } : {}),
+    ...(args.includes('--take') ? { take: true } : {}),
+    ...(args.includes('--with-calibration') ? { with_calibration: true } : {}),
+    ...(valueOf('--calibration-holder') ? { calibration_holder: valueOf('--calibration-holder') } : {}),
+  };
+}
+
+function formatBrokeredThinkResult(question: string, result: unknown, json: boolean): string {
+  if (json) return JSON.stringify(result, null, 2) + '\n';
+  const r = result as any;
+  const lines: string[] = [`# ${question}`, '', String(r.answer ?? '') , ''];
+  if (Array.isArray(r.gaps) && r.gaps.length > 0) {
+    lines.push('## Gaps');
+    for (const g of r.gaps) lines.push(`- ${g}`);
+    lines.push('');
+  }
+  lines.push('---');
+  lines.push(`Model: ${r.modelUsed ?? '?'} | Pages: ${r.pagesGathered ?? 0} | Takes: ${r.takesGathered ?? 0} | Graph: ${r.graphHits ?? 0} | Citations: ${Array.isArray(r.citations) ? r.citations.length : 0}`);
+  if (r.saved_slug) lines.push(`Saved: ${r.saved_slug} (${r.evidence_inserted ?? 0} evidence rows)`);
+  if (Array.isArray(r.warnings) && r.warnings.length > 0) process.stderr.write(`Warnings: ${r.warnings.join(', ')}\n`);
+  return lines.join('\n') + '\n';
+}
+
 // Exported for tests (same import-safety contract as cliAliases/printOpHelp).
 export function formatResult(opName: string, result: unknown): string {
   switch (opName) {
@@ -1047,6 +1299,8 @@ async function handleCliOnly(command: string, args: string[]) {
       refuseThinClient(command, cfg!.remote_mcp!.mcp_url);
     }
   }
+
+  if (command === 'serve' && await maybeRunBrokeredMcpServe(args)) return;
 
   // Commands that don't need a database connection
   if (command === 'schema') {
@@ -1531,6 +1785,8 @@ async function handleCliOnly(command: string, args: string[]) {
     return;
   }
 
+  if (await maybeDeferPgliteMaintenanceCommand(command)) return;
+
   // #1633: out-of-band hard-deadline watchdog for `gbrain sync`. Installed
   // BEFORE connectEngine so a connect-phase hang (the reported zombie class) is
   // bounded too. A Bun Worker on its own OS thread SIGKILLs the process at the
@@ -1566,6 +1822,7 @@ async function handleCliOnly(command: string, args: string[]) {
 
   // All remaining CLI-only commands need a DB connection
   const engine = await connectEngine();
+  const brokerServer = command === 'serve' ? null : await maybeStartCliOperationBroker(engine);
   try {
     switch (command) {
       case 'import': {
@@ -2018,6 +2275,9 @@ async function handleCliOnly(command: string, args: string[]) {
       }
     }
   } finally {
+    try { brokerServer?.close(); } catch { /* noop */ }
+    releaseOperationStartup(operationStartupHandle);
+    operationStartupHandle = null;
     syncWatchdog?.dispose(); // #1633: tear down the hard-deadline watchdog on clean exit
     // #2084 — the CLI_ONLY fall-through teardown (drain every background-work
     // sink, THEN disconnect, under a computed-deadline backstop) lives in
