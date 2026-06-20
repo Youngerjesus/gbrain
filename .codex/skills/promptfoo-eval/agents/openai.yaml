@@ -1,0 +1,4 @@
+interface:
+  display_name: "Promptfoo Eval"
+  short_description: "Design and run promptfoo evals for prompt changes"
+  default_prompt: "Use this skill to verify a prompt change with promptfoo evals, including eval design, baseline/candidate comparison, rubric-first LLM judges, and evidence reporting."

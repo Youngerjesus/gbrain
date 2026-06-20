@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: Ephemeral promptfoo eval harness
+
+prompts:
+  - "{{path}}"
+
+providers:
+  - "exec: node providers/read_file_provider.js"
+
+tests:
+  - description: targeted deterministic check
+    metadata:
+      suite: targeted
+      feedback_id: replace-with-feedback-id
+    vars:
+      path: "replace/with/relative/path.txt"
+    assert:
+      - type: contains
+        value: "required text"
+
+  - description: regression deterministic check
+    metadata:
+      suite: regression
+      feedback_id: replace-with-regression-id
+    vars:
+      path: "replace/with/relative/path.txt"
+    assert:
+      - type: not-contains
+        value: "forbidden text"

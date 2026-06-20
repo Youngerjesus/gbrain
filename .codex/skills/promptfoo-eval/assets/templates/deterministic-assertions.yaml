@@ -1,0 +1,15 @@
+# Examples to copy into promptfoo tests when output properties are mechanically checkable.
+
+assert:
+  - type: contains
+    value: "required phrase"
+
+  - type: not-contains
+    value: "forbidden phrase"
+
+  - type: is-json
+
+  - type: javascript
+    value: |
+      const parsed = JSON.parse(output);
+      return parsed.status === "ok" && Array.isArray(parsed.items);

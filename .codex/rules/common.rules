@@ -1,0 +1,91 @@
+# Shared allow-list for frequent developer commands in this repository.
+
+prefix_rule(
+    pattern = ["git", ["status", "diff", "add", "restore", "pull", "push", "commit"]],
+    decision = "allow",
+    justification = "Allow common git commands without prompting in this repository.",
+    match = [
+        "git status",
+        "git diff --stat",
+        "git add .",
+        "git restore --staged .",
+        "git pull origin main",
+        "git push origin HEAD",
+        "git commit -m chore",
+    ],
+    not_match = [
+        "git reset --hard",
+        "git checkout -- .",
+    ],
+)
+
+prefix_rule(
+    pattern = ["pytest"],
+    decision = "allow",
+    justification = "Allow pytest runs without prompting in this repository.",
+    match = [
+        "pytest",
+        "pytest tests/unit/test_example.py -q",
+    ],
+)
+
+prefix_rule(
+    pattern = ["npx", "playwright", "test"],
+    decision = "allow",
+    justification = "Allow Playwright test runs without prompting in this repository.",
+    match = [
+        "npx playwright test",
+        "npx playwright test tests/e2e/payment.spec.ts --project=chromium",
+    ],
+    not_match = [
+        "npx cowsay hello",
+    ],
+)
+
+prefix_rule(
+    pattern = ["npx", "playwright", "show-report"],
+    decision = "allow",
+    justification = "Allow Playwright report inspection without prompting in this repository.",
+    match = [
+        "npx playwright show-report",
+        "npx playwright show-report frontend/playwright-report",
+    ],
+)
+
+prefix_rule(
+    pattern = ["npm", "run", "dev"],
+    decision = "allow",
+    justification = "Allow local dev servers for browser verification without prompting in this repository.",
+    match = [
+        "npm run dev",
+        "npm run dev -- --hostname 127.0.0.1 --port 3000",
+    ],
+)
+
+prefix_rule(
+    pattern = ["bash", "scripts/start_dev_env.sh"],
+    decision = "allow",
+    justification = "Allow the background dev environment entrypoint for automated browser verification.",
+    match = [
+        "bash scripts/start_dev_env.sh",
+    ],
+)
+
+prefix_rule(
+    pattern = ["bash", "scripts/stop_dev_env.sh"],
+    decision = "allow",
+    justification = "Allow stopping the background dev environment after automated browser verification.",
+    match = [
+        "bash scripts/stop_dev_env.sh",
+    ],
+)
+
+prefix_rule(
+    pattern = ["python3", "-m", "http.server"],
+    decision = "allow",
+    justification = "Allow local static HTTP serving for Playwright and report inspection without prompting.",
+    match = [
+        "python3 -m http.server 4173",
+        "python3 -m http.server 4173 --bind 127.0.0.1 --directory project_manager/logs",
+    ],
+)

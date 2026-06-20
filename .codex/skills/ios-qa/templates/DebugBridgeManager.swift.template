@@ -1,0 +1,28 @@
+// AUTO-GENERATED from gstack/ios-qa/templates/DebugBridgeManager.swift.template
+//
+// Bootstraps StateServer on app launch. Lives in DebugBridgeCore (no UIKit
+// dependency). App-specific state accessors are generated into the consuming
+// app target and must be registered by app-side wiring before the server starts.
+// Everything is #if DEBUG-gated; this file does not exist in Release builds.
+
+#if DEBUG
+
+import Foundation
+
+@MainActor
+public final class DebugBridgeManager {
+    public static let shared = DebugBridgeManager()
+
+    public func start() {
+        // Boot the StateServer after app-side wiring has registered accessors.
+        StateServer.shared.start()
+    }
+}
+
+// Apps declare their canonical state struct; codegen reads it and emits
+// app-side generated accessor registration. The app's struct must be `@Observable` and
+// must hold all snapshot-eligible state in `@Snapshotable`-marked fields.
+@MainActor
+public protocol AppState: AnyObject {}
+
+#endif // DEBUG

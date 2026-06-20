@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+# Starter template. Replace prompts, providers, vars, and assertions for your project.
+
+description: Prompt feedback verification
+
+prompts:
+  - file://prompts/candidate.txt
+
+providers:
+  - REPLACE_WITH_PROVIDER_ID
+
+tests:
+  - description: targeted behavior case
+    metadata:
+      suite: targeted
+      feedback_id: replace-with-feedback-id
+    vars:
+      input: "Replace with an input that exposed the prompt feedback."
+    assert:
+      - type: contains
+        value: "Replace with required output text when mechanically checkable."
+      - type: llm-rubric
+        threshold: 0.8
+        value: |
+          Pass if the output demonstrates the exact behavior requested by the feedback.
+          Fail if it only appears improved stylistically, avoids the requested behavior, or introduces unsupported claims.
+          Negative examples: generic answer; unsupported specific claim; correct tone but wrong substance.
+
+  - description: regression behavior case
+    metadata:
+      suite: regression
+    vars:
+      input: "Replace with an input representing behavior that must not regress."
+    assert:
+      - type: not-contains
+        value: "Replace with forbidden text or behavior when mechanically checkable."

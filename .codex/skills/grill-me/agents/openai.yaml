@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill Me"
+  short_description: "핵심 리스크를 제안 선택지와 자유입력으로 압박 질문하는 스킬"
+  default_prompt: "Use $grill-me to ask only critical, handoff-changing pressure questions one at a time. Offer 2-3 suggested answer options, but accept my free-form answers as first-class input. Stop after 5 questions, ask whether to extend for up to 5 more, then turn the answers into a handoff-ready summary."

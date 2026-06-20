@@ -1,0 +1,230 @@
+model = "gpt-5.5"
+
+[analytics]
+enabled = false
+
+[features]
+multi_agent = true
+
+[agents]
+max_threads = 100
+max_depth = 3
+
+[agents.document-writer]
+description = "기술 문서 및 사양서 작성을 전담하는 에이전트. AI가 컨텍스트로 활용하고 사람이 정확하게 검증할 수 있도록 엄격한 Markdown 구조와 모호성 없는 문장을 강제하여 문서를 작성합니다."
+config_file = "agents/document-writer.toml"
+
+[agents.product-builder]
+description = "훌륭한 제품을 만들기 위한 의사결정에 기여하는 에이전트. 엔지니어링, 프로덕트, 디자인 관점을 종합하여 제품의 본질적인 가치를 훼손하는 요소를 방어하고 구조적 해자를 갖춘 제품을 설계할 때 사용하세요."
+config_file = "agents/product-builder.toml"
+
+[agents.project-reviewer]
+description = "프로젝트 빌더의 제안, 태스크 기획, 아키텍처 설계를 비판적으로 검토하는 리뷰어 에이전트. 논리적 모순, 실패 가능성, 리스크, 트레이드오프, 인지 편향을 분석합니다."
+config_file = "agents/project-reviewer.toml"
+
+[agents.decision-brake-thinker]
+description = "제1원칙, 시스템 사고, second-order, inversion 으로 중요한 의사결정을 심화 분석하는 decision-brake 에이전트입니다."
+config_file = "agents/decision-brake-thinker.toml"
+
+[agents.decision-brake-reviewer]
+description = "중요한 의사결정에 브레이크를 걸어 메인 판단과 companion-agent 산출물의 허점, 과신, 더 나은 대안을 독립 검토하는 에이전트입니다."
+config_file = "agents/decision-brake-reviewer.toml"
+
+[agents.decision-brake-explorer]
+description = "현재안 밖의 대안적 문제 모델, 근본 원인 가설, 비자명한 해결 전략을 탐색할 때 사용하는 decision-brake 발산 에이전트입니다."
+config_file = "agents/decision-brake-explorer.toml"
+
+[agents.decision-brake-scope-targeter]
+description = "의사결정 스코프가 너무 작거나 큰지, 실제로 이길 수 있는 최소 유효 지점이 어디인지 검토하는 decision-brake 렌즈 오너입니다."
+config_file = "agents/decision-brake-scope-targeter.toml"
+
+[agents.decision-brake-causal-coverage-reviewer]
+description = "의사결정이 증상이나 proxy가 아니라 문제에서 의도한 결과까지의 causal chain을 충분히 덮는지 검토하는 decision-brake 렌즈 오너입니다."
+config_file = "agents/decision-brake-causal-coverage-reviewer.toml"
+
+[agents.decision-brake-readiness-reviewer]
+description = "의사결정이 실행 가능하고 handoff-ready 한지, missing input/evidence 와 required followups 를 검토하는 decision-brake 렌즈 오너입니다."
+config_file = "agents/decision-brake-readiness-reviewer.toml"
+
+[agents.root-cause-solution-thinker]
+description = "근본 원인 기반 해결책을 제1원칙, 시스템 사고, 역발상, second-order 관점으로 심화하는 에이전트입니다."
+config_file = "agents/root-cause-solution-thinker.toml"
+
+[agents.root-cause-solution-explorer]
+description = "근본 원인에 대해 local patch 밖의 개입 지점과 비자명한 해결책 후보를 발산 탐색하는 에이전트입니다."
+config_file = "agents/root-cause-solution-explorer.toml"
+
+[agents.root-cause-solution-reviewer]
+description = "선택된 근본 원인 해결책이 causal mechanism 을 닫는지, 과잉 설계나 증상 마스킹이 아닌지 독립 검토하는 에이전트입니다."
+config_file = "agents/root-cause-solution-reviewer.toml"
+
+[agents.implementation-brake-reviewer]
+description = "이미 작성된 구현을 ship 전에 검토해 correctness, regression, edge case, test gap, 과도한 복잡도를 압박 점검하는 구현 리뷰 에이전트입니다."
+config_file = "agents/implementation-brake-reviewer.toml"
+
+[agents.visual-qa-reviewer]
+description = "Read-only visual QA companion for rendered UI hierarchy, spacing, typography, state treatment, clipping/overflow, responsive behavior, and trust-quality issues before implementation-brake."
+config_file = "agents/visual-qa-reviewer.toml"
+
+[agents.reference-fidelity-reviewer]
+description = "Read-only reference fidelity companion for comparing implemented UI evidence against reference screenshots, accepted differences, and visual acceptance criteria."
+config_file = "agents/reference-fidelity-reviewer.toml"
+
+[agents.plan-eng-scope-reuse-reviewer]
+description = "Read-only Plan Eng companion for first-principles necessity, existing-flow reuse, minimum implementation scope, and scope waste."
+config_file = "agents/plan-eng-scope-reuse-reviewer.toml"
+
+[agents.plan-eng-architecture-contract-reviewer]
+description = "Read-only Plan Eng companion for ownership boundaries, dependency direction, integration contracts, data flow, and invariants."
+config_file = "agents/plan-eng-architecture-contract-reviewer.toml"
+
+[agents.plan-eng-verification-failure-reviewer]
+description = "Read-only Plan Eng companion for proof obligations, failure modes, observability, rollback, and verification readiness."
+config_file = "agents/plan-eng-verification-failure-reviewer.toml"
+
+[agents.grill-me-risk-finder]
+description = "Read-only Grill Me specialist that proposes risk-focused pressure-question candidates for a refreshed candidate pool."
+config_file = "agents/grill-me-risk-finder.toml"
+
+[agents.grill-me-alternative-finder]
+description = "Read-only Grill Me specialist that proposes alternative-path pressure-question candidates for a refreshed candidate pool."
+config_file = "agents/grill-me-alternative-finder.toml"
+
+[agents.grill-me-verification-finder]
+description = "Read-only Grill Me specialist that proposes outcome and verification pressure-question candidates for a refreshed candidate pool."
+config_file = "agents/grill-me-verification-finder.toml"
+
+[agents.grill-me-handoff-reviewer]
+description = "Read-only Grill Me specialist that proposes handoff-integrity pressure-question candidates for a refreshed candidate pool."
+config_file = "agents/grill-me-handoff-reviewer.toml"
+
+[agents.grill-me-requirement-shape-finder]
+description = "Read-only Grill Me specialist that proposes requirement-shape pressure-question candidates for a refreshed candidate pool."
+config_file = "agents/grill-me-requirement-shape-finder.toml"
+
+[agents.requirement-clarifier-post-draft-reviewer]
+description = "Read-only Requirement Clarifier reviewer for capture fidelity and material readiness before requirements are finalized."
+config_file = "agents/requirement-clarifier-post-draft-reviewer.toml"
+
+[agents.requirement-conformance-reviewer]
+description = "Read-only implementation-brake companion for checking implementation conformance to accepted requirements, including acceptance coverage."
+config_file = "agents/requirement-conformance-reviewer.toml"
+
+[agents.scenario-path-separation-reviewer]
+description = "Read-only Scenario Brake companion for entry paths, actors, states, re-entry paths, and conflated scenario separation."
+config_file = "agents/scenario-path-separation-reviewer.toml"
+
+[agents.scenario-parameter-mutation-reviewer]
+description = "Read-only Scenario Brake companion for data shape, dependency behavior, environment, timing, and high-risk parameter combinations."
+config_file = "agents/scenario-parameter-mutation-reviewer.toml"
+
+[agents.scenario-recovery-observability-reviewer]
+description = "Read-only Scenario Brake companion for recovery paths, invariants, user/operator signals, and silent-failure scenario gaps."
+config_file = "agents/scenario-recovery-observability-reviewer.toml"
+
+[agents.task-master]
+description = "프로젝트 빌더와 리뷰어가 합의한 작업을 실행 가능한 단위로 분해하고, 의존성, 우선순위, 상태를 포함한 작업 지시서를 생성하는 에이전트입니다."
+config_file = "agents/task-master.toml"
+
+[agents.task-reviewer]
+description = "태스크 스펙과 계약을 강화하여 구현 에이전트의 얕은 해결을 방지하고, 명시적 기술 제약과 E2E 테스트 의무를 강제하는 리뷰어입니다."
+config_file = "agents/task-reviewer.toml"
+
+[agents.plan-compiler-obligation-authority-reviewer]
+description = "Read-only Plan Compiler reviewer for source obligation preservation, authority boundaries, and invented or lost obligations."
+config_file = "agents/plan-compiler-obligation-authority-reviewer.toml"
+
+[agents.plan-compiler-slice-boundary-reviewer]
+description = "Read-only Plan Compiler reviewer for scheduler-sized slice boundaries, atomicity, duplication, and ownership conflict risk."
+config_file = "agents/plan-compiler-slice-boundary-reviewer.toml"
+
+[agents.plan-compiler-execution-graph-reviewer]
+description = "Read-only Plan Compiler reviewer for dependency direction, missing or unnecessary edges, DAG readiness, and scheduler handoff graph risk."
+config_file = "agents/plan-compiler-execution-graph-reviewer.toml"
+
+[agents.code-reviewer]
+description = "Primary merge-gate reviewer for correctness, regressions, completeness, and merge safety."
+config_file = "agents/code-reviewer.toml"
+
+[agents.performance-reviewer]
+description = "Performance reviewer for concrete query, loop, async, rendering, bundle, unbounded data, and resource-risk regressions."
+config_file = "agents/performance-reviewer.toml"
+
+[agents.testing-reviewer]
+description = "Test quality reviewer focused on coverage gaps, negative paths, edge cases, and merge confidence."
+config_file = "agents/testing-reviewer.toml"
+
+[agents.security-reviewer]
+description = "Security reviewer for trust boundaries, auth/authz, injection defense, secret handling, and validation regressions."
+config_file = "agents/security-reviewer.toml"
+
+[agents.verifier]
+description = "Verification specialist for checking implementation against spec.md, contracts.md, code, and executed tests."
+config_file = "agents/verifier.toml"
+
+[agents.product-evidence-projection-reviewer]
+description = "Read-only reviewer for product evidence projection contracts, raw diagnostic sources, allowed projected fields, validators, negative fixtures, and waiver safety."
+config_file = "agents/product-evidence-projection-reviewer.toml"
+
+[agents.codebase-fit-reviewer]
+description = "Read-only reviewer for managed-repo-native spec/contract fit and preservation of Codebase Evidence Gate obligations without control-plane leakage."
+config_file = "agents/codebase-fit-reviewer.toml"
+
+[agents.objective-alignment-reviewer]
+description = "Meta Audit v2 lens for checking whether objective, current-plan gap, and artifact evidence contract lineage were preserved through a run."
+config_file = "agents/objective-alignment-reviewer.toml"
+
+[agents.phase-purpose-reviewer]
+description = "Meta Audit v2 lens for checking whether phases served their intended purpose instead of optimizing paperwork passage."
+config_file = "agents/phase-purpose-reviewer.toml"
+
+[agents.autopilot-efficiency-reviewer]
+description = "Meta Audit v2 lens for checking whether effort targeted the smallest evidence-backed move toward artifact truth."
+config_file = "agents/autopilot-efficiency-reviewer.toml"
+
+[agents.ownership-boundary-reviewer]
+description = "Meta Audit v2 lens for checking ownership-boundary drift across CAO, Meta, policy, progress, memory, scheduler, and coding agents."
+config_file = "agents/ownership-boundary-reviewer.toml"
+
+[agents.result-interpretation-reviewer]
+description = "Meta Audit v2 lens for checking result overclaiming, reward-hacking, and completion evidence misuse."
+config_file = "agents/result-interpretation-reviewer.toml"
+
+[agents.context-synchronizer]
+description = "Document consistency manager that keeps root/project AGENTS.md, AUTOPILOT_DESIGN.md, META_DESIGN.md, docs, specs, and .codex guidance aligned when assumptions change."
+config_file = "agents/context-synchronizer.toml"
+
+[agents.context-loader]
+description = "Read-only codebase exploration agent for pre-implementation context loading before tdd-workflow."
+config_file = "agents/context-loader.toml"
+
+[agents.debug-direct-cause-explorer]
+description = "Read-only systematic-debugging explorer for the immediate failing boundary, direct trigger, and direct cause lens before parent synthesis."
+config_file = "agents/debug-direct-cause-explorer.toml"
+
+[agents.debug-deeper-cause-explorer]
+description = "Read-only systematic-debugging explorer for why the direct failure became possible, including upstream state, contracts, ordering, and invariants."
+config_file = "agents/debug-deeper-cause-explorer.toml"
+
+[agents.debug-masked-failure-explorer]
+description = "Read-only systematic-debugging explorer for masked downstream failure and next-boundary risks hidden by the first observed failure."
+config_file = "agents/debug-masked-failure-explorer.toml"
+
+[agents.debug-path-coverage-explorer]
+description = "Read-only systematic-debugging explorer for alternate entry paths, actors, states, configs, and retry/resume path coverage."
+config_file = "agents/debug-path-coverage-explorer.toml"
+
+[agents.debug-architecture-brake-reviewer]
+description = "Read-only systematic-debugging reviewer for architecture-brake signals such as repeated fixes, hidden dependencies, shared state, and design instability."
+config_file = "agents/debug-architecture-brake-reviewer.toml"
+
+[agents.staff-engineer]
+description = "Primary code implementer. Writes code according to given specs, acts as a staff engineer for code implementation, and modifies code proactively based on code review feedback."
+config_file = "agents/staff-engineer.toml"
+
+[sandbox_workspace_write]
+network_access = true
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["@playwright/mcp@latest"]

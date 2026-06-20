@@ -1,0 +1,46 @@
+// AUTO-GENERATED from gstack/ios-qa/templates/DebugBridgeWiring.swift.template
+//
+// Wiring snippet for the app's @main entry. Users paste this into their
+// App.swift inside the `init()` of the SwiftUI App struct, gated by
+// #if DEBUG. The wiring is intentionally tiny; everything heavy lives in
+// the DebugBridge target.
+
+#if DEBUG
+import DebugBridgeCore
+
+#if canImport(UIKit)
+import DebugBridgeUI
+#endif
+
+@MainActor
+func startGstackDebugBridge(appState: AppState) {
+    AppStateAccessor.register(appState)
+    DebugBridgeManager.shared.start()
+
+    #if canImport(UIKit)
+    // Install accessibility + screenshot + mutation bridges before the first
+    // authenticated UI request can use them.
+    DebugBridgeUIWiring.installAll()
+
+    let recording = ProcessInfo.processInfo.arguments.contains("--gstack-recording")
+    DebugOverlayWindow.shared.install(recording: recording)
+    #endif
+}
+#endif
+
+// Example usage in the app's @main entry (paste this into App.swift):
+//
+//   @main
+//   struct MyApp: App {
+//       @State private var appState = MyAppState()
+//
+//       init() {
+//           #if DEBUG
+//           startGstackDebugBridge(appState: appState)
+//           #endif
+//       }
+//
+//       var body: some Scene {
+//           WindowGroup { ContentView() }
+//       }
+//   }

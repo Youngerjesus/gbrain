@@ -1,0 +1,4 @@
+interface:
+  display_name: "Closed Loop Harness"
+  short_description: "Design reusable agent loop harnesses with contract preflight"
+  default_prompt: "Use $closed-loop-harness to design, implement, evaluate, trace, run contract preflight, declare runtime allowlists, and 1.5-validate a repo-native closed loop harness for this task."
