@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   operationSocketPath,
@@ -8,7 +8,7 @@ import {
   type OperationIpcRequest,
 } from '../src/core/pglite-operation-ipc.ts';
 import { createEngine } from '../src/core/engine-factory.ts';
-import { dispatchBrokeredOperation } from '../src/core/pglite-operation-dispatch.ts';
+import { dispatchBrokeredOperation } from '../src/mcp/pglite-operation-dispatch.ts';
 
 const servers: Array<{ close: () => void }> = [];
 
@@ -42,10 +42,43 @@ function writeLiveLock(dbPath: string): void {
   }));
 }
 
-function runCli(args: string[], home: string, cwd = process.cwd()): Promise<{ stdout: string; stderr: string; status: number | null }> {
+function runCli(
+  args: string[],
+  home: string,
+  cwd = process.cwd(),
+  env: Record<string, string> = {},
+): Promise<{ stdout: string; stderr: string; status: number | null }> {
   return new Promise((resolve) => {
     const child = spawn('bun', ['run', join(process.cwd(), 'src/cli.ts'), ...args], {
       cwd,
+      env: {
+        ...process.env,
+        NODE_ENV: 'test',
+        GBRAIN_HOME: home,
+        DATABASE_URL: '',
+        GBRAIN_DATABASE_URL: '',
+        ...env,
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf-8');
+    child.stderr.setEncoding('utf-8');
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
+    child.on('close', (status) => resolve({ stdout, stderr, status }));
+  });
+}
+
+function runCliBounded(
+  args: string[],
+  home: string,
+  timeoutMs = 1500,
+): Promise<{ stdout: string; stderr: string; status: number | null; timedOut: boolean }> {
+  return new Promise((resolve) => {
+    const child = spawn('bun', ['run', join(process.cwd(), 'src/cli.ts'), ...args], {
+      cwd: process.cwd(),
       env: {
         ...process.env,
         NODE_ENV: 'test',
@@ -57,11 +90,19 @@ function runCli(args: string[], home: string, cwd = process.cwd()): Promise<{ st
     });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeoutMs);
     child.stdout.setEncoding('utf-8');
     child.stderr.setEncoding('utf-8');
     child.stdout.on('data', (chunk) => { stdout += chunk; });
     child.stderr.on('data', (chunk) => { stderr += chunk; });
-    child.on('close', (status) => resolve({ stdout, stderr, status }));
+    child.on('close', (status) => {
+      clearTimeout(timer);
+      resolve({ stdout, stderr, status, timedOut });
+    });
   });
 }
 
@@ -210,7 +251,7 @@ describe('CLI PGLite operation broker routing', () => {
     }
   });
 
-  test('no-owner query and think keep direct-open CLI behavior', async () => {
+  test('no-owner query search and think keep direct-open CLI behavior', async () => {
     const { home } = makeHome();
     try {
       const query = await runCli(['query', 'no-owner-query'], home);
@@ -218,6 +259,12 @@ describe('CLI PGLite operation broker routing', () => {
       expect(query.stdout).toContain('No results.');
       expect(query.stderr).not.toContain('PGLite owner broker error');
       expect(query.stderr).not.toContain('Timed out waiting for PGLite lock');
+
+      const search = await runCli(['search', 'no-owner-search'], home);
+      expect(search.status).toBe(0);
+      expect(search.stdout).not.toContain('PGLite owner broker error');
+      expect(search.stderr).not.toContain('PGLite owner broker error');
+      expect(search.stderr).not.toContain('Timed out waiting for PGLite lock');
 
       const think = await runCli(['think', 'no owner think?', '--json'], home);
       expect(think.status).toBe(0);
@@ -228,6 +275,48 @@ describe('CLI PGLite operation broker routing', () => {
       rmSync(home, { recursive: true, force: true });
     }
   }, 30_000);
+
+  test('CLI caller reports owner_unreachable when a live owner lock has no broker socket', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+
+      const result = await runCli(['--timeout=300ms', 'query', 'owner-missing-socket'], home);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('owner_unreachable');
+      expect(result.stderr).not.toContain('Timed out waiting for PGLite lock');
+      expect(result.stderr).not.toContain('Could not acquire PGLite lock');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('CLI caller surfaces completion_unknown after the owner accepts but times out', async () => {
+    const { home, dbPath } = makeHome();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    try {
+      writeLiveLock(dbPath);
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async () => {
+        await gate;
+        return { ok: true, result: [] };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCli(['--timeout=20ms', 'query', 'completion-unknown'], home);
+      release();
+
+      expect(result.status).toBe(124);
+      expect(result.stderr).toContain('completion_unknown');
+      expect(result.stderr).toContain('completion is unknown');
+      expect(result.stdout).not.toContain('No results.');
+    } finally {
+      release?.();
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
 
   test('five simultaneous mixed CLI and MCP callers share the live owner broker', async () => {
     const { home, dbPath } = makeHome();
@@ -345,8 +434,294 @@ describe('CLI PGLite operation broker routing', () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain('lock_safety_blocked');
+      expect(result.stderr).not.toContain('owner_unreachable');
       expect(result.stderr).not.toContain('Timed out waiting for PGLite lock');
     } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('stdio MCP serve fails fast on corrupt lock instead of opening or cleaning PGLite', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      const lockDir = join(dbPath, '.gbrain-lock');
+      const lockFile = join(lockDir, 'lock');
+      mkdirSync(lockDir, { recursive: true });
+      writeFileSync(lockFile, '{not-json');
+
+      const result = await runCliBounded(['serve'], home);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('lock_safety_blocked');
+      expect(result.stderr).not.toContain('Timed out waiting for PGLite lock');
+      expect(existsSync(lockFile)).toBe(true);
+      expect(readFileSync(lockFile, 'utf-8')).toBe('{not-json');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('second stdio MCP proxy returns owner_unreachable when live owner socket is absent', async () => {
+    const { home, dbPath } = makeHome();
+    let child: ReturnType<typeof spawn> | null = null;
+    try {
+      writeLiveLock(dbPath);
+      child = spawn('bun', ['run', join(process.cwd(), 'src/cli.ts'), 'serve'], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          GBRAIN_HOME: home,
+          DATABASE_URL: '',
+          GBRAIN_DATABASE_URL: '',
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'gbrain-test', version: '0.0.0' },
+        },
+      });
+      await waitForJsonLine(child, 1);
+      sendJson(child, { jsonrpc: '2.0', method: 'notifications/initialized', params: {} });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'query', arguments: { query: 'mcp-owner-missing-socket' } },
+      });
+      const call = await waitForJsonLine(child, 2);
+      expect(call.error).toBeUndefined();
+      expect(call.result.isError).toBe(true);
+      const body = JSON.parse(call.result.content[0].text);
+      expect(body.error).toBe('owner_unreachable');
+    } finally {
+      if (child) {
+        child.kill('SIGTERM');
+        await new Promise((resolve) => child!.once('exit', resolve));
+      }
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('second stdio MCP proxy preserves source auth scope when federated read is configured', async () => {
+    const { home, dbPath } = makeHome();
+    let child: ReturnType<typeof spawn> | null = null;
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return { ok: true, result: [] };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      child = spawn('bun', ['run', join(process.cwd(), 'src/cli.ts'), 'serve'], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          GBRAIN_HOME: home,
+          GBRAIN_SOURCE: 'ai-notes',
+          GBRAIN_FEDERATED_READ: 'default,ai-notes,gstack',
+          DATABASE_URL: '',
+          GBRAIN_DATABASE_URL: '',
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'gbrain-test', version: '0.0.0' },
+        },
+      });
+      await waitForJsonLine(child, 1);
+      sendJson(child, { jsonrpc: '2.0', method: 'notifications/initialized', params: {} });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'query', arguments: { query: 'mcp-federated-source' } },
+      });
+      const call = await waitForJsonLine(child, 2);
+      expect(call.error).toBeUndefined();
+      expect(seen).toHaveLength(1);
+      expect(seen[0].context.sourceId).toBe('ai-notes');
+      expect(seen[0].context.auth).toMatchObject({
+        clientId: 'stdio',
+        sourceId: 'ai-notes',
+        allowedSources: ['default', 'ai-notes', 'gstack'],
+      });
+    } finally {
+      if (child) {
+        child.kill('SIGTERM');
+        await new Promise((resolve) => child!.once('exit', resolve));
+      }
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test('direct stdio MCP no-owner search honors federated read source auth scope', async () => {
+    const { home, dbPath } = makeHome();
+    let child: ReturnType<typeof spawn> | null = null;
+    let engine: Awaited<ReturnType<typeof createEngine>> | null = null;
+    try {
+      engine = await createEngine({ engine: 'pglite', database_path: dbPath });
+      await engine.connect({ engine: 'pglite', database_path: dbPath });
+      await engine.initSchema();
+      await engine.executeRaw(
+        `INSERT INTO sources (id, name) VALUES
+         ('ai-notes', 'ai-notes'),
+         ('gstack', 'gstack')
+         ON CONFLICT (id) DO NOTHING`,
+        [],
+      );
+      await engine.setConfig('search.mcp_keyword_only', 'true');
+      for (const sourceId of ['default', 'gstack']) {
+        await engine.putPage(`notes/${sourceId}-federated`, {
+          type: 'note',
+          title: `${sourceId} federated`,
+          compiled_truth: `FEDERATEDSCOPE ${sourceId}`,
+          timeline: '',
+        }, { sourceId });
+        await engine.upsertChunks(`notes/${sourceId}-federated`, [
+          { chunk_index: 0, chunk_text: `FEDERATEDSCOPE ${sourceId}`, chunk_source: 'compiled_truth' },
+        ], { sourceId });
+      }
+      await engine.putPage('notes/ai-notes-federated', {
+        type: 'note',
+        title: 'ai-notes federated',
+        compiled_truth: 'FEDERATEDSCOPE ai-notes',
+        timeline: '',
+      }, { sourceId: 'ai-notes' });
+      await engine.upsertChunks('notes/ai-notes-federated', [
+        { chunk_index: 0, chunk_text: 'FEDERATEDSCOPE ai-notes', chunk_source: 'compiled_truth' },
+      ], { sourceId: 'ai-notes' });
+      await engine.disconnect();
+      engine = null;
+
+      child = spawn('bun', ['run', join(process.cwd(), 'src/cli.ts'), 'serve'], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          GBRAIN_HOME: home,
+          GBRAIN_SOURCE: 'ai-notes',
+          GBRAIN_FEDERATED_READ: 'default,gstack',
+          DATABASE_URL: '',
+          GBRAIN_DATABASE_URL: '',
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'gbrain-test', version: '0.0.0' },
+        },
+      });
+      await waitForJsonLine(child, 1);
+      sendJson(child, { jsonrpc: '2.0', method: 'notifications/initialized', params: {} });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'search', arguments: { query: 'FEDERATEDSCOPE', limit: 10 } },
+      });
+      const call = await waitForJsonLine(child, 2);
+      expect(call.error).toBeUndefined();
+      expect(call.result.isError).toBeUndefined();
+      const rows = JSON.parse(call.result.content[0].text);
+      const sourceIds = rows.map((row: any) => row.source_id).sort();
+      expect(sourceIds).toEqual(['default', 'gstack']);
+      expect(sourceIds).not.toContain('ai-notes');
+    } finally {
+      if (child) {
+        child.kill('SIGTERM');
+        await new Promise((resolve) => child!.once('exit', resolve));
+      }
+      await engine?.disconnect();
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  test('second stdio MCP proxy preserves invalid_params envelope from owner dispatch', async () => {
+    const { home, dbPath } = makeHome();
+    let child: ReturnType<typeof spawn> | null = null;
+    let engine: Awaited<ReturnType<typeof createEngine>> | null = null;
+    try {
+      engine = await createEngine({ engine: 'pglite', database_path: dbPath });
+      await engine.connect({ engine: 'pglite', database_path: dbPath });
+      await engine.initSchema();
+      const ownerEngine = engine;
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), (request) =>
+        dispatchBrokeredOperation(ownerEngine, request),
+      );
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      child = spawn('bun', ['run', join(process.cwd(), 'src/cli.ts'), 'serve'], {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          GBRAIN_HOME: home,
+          DATABASE_URL: '',
+          GBRAIN_DATABASE_URL: '',
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'gbrain-test', version: '0.0.0' },
+        },
+      });
+      await waitForJsonLine(child, 1);
+      sendJson(child, { jsonrpc: '2.0', method: 'notifications/initialized', params: {} });
+
+      sendJson(child, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: { name: 'search', arguments: {} },
+      });
+      const call = await waitForJsonLine(child, 2);
+      expect(call.error).toBeUndefined();
+      expect(call.result.isError).toBe(true);
+      const body = JSON.parse(call.result.content[0].text);
+      expect(body.error).toBe('invalid_params');
+    } finally {
+      if (child) {
+        child.kill('SIGTERM');
+        await new Promise((resolve) => child!.once('exit', resolve));
+      }
+      await engine?.disconnect();
       rmSync(home, { recursive: true, force: true });
     }
   });

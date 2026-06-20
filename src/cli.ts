@@ -34,7 +34,7 @@ import { callRemoteTool, RemoteMcpError, unpackToolResult } from './core/mcp-cli
 import { maybePromptForUpgrade } from './core/thin-client-upgrade-prompt.ts';
 import { VERSION } from './version.ts';
 import { classifyPgliteLock } from './core/pglite-lock.ts';
-import { dispatchBrokeredOperation } from './core/pglite-operation-dispatch.ts';
+import { dispatchBrokeredOperation } from './mcp/pglite-operation-dispatch.ts';
 import {
   OPERATION_IPC_UNAVAILABLE,
   forwardOperationViaIpc,
@@ -929,6 +929,13 @@ async function maybeRunBrokeredMcpServe(args: string[]): Promise<boolean> {
   const cfg = loadConfig();
   if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
   const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for brokered MCP serve.`,
+    });
+    return true;
+  }
   if (lock.status !== 'live') return false;
 
   const { startMcpOperationProxyServer } = await import('./mcp/server.ts');
@@ -966,7 +973,7 @@ async function forwardToLivePgliteOwner(
   }
   return {
     ok: false,
-    status: 'lock_safety_blocked',
+    status: 'owner_unreachable',
     message: 'PGLite lock state requires owner-broker routing, but the operation broker is not reachable.',
   };
 }

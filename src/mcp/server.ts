@@ -3,11 +3,13 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { BrainEngine } from '../core/engine.ts';
 import { operations } from '../core/operations.ts';
+import type { AuthInfo } from '../core/operations.ts';
 import { VERSION } from '../version.ts';
 import { buildToolDefs } from './tool-defs.ts';
 import { dispatchToolCall, validateParams, buildOperationContext } from './dispatch.ts';
 import { getBrainHotMemoryMeta } from '../core/facts/meta-hook.ts';
 import { loadConfig } from '../core/config.ts';
+import { assertValidSourceId } from '../core/source-id.ts';
 import {
   resolveSocketPath,
   startResolveIpcServer,
@@ -20,9 +22,60 @@ import {
   operationSocketPath,
   startPgliteOperationIpcServer,
 } from '../core/pglite-operation-ipc.ts';
-import { dispatchBrokeredOperation } from '../core/pglite-operation-dispatch.ts';
+import { dispatchBrokeredOperation } from './pglite-operation-dispatch.ts';
+
+export const GBRAIN_FEDERATED_READ_ENV = 'GBRAIN_FEDERATED_READ';
+
+export interface StdioSourceScope {
+  sourceId: string;
+  allowedSources?: string[];
+}
+
+export function parseStdioFederatedRead(raw: string | undefined): string[] | undefined {
+  if (!raw || raw.trim().length === 0) return undefined;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(',')) {
+    const sourceId = part.trim();
+    if (!sourceId) continue;
+    try {
+      assertValidSourceId(sourceId);
+    } catch (error) {
+      throw new Error(`${GBRAIN_FEDERATED_READ_ENV} contains invalid source id ${JSON.stringify(sourceId)}: ${(error as Error).message}`);
+    }
+    if (!seen.has(sourceId)) {
+      seen.add(sourceId);
+      out.push(sourceId);
+    }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+export function resolveStdioSourceScope(env: { [key: string]: string | undefined } = process.env): StdioSourceScope {
+  const sourceId = env.GBRAIN_SOURCE || 'default';
+  assertValidSourceId(sourceId);
+  const allowedSources = parseStdioFederatedRead(env[GBRAIN_FEDERATED_READ_ENV]);
+  return {
+    sourceId,
+    ...(allowedSources ? { allowedSources } : {}),
+  };
+}
+
+function stdioAuthForScope(scope: StdioSourceScope): AuthInfo | undefined {
+  if (!scope.allowedSources) return undefined;
+  return {
+    token: 'stdio',
+    clientId: 'stdio',
+    clientName: 'stdio',
+    scopes: [],
+    sourceId: scope.sourceId,
+    allowedSources: scope.allowedSources,
+  };
+}
 
 export async function startMcpServer(engine: BrainEngine) {
+  const stdioSourceScope = resolveStdioSourceScope(process.env);
+  const stdioAuth = stdioAuthForScope(stdioSourceScope);
   const server = new Server(
     { name: 'gbrain', version: VERSION },
     { capabilities: { tools: {} } },
@@ -53,7 +106,8 @@ export async function startMcpServer(engine: BrainEngine) {
       // v0.31: source defaults to 'default' for stdio (no per-token scope).
       // Operators who want a different source on stdio MCP should set
       // GBRAIN_SOURCE in the env or use --source via `gbrain call`.
-      sourceId: process.env.GBRAIN_SOURCE || 'default',
+      sourceId: stdioSourceScope.sourceId,
+      ...(stdioAuth ? { auth: stdioAuth } : {}),
       // v0.31 (eD3): _meta.brain_hot_memory injection so Claude Desktop /
       // Code see the brain's relevant hot memory automatically alongside
       // every tool-call response. Best-effort; absorbs errors.
@@ -89,20 +143,22 @@ export async function startMcpServer(engine: BrainEngine) {
     const cfg = loadConfig();
     if (cfg?.engine === 'pglite' && cfg.database_path) {
       resolveSocket = resolveSocketPath(cfg.database_path);
-      const defaultSource = process.env.GBRAIN_SOURCE || 'default';
       resolveServer = await startResolveIpcServer(
         resolveSocket,
-        (req) =>
-          resolveEntitiesToPointers(
+        (req) => {
+          const explicitSourceId = typeof req.sourceId === 'string' && req.sourceId.length > 0 ? req.sourceId : null;
+          return resolveEntitiesToPointers(
             engine,
-            req.sourceId || defaultSource,
+            explicitSourceId || stdioSourceScope.sourceId,
             req.candidates ?? [],
             {
               priorContextText: req.priorContextText,
               maxPointers: req.maxPointers,
               suppression: req.suppression,
+              ...(!explicitSourceId && stdioSourceScope.allowedSources ? { sourceIds: stdioSourceScope.allowedSources } : {}),
             },
-          ),
+          );
+        },
         // The IPC resolve path IS the ambient reflex channel. Logging happens
         // at DELIVERY (post-write), not inside the resolver — a block the
         // client's 250ms budget abandoned was never injected, and counting it
@@ -152,6 +208,8 @@ function emitOperationBrokerDiagnostic(event: { status: string; socketPath: stri
 }
 
 export async function startMcpOperationProxyServer(socketPath: string): Promise<void> {
+  const stdioSourceScope = resolveStdioSourceScope(process.env);
+  const stdioAuth = stdioAuthForScope(stdioSourceScope);
   const server = new Server(
     { name: 'gbrain', version: VERSION },
     { capabilities: { tools: {} } },
@@ -182,7 +240,8 @@ export async function startMcpOperationProxyServer(socketPath: string): Promise<
       context: {
         remote: true,
         takesHoldersAllowList: ['world'],
-        sourceId: process.env.GBRAIN_SOURCE || 'default',
+        sourceId: stdioSourceScope.sourceId,
+        ...(stdioAuth ? { auth: stdioAuth } : {}),
         output: 'json',
       },
     });

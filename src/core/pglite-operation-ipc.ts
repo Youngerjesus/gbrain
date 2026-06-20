@@ -22,6 +22,15 @@ export interface OperationIpcContext {
   remote: boolean;
   sourceId?: string;
   output?: 'json' | 'text';
+  auth?: {
+    token: string;
+    clientId: string;
+    clientName?: string;
+    scopes: string[];
+    expiresAt?: number;
+    sourceId?: string;
+    allowedSources?: string[];
+  };
   [key: string]: unknown;
 }
 
