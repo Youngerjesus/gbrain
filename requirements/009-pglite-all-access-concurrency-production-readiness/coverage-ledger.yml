@@ -1,0 +1,220 @@
+requirement_id: 009-pglite-all-access-concurrency-production-readiness
+ledger_version: 1
+ledger_required: true
+status: verified
+last_updated_by_gate: production-readiness
+last_updated_at: "2026-06-21T03:30:00+09:00"
+closure_policy:
+  allowed_closed_statuses:
+    - verified
+    - not_required_with_reason
+    - deferred_with_user_acceptance
+  blocking_statuses:
+    - planned
+    - missing
+    - blocked
+    - stale_needs_recheck
+  evidence_rule: typed_evidence_required
+coverage_rows:
+  - row_id: sequence.closeout_inputs
+    required: true
+    obligation_type: closure_contract
+    description: Requirements 006, 007, and 008 are checked complete with closeout evidence before final readiness.
+    source_refs:
+      - goal-requirements/002-pglite-all-access-concurrency/sequence.md
+      - requirements/006-pglite-access-path-inventory/progress.md
+      - requirements/007-pglite-broker-guard-implementation/progress.md
+      - requirements/008-pglite-all-access-concurrency-verification/progress.md
+    data_condition: sequence items 1-3 checked complete and each prior requirement has implementation-brake `[SHIP]` plus closeout evidence
+    required_evidence:
+      - closure_validator_test
+    status: verified
+    evidence_refs:
+      - type: closure_validator_test
+        ref: "python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/006-pglite-access-path-inventory; python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/007-pglite-broker-guard-implementation; python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/008-pglite-all-access-concurrency-verification"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: launch_boundary.accepted_scope
+    required: true
+    obligation_type: artifact_contract
+    description: The readiness verdict uses the accepted local PGLite CLI/MCP launch boundary and does not silently broaden or narrow scope.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Launch-Boundary
+    data_condition: readiness artifact records local CLI, gbrain call, stdio MCP, HTTP MCP, owner startup, and maintenance behavior while excluding hosted deployment
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "python3 scripts/coverage_ledger.py validate --mode schema --requirement-dir requirements/009-pglite-all-access-concurrency-production-readiness; python3 scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/009-pglite-all-access-concurrency-production-readiness"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: artifact_role_test
+        ref: "requirements/009-pglite-all-access-concurrency-production-readiness/readiness.md#Launch-Boundary-Reviewed"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: trust_boundary.preserved
+    required: true
+    obligation_type: workflow_policy
+    description: Local CLI, gbrain call, stdio MCP, HTTP MCP, localOnly rejection, remote flags, filesystem confinement, and HTTP owner-server topology remain launch-ready.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Acceptance-Criteria
+      - src/core/operations.ts
+      - src/mcp/server.ts
+      - src/cli.ts
+    data_condition: tests or structured artifacts cover local and remote caller variants without weakening OperationContext.remote or filesystem confinement
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: verified
+    evidence_refs:
+      - type: structured_contract_fixture
+        ref: "requirements/007-pglite-broker-guard-implementation/representative-coverage.yml and requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-command-matrix.yml preserve localOnly, remote caller, file_upload, and transport metadata"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: positive_negative_trigger_tests
+        ref: "bun test test/pglite-owner-policy.test.ts test/cli-pglite-operation-broker.test.ts test/pglite-operation-ipc.test.ts test/http-transport.test.ts"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: diagnostics.operator_recovery
+    required: true
+    obligation_type: verification_contract
+    description: Operator-visible typed statuses and recovery guidance are sufficient for first exposure.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Acceptance-Criteria
+      - requirements/007-pglite-broker-guard-implementation/evidence.md
+      - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+    data_condition: maintenance_deferred, owner_unreachable, owner_starting, completion_unknown, lock_safety_blocked, local_only_remote_rejected, and duplicate owner handling are covered or classified
+    required_evidence:
+      - targeted_validator_command
+    status: verified
+    evidence_refs:
+      - type: targeted_validator_command
+        ref: "bun test test/pglite-owner-policy.test.ts test/cli-pglite-operation-broker.test.ts test/pglite-operation-ipc.test.ts test/http-transport.test.ts"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: heavy_destructive.data_safety
+    required: true
+    obligation_type: workflow_policy
+    description: Sync, embed, extract, doctor remediation, migrations, file upload, destructive mutations, safe non-execution, and typed guard behavior have no unresolved internal launch blocker.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Acceptance-Criteria
+      - requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-command-matrix.yml
+      - requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-results.jsonl
+    data_condition: heavy or destructive paths are represented by live safe execution, safe non-execution, or typed guard-fail-fast evidence
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: verified
+    evidence_refs:
+      - type: structured_contract_fixture
+        ref: "pglite-all-access-command-matrix.yml includes sync, embed, extract, doctor, migrations, file upload, schema, repair, reinit, and watch rows with execution safety modes"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: positive_negative_trigger_tests
+        ref: "all-access matrix validator passed with 468 rows, 380 executable rows, 88 safe non-execution rows, 1140 attempts, 0 raw timeout observations, and 0 failed rows"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: verification.freshness
+    required: true
+    obligation_type: verification_contract
+    description: Readiness cites fresh validator/test evidence for inventory validation, all-access matrix validation, coverage closure, broker regression, and typecheck.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Verification-Method
+    data_condition: final readiness run records commands and pass/fail results after requirement 008 closeout
+    required_evidence:
+      - targeted_validator_command
+      - scripts_verify_result
+    status: verified
+    evidence_refs:
+      - type: targeted_validator_command
+        ref: "inventory validator, all-access matrix validator, prior closure validators, and broker regression commands passed on 2026-06-21"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: scripts_verify_result
+        ref: "bun run typecheck passed with tsc --noEmit"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: privacy.artifact_sanitization
+    required: true
+    obligation_type: regression_fixture
+    description: Launch artifacts do not require secrets, tokens, live local DB contents, or machine-specific runtime paths as proof.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Acceptance-Criteria
+      - requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-results.jsonl
+      - requirements/008-pglite-all-access-concurrency-verification/pglite-all-access-run-manifest.json
+    data_condition: artifact privacy scan finds no secret-looking tokens, absolute user paths, raw socket paths, raw temp PGLite paths, or owner PIDs in readiness proof artifacts
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: verified
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: "artifact privacy scan across requirement 008 launch proof artifacts"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: expected_error_assertions
+        ref: "no matches for absolute user paths, raw temp PGLite paths, raw owner socket paths, raw owner_pid fields, or common secret-looking token prefixes"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: external_dependencies.none
+    required: true
+    obligation_type: artifact_contract
+    description: Local PGLite readiness has no external account, DNS, hosted infrastructure, OAuth, email, payment, or vendor approval dependency.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Launch-Boundary
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Out-Of-Scope--Avoid
+    data_condition: readiness artifact classifies external dependencies as absent or records explicit handoff
+    required_evidence:
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: artifact_role_test
+        ref: "requirements/009-pglite-all-access-concurrency-production-readiness/readiness.md#External-Handoff"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: blocker_classification.complete
+    required: true
+    obligation_type: closure_contract
+    description: All unresolved launch items are classified as ready, ready_with_external_handoff, blocked_internal, blocked_external, or deferred_non_goal without hiding internal blockers.
+    source_refs:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Acceptance-Criteria
+    data_condition: readiness artifact records blocker classification, residual risks, external handoffs, and deferred non-goals
+    required_evidence:
+      - closure_validator_test
+    status: verified
+    evidence_refs:
+      - type: closure_validator_test
+        ref: "requirements/009-pglite-all-access-concurrency-production-readiness/readiness.md records final state ready, no required follow-up slices, no external handoff, and deferred non-goals"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+  - row_id: sequence.final_state
+    required: true
+    obligation_type: ship_gate
+    description: Final verdict is recorded in requirement and sequence state before marking the goal sequence complete.
+    source_refs:
+      - goal-requirements/002-pglite-all-access-concurrency/sequence.md
+      - goal-requirements/002-pglite-all-access-concurrency/progress.md
+    data_condition: readiness verdict is production-ready or accepted external handoff, sequence item 4 is checked complete, and progress/evidence files agree
+    required_evidence:
+      - implementation_brake_harness
+      - closure_validator_result
+      - progress_state_assertion
+    status: verified
+    evidence_refs:
+      - type: implementation_brake_harness
+        ref: "requirements/006, requirements/007, and requirements/008 passed implementation-brake and closeout; requirement 009 passed requirement post-draft reviewer and production-readiness"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: closure_validator_result
+        ref: "python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/009-pglite-all-access-concurrency-production-readiness"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+      - type: progress_state_assertion
+        ref: "sequence progress and requirement 009 progress record `[PRODUCTION READY]` and final sequence completion"
+        recorded_in: requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md
+    recorded_in:
+      - requirements/009-pglite-all-access-concurrency-production-readiness/evidence.md

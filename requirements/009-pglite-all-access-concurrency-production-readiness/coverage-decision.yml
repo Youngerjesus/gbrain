@@ -1,0 +1,21 @@
+requirement_id: 009-pglite-all-access-concurrency-production-readiness
+decision_version: 1
+ledger_required: true
+ledger_path: coverage-ledger.yml
+trigger_evaluation:
+  signals:
+    subtask_count: 10
+    acceptance_criteria_count: 10
+    production_bound: true
+    multiple_prior_requirements: true
+    trust_boundary_and_privacy: true
+    low_risk_mechanical_edits: false
+  rationale: Requirement 009 is the final production-readiness gate for the all-access PGLite concurrency sequence and must classify launch boundary, trust, diagnostics, evidence freshness, privacy, and handoff state.
+source_refs:
+  - requirements/009-pglite-all-access-concurrency-production-readiness/requirements.md#Acceptance-Criteria
+  - goal-requirements/002-pglite-all-access-concurrency/sequence.md
+  - requirements/006-pglite-access-path-inventory/evidence.md
+  - requirements/007-pglite-broker-guard-implementation/evidence.md
+  - requirements/008-pglite-all-access-concurrency-verification/evidence.md
+decided_by_gate: requirement-clarifier
+decided_at: "2026-06-21T03:30:00+09:00"
