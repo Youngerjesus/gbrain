@@ -18,7 +18,7 @@ After all listed requirements and the readiness gate are complete, PGLite users 
 - [x] 2. `requirements/002-pglite-operation-forwarding/requirements.md` - outcome: owner discovery and local-only operation forwarding for `query`, `search`, and `think`; create this requirements file only when this slice starts.
 - [x] 3. `requirements/003-pglite-priority-scheduler/requirements.md` - outcome: interactive priority and bounded maintenance behavior for `sync`, `embed`, and `extract`; create this requirements file only when this slice starts.
 - [x] 4. `requirements/004-pglite-concurrency-verification/requirements.md` - outcome: end-to-end concurrency, stale-owner recovery, diagnostics, and documentation coverage; create this requirements file only when this slice starts.
-- [ ] 5. `requirements/005-pglite-concurrent-access-production-readiness/requirements.md` - outcome: sequence-level readiness verdict and launch handoff state.
+- [x] 5. `requirements/005-pglite-concurrent-access-production-readiness/requirements.md` - outcome: sequence-level readiness verdict and launch handoff state.
 
 ## State Files
 

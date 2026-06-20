@@ -41,6 +41,7 @@ cd "$ROOT"
 ALLOWED=(
   "src/cli.ts"                                  # local CLI; user owns the machine, no trust boundary
   "src/mcp/dispatch.ts"                         # shared dispatch; sets ctx.remote from caller, handlers self-gate
+  "src/mcp/pglite-operation-dispatch.ts"         # local stdio owner-broker adapter; IPC validates query/search/think only
   "src/mcp/server.ts"                           # stdio MCP; local-trusted (binary on user's box)
   "src/mcp/http-transport.ts"                   # superseded by serve-http.ts; kept for back-compat tests
   "src/mcp/tool-defs.ts"                        # pure helper; takes ops as parameter, never exposes them
