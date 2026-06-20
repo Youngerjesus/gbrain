@@ -166,6 +166,21 @@ def fallback_policies() -> dict[str, FallbackPolicy]:
             FallbackAction.PARENT_FALLBACK,
             "Parent may inspect locally and record residual context risk.",
         ),
+        "plan-design-review": FallbackPolicy(
+            "plan-design-review",
+            FallbackAction.STRUCTURED_BLOCKED,
+            "Triggered UI planning review cannot be silently bypassed.",
+        ),
+        "plan-ux-review": FallbackPolicy(
+            "plan-ux-review",
+            FallbackAction.STRUCTURED_BLOCKED,
+            "Triggered user experience planning review cannot be silently bypassed.",
+        ),
+        "plan-devex-review": FallbackPolicy(
+            "plan-devex-review",
+            FallbackAction.STRUCTURED_BLOCKED,
+            "Triggered developer experience planning review cannot be silently bypassed.",
+        ),
         "plan-eng-review": FallbackPolicy(
             "plan-eng-review",
             FallbackAction.STRUCTURED_BLOCKED,
@@ -180,6 +195,16 @@ def fallback_policies() -> dict[str, FallbackPolicy]:
             "visual-qa-hardening",
             FallbackAction.STRUCTURED_BLOCKED,
             "UI-bearing review cannot be silently bypassed.",
+        ),
+        "ux-review": FallbackPolicy(
+            "ux-review",
+            FallbackAction.STRUCTURED_BLOCKED,
+            "Triggered live user experience review cannot be silently bypassed.",
+        ),
+        "devex-review": FallbackPolicy(
+            "devex-review",
+            FallbackAction.STRUCTURED_BLOCKED,
+            "Triggered live developer experience review cannot be silently bypassed.",
         ),
         "implementation-brake": FallbackPolicy(
             "implementation-brake",

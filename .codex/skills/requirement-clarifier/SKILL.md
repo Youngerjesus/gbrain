@@ -237,6 +237,20 @@ Required checks:
 - Readiness consistency: `Ready` must not contain decision-bearing open questions; `Risky but usable` must preserve residual risk; `Blocked` must identify the blocking question or evidence gap.
 - Reviewer status handling: machine-consumed readiness may use only structured `reviewer_result_status` or an explicit fallback status, never prose praise or substring matches.
 
+## Conditional Coverage Ledger Gate
+
+Before a broad or high-risk requirement can be accepted as `Ready`, create a machine-readable coverage decision and, when required, a separate coverage ledger.
+
+Use `requirements/<requirement-id>/coverage-decision.yml` to record the structured decision. The decision must include `requirement_id`, `decision_version`, `ledger_required`, `trigger_evaluation`, `source_refs`, `decided_by_gate`, and `decided_at`.
+
+Set `ledger_required: true` when any strong omission-risk trigger applies, including 10+ subtasks, 10+ screens or screenshots, multi-state UI, bulk data/table migration, multiple modules/packages, many acceptance criteria, or similar high-risk scope. Then create `requirements/<requirement-id>/coverage-ledger.yml` and keep readiness blocked until schema/readiness validation can pass.
+
+Set `ledger_required: false` only with structured `ledger_not_required.reason`, `ledger_not_required.risk_assessment`, and `ledger_not_required.accepted_scope_refs`. A high-count but low-risk mechanical-edit case may use this path only when the accepted scope is explicitly narrow and the rationale is recorded.
+
+`coverage-ledger.yml` is a separate artifact. Do not embed required coverage rows only in `progress.md` or `evidence.md`. `progress.md` records gate state and recheck routing; `evidence.md` records human-readable verification history.
+
+Semantic acceptance for coverage-ledger readiness belongs to `scripts/coverage_ledger.py` or an equivalent structured validator. Skill prose, substring checks, route existence, or reviewer praise are drift hints only and must not be treated as authoritative coverage proof.
+
 Reviewer unavailable policy:
 
 - If the post-draft reviewer is available, `Ready` requires structured `SHIP` or resolved material findings.

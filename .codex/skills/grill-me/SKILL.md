@@ -1,6 +1,6 @@
 ---
 name: grill-me
-description: "Interrogate vague ideas, plans, feature concepts, architecture sketches, or design directions before planning or implementation so the human and AI converge on a shared design concept and problem definition. Ask only critical, handoff-changing pressure questions one at a time, with 2-3 suggested answer options rendered as plain text while requiring a free-form chat response path, with a default 5-question budget and explicit user approval for up to 5 more. Use when the user asks for grill me, pressure questions, hidden assumptions, missing requirements, decision dependencies, validation gaps, shared design concept alignment, or a handoff-ready summary for requirement-clarifier, decision-brake, scenario-brake, plan-eng-review, office-hours, or implementation planning."
+description: "Interrogate vague ideas, plans, feature concepts, architecture sketches, or design directions before planning or implementation so the human and AI converge on a shared design concept and problem definition. Ask only critical, handoff-changing pressure questions one at a time by default, or use explicit batch mode when requested, with 2-3 suggested answer options rendered as plain text while requiring a free-form chat response path. Sequential mode has a default 5-question budget and explicit user approval for up to 5 more; batch mode is limited by criticality rather than count. Use when the user asks for grill me, pressure questions, hidden assumptions, missing requirements, decision dependencies, validation gaps, shared design concept alignment, or a handoff-ready summary for requirement-clarifier, decision-brake, scenario-brake, plan-eng-review, office-hours, or implementation planning."
 ---
 
 # Grill Me
@@ -12,9 +12,10 @@ Primary goal: make the human and AI share the same design concept, problem defin
 ## Core Posture
 
 - Treat the user's idea as under-specified until proven otherwise.
-- Ask one question at a time, and only when it passes the criticality gate.
-- Use a default budget of 5 pressure questions. Ask fewer when enough is known.
-- After 5 questions, do not continue automatically. Ask the user whether to extend for up to 5 more questions or synthesize now.
+- Ask one question at a time by default, and only when it passes the criticality gate.
+- Support an explicit `Batch mode` when the user asks to receive the critical pressure questions at once. Treat prior `Batch-5 mode` wording as a legacy alias only; it never creates a five-question cap.
+- Use a default budget of 5 pressure questions only in Sequential mode. Ask fewer when enough is known.
+- After 5 Sequential-mode questions, do not continue automatically. Ask the user whether to extend for up to 5 more questions or synthesize now.
 - Prefer uncomfortable, decision-changing questions over broad brainstorming.
 - Do not interrogate facts that can be discovered from the repo, docs, configs, schemas, or existing code. Inspect those directly when available.
 - Do not turn the session into requirement writing too early. The goal is to expose uncertainty first, then hand off.
@@ -46,7 +47,7 @@ The main agent is the **Main Pressure Interviewer**. It is not a registered suba
 
 The Main Pressure Interviewer may ask a high-impact obvious question before running a subagent round when the question passes the criticality gate from local grounding and prior answers.
 
-Run a registered agent refresh round only when the remaining direct candidates are weak, non-critical, stale, depleted, or insufficient for deciding the next handoff-changing question. A refresh round is also appropriate before recommending the 5-question extension when the remaining uncertainty is unclear.
+Run a registered agent refresh round only when the remaining direct candidates are weak, non-critical, stale, depleted, or insufficient for deciding the next handoff-changing question. In Sequential mode, a refresh round is also appropriate before recommending the 5-question extension when the remaining uncertainty is unclear.
 
 Required registered Codex agents:
 
@@ -95,20 +96,40 @@ Override the default order only when a lower-ranked candidate is a prerequisite 
 
 When a user answer materially changes the idea, re-score direct candidates before selecting the next question. Regenerate with registered agents only when the remaining candidate pool is stale, depleted, or no longer produces a critical question. Do not rely on a stale candidate queue for the next question or for extension recommendations.
 
+### 2a. Choose the interaction mode
+
+Default to **Sequential mode**: ask one pressure question per turn, incorporate the answer, then choose the next question.
+
+Use `Batch mode` only when the user explicitly asks for a batch, all critical questions, questions up front, or equivalent wording. Do not infer batch mode merely because the idea is broad, the user is impatient, or subagents are available.
+
+`Batch mode` may be built with or without a registered agent refresh. Use it with or without a registered agent refresh depending on candidate quality:
+
+- If grounding exposes enough high-impact direct candidates, curate the batch directly. Do not run a refresh round merely because batch mode was requested.
+- If the direct candidate pool is weak, stale, depleted, or insufficient for the set of independent critical questions, run the registered agent refresh process from section 2 before constructing the batch.
+- If a registered agent refresh round is used for batch construction, preserve the existing fail-closed semantics for `blocked_unavailable`, `blocked_invalid_output`, and `blocked_partial_generation`: report the blocker, discard or quarantine partial candidates, and do not ask from a partial pool.
+
+The default 5-question budget does not apply in `Batch mode`. Do not pad the batch to 5 questions. Do not cap the batch at 5 questions. Batch question count is limited by the criticality gate, not by a numeric budget. A batch may contain 10 or 15 questions when each question is handoff-changing. Ask fewer when fewer questions pass the criticality gate.
+
+Each batched question must independently pass the criticality gate and be answerable without depending on an unavailable prior answer in the same batch. If one dependency-breaking answer is needed before the remaining questions can be responsible, stay in Sequential mode for that question and explain that batching would blur the decision boundary.
+
+Order batched questions by priority and dependency: put proceed/kill, outcome, and prerequisite questions before lower-impact scope, route, or polishing questions, and keep dependent questions after the questions they rely on. Number the questions in that order and give 2-3 suggested options under each question when useful. Preserve the free-form answer path for the entire batch, including an explicit note that the user may answer any subset, reject the options, mark a question not applicable, or answer in their own words.
+
+After the batched answers are processed, synthesize when the critical set is exhausted or ask the next critical follow-up only when the answers reveal a new handoff-changing uncertainty. Count only answered pressure questions that produced usable decision signal; unanswered or explicitly deferred batched questions remain open decisions instead of silently counting as answered.
+
 ### 3. Run the question loop
 
-Ask exactly one question per turn unless the user explicitly requests a batch.
+Ask exactly one question per turn in Sequential mode.
 
 Track `question_budget_state`:
 
-- Default round: maximum 5 pressure questions.
+- Sequential default round: maximum 5 pressure questions.
 - Extension round: maximum 5 additional pressure questions, only after explicit user approval.
 - Total default maximum: 10 pressure questions.
 - Stop before the budget is exhausted when no remaining question passes the criticality gate.
 - Never treat the budget as a target. It is a ceiling.
 - Track `answered_pressure_question_count`.
 - A specificity press after a vague, rejected, "none of these", "not applicable", or "I cannot answer yet" answer does not count as answered until it produces usable decision signal or the user explicitly declines to answer.
-- If the user explicitly requests a batch, batch questions count against `answered_pressure_question_count`; do not exceed the current remaining budget, and fire the same extension gate when the first 5 answered pressure questions have been used.
+- In `Batch mode`, batch questions count against `answered_pressure_question_count` for synthesis bookkeeping, but they do not consume or obey the Sequential-mode 5-question budget.
 
 Before asking, apply the criticality gate. A question is worth asking only if a plausible answer would change at least one of:
 
@@ -133,11 +154,11 @@ If the user's answer is vague, press once for specificity before moving on.
 
 Do not repeat answered questions. Do not ask checklist questions mechanically. Stop the loop when the remaining uncertainty is non-critical, merely nice-to-know, or no longer changes the next handoff.
 
-### 3a. Ask for extension after 5 questions
+### 3a. Ask for extension after 5 Sequential-mode questions
 
-After the fifth pressure question has been answered, pause and ask whether to continue. Do not ask question 6 until the user explicitly chooses to extend.
+After the fifth Sequential-mode pressure question has been answered, pause and ask whether to continue. Do not ask question 6 until the user explicitly chooses to extend.
 
-Before recommending extension, re-score or regenerate candidates so the recommendation is not based on a stale candidate queue. If important questions remain, summarize only the remaining question categories without revealing the remaining question text. If extension declined, ignored, or redirected by the user, synthesize with unresolved categories preserved.
+Before recommending a Sequential-mode extension, re-score or regenerate candidates so the recommendation is not based on a stale candidate queue. If important questions remain, summarize only the remaining question categories without revealing the remaining question text. If extension declined, ignored, or redirected by the user, synthesize with unresolved categories preserved.
 
 Ask one extension question in normal chat with these suggested options:
 
@@ -254,6 +275,7 @@ If none fit, recommend a direct implementation plan only when the idea is simple
 
 - In early turns, output the grounding summary plus one question.
 - During the loop, output only enough context to make the next question precise.
+- In `Batch mode`, output the grounding summary plus the numbered batch and make the free-form answer path explicit.
 - Skip non-critical questions even if they would improve the idea.
 - Render suggested answer options as plain text inside the chat message. Do not use multiple-choice input tools for pressure questions; preserve a free-form answer path as the primary interaction.
 - At synthesis time, output the handoff summary and next skill recommendation.

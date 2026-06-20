@@ -6,6 +6,11 @@ Created: <YYYY-MM-DD>
 Last updated: <YYYY-MM-DD>
 Secondary plan: <Pending until secondary-plan | [secondary_plan.md](secondary_plan.md)>
 Requirements source: <link or "None selected in this session">
+Review artifacts:
+- Plan design review: <Not required | Pending | [reviews/plan-design-review.md](reviews/plan-design-review.md)>
+- Plan UX review: <Not required | Pending | [reviews/plan-ux-review.md](reviews/plan-ux-review.md)>
+- Plan DevEx review: <Not required | Pending | [reviews/plan-devex-review.md](reviews/plan-devex-review.md)>
+- Plan engineering review: <Not required | Pending | [reviews/plan-eng-review.md](reviews/plan-eng-review.md)>
 
 ## Goal Objective
 

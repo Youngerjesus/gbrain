@@ -252,6 +252,24 @@ Unavailable policy:
 
 Reject prose-only approval, substring `CONFORMANT`, or `CONFORMANT` plus unresolved material findings as authoritative conformance evidence.
 
+## Coverage Ledger Ship Gate
+
+When a requirement has `requirements/<requirement-id>/coverage-ledger.yml`, treat that ledger as authoritative completion input before `[SHIP]`.
+
+Before `[SHIP]`, require deterministic closure validation over the actual requirement ledger, for example:
+
+```text
+python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>
+```
+
+Do not issue `[SHIP]` when closure validation is missing, unavailable, crashes, times out, emits unparseable output, or reports incomplete rows, stale rows, missing typed evidence, incompatible evidence, missing artifacts, path escapes, split-brain decision/ledger state, or stale evidence.
+
+If strong broad-work signals are found but neither `coverage-ledger.yml` nor a structured `coverage-decision.yml` not-required decision exists, do not issue `[SHIP]`. Record a structured progress gap and route back to requirement clarification / post-draft review. The progress gap must include `requirement_id`, `route`, `blocking_reason`, `triggering_signals`, `expected_next_gate`, `closure_condition`, and `recorded_at`; the route is `requirement-clarifier-post-review-recheck`.
+
+A prior not-required decision can become stale. If implementation-time broad-work signals exceed the decision's accepted scope, treat the decision as `stale_needs_recheck` and block `[SHIP]` until requirement clarification/post-review updates the decision and any required ledger.
+
+Coverage-ledger semantic acceptance belongs to `scripts/coverage_ledger.py` or an equivalent structured validator. Skill text, substring checks, route existence, or prose-only reviewer approval are not authoritative coverage evidence.
+
 ## Companion Agent Routing
 
 `implementation-brake`가 최종 ship-readiness verdict 를 소유합니다.

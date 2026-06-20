@@ -1,6 +1,6 @@
 ---
 name: project-bootstrap
-description: Initialize or adopt a generic software project with Codex operating structure, template docs, and minimal spec/contracts support.
+description: Initialize or adopt a generic software project with Codex operating structure, template docs, and goal-requirements support.
 ---
 
 # Project Bootstrap
@@ -24,7 +24,7 @@ Install a reusable development operating system for a generic software project:
 - root `AGENTS.md`
 - optional root `DESIGN.md`
 - `main/` workspace templates
-- minimal spec mode with `spec.md` and `contracts.md`
+- goal-requirements and requirements workflow scaffolding
 
 The default `.codex` install is curated, not exhaustive. Reuse the strongest existing agents and skills, but only after removing domain-specific or stack-specific assumptions.
 
@@ -64,11 +64,6 @@ Recommend generating `DESIGN.md` when any of these signals exist:
 
 If these signals are absent, default to not generating `DESIGN.md`.
 
-## Minimal Spec Mode
+## Requirement Workflow
 
-Bootstrap only these spec templates by default:
-
-- `main/specs/_template/spec.md`
-- `main/specs/_template/contracts.md`
-
-Do not force `plan.md`, `tasks.md`, or `design.md` during bootstrap. Those can be added later when the project needs them.
+Bootstrap the goal-requirements workflow by default. New projects should start work from `goal-requirements/`, `requirements/`, and `plans/`.

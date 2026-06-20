@@ -8,7 +8,7 @@ requirements/<requirement-id>/progress.md
 
 Keep this file focused on gate-level recovery state for one requirement. Update it before and after every gate.
 
-For `research`, `technical-design`, and UI-bearing `plan-design-review`, use this gate status vocabulary:
+For `research`, `technical-design`, conditional plan-stage reviews (`plan-design-review`, `plan-ux-review`, `plan-devex-review`), and conditional live reviews (`ux-review`, `devex-review`), use this gate status vocabulary:
 
 - `not_evaluated`
 - `required_pending`
@@ -19,7 +19,7 @@ For `research`, `technical-design`, and UI-bearing `plan-design-review`, use thi
 - `awaiting_user_approval`
 - `stale_needs_recheck`
 
-Artifact existence alone is insufficient. If an artifact path, chat-only review outcome, and the recorded gate state disagree, record the artifact/state mismatch and set the next action to revalidate, rerun, or block before `plan-eng-review`.
+Artifact existence alone is insufficient. For triggered plan-stage reviews, `completed` requires the matching `plans/<plan-id>/reviews/<gate>.md` artifact path. If an artifact path and the recorded gate state disagree, record the artifact/state mismatch and set the next action to revalidate, rerun, or block before `plan-eng-review`.
 
 ```markdown
 # Requirement Progress
@@ -144,6 +144,7 @@ Record requirement reviewer fallback, conformance reviewer fallback, AC coverage
 - Gate status: not_evaluated | required_pending | in_progress | completed | not_required | blocked | awaiting_user_approval | stale_needs_recheck
 - Reason:
 - Review outcome: passed | changes_required | blocked | not_required
+- Review artifact path: plans/<plan-id>/reviews/plan-design-review.md | Missing | Not required
 - Draft Plan reviewed: plans/<plan-id>/plan.md | Missing
 - Locked design decisions:
 - Deferred design items:
@@ -160,6 +161,7 @@ Record requirement reviewer fallback, conformance reviewer fallback, AC coverage
 - Gate status: not_evaluated | required_pending | in_progress | completed | not_required | blocked | awaiting_user_approval | stale_needs_recheck
 - Reason:
 - Review outcome: passed | changes_required | blocked | not_required
+- Review artifact path: plans/<plan-id>/reviews/plan-ux-review.md | Missing | Not required
 - Draft Plan reviewed: plans/<plan-id>/plan.md | Missing
 - Locked UX decisions:
 - Deferred UX items:
@@ -176,10 +178,26 @@ Record requirement reviewer fallback, conformance reviewer fallback, AC coverage
 - Gate status: not_evaluated | required_pending | in_progress | completed | not_required | blocked | awaiting_user_approval | stale_needs_recheck
 - Reason:
 - Review outcome: passed | changes_required | blocked | not_required
+- Review artifact path: plans/<plan-id>/reviews/plan-devex-review.md | Missing | Not required
 - Draft Plan reviewed: plans/<plan-id>/plan.md | Missing
 - Locked DX decisions:
 - Deferred DX items:
 - Draft Plan reconciliation required before `plan-eng-review`: yes | no
+- Blockers:
+- Requires user approval: yes | no
+- Requirement version or change note:
+- Artifact/state mismatch:
+
+### plan-eng-review
+
+- Gate: plan-eng-review
+- Gate status: not_evaluated | required_pending | in_progress | completed | blocked | awaiting_user_approval | stale_needs_recheck
+- Reason:
+- Review outcome: passed | changes_required | blocked
+- Review artifact path: plans/<plan-id>/reviews/plan-eng-review.md | Missing
+- Draft Plan reviewed: plans/<plan-id>/plan.md | Missing
+- Plan-stage review inputs consumed: plan-design-review | plan-ux-review | plan-devex-review | none
+- Draft Plan reconciliation required before `scenario-brake` or `secondary-plan`: yes | no
 - Blockers:
 - Requires user approval: yes | no
 - Requirement version or change note:

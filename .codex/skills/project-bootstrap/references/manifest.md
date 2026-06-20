@@ -37,7 +37,7 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `.codex/agents/performance-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | concrete performance-risk specialist |
 | `.codex/agents/testing-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | template-managed |
 | `.codex/agents/security-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | template-managed |
-| `.codex/agents/verifier.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | minimal spec mode aware |
+| `.codex/agents/verifier.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | requirement workflow aware |
 | `.codex/agents/context-synchronizer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | template-managed |
 | `.codex/agents/context-loader.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | read-only pre-implementation codebase exploration |
 | `.codex/agents/visual-qa-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | visual QA companion reviewer |
@@ -100,6 +100,9 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `.codex/skills/systematic-debugging/root-cause-tracing.md` | Yes | all modes | preserve | No | direct skill reference |
 | `.codex/skills/systematic-debugging/defense-in-depth.md` | Yes | all modes | preserve | No | direct skill reference |
 | `.codex/skills/systematic-debugging/condition-based-waiting.md` | Yes | all modes | preserve | No | direct skill reference |
+| `scripts/coverage_ledger.py` | Yes | all modes | preserve | Yes | coverage-ledger validator baseline |
+| `scripts/verify` | Yes | all modes | preserve | Yes | local verification baseline |
+| `tests/verify_coverage_ledger.py` | Yes | all modes | preserve | Yes | coverage-ledger validator tests |
 | `AGENTS.md` | Yes | all modes | never | No | strategic project doc |
 | `README.md` | Yes | all modes | never | No | strategic project doc |
 | `DESIGN.md` | Optional | UI-bearing projects only | never | No | root design SSOT |
@@ -109,8 +112,6 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `main/docs/project_overview.md` | Yes | all modes | never | No | project SSOT seed |
 | `main/docs/tech_stack.md` | Yes | all modes | preserve | No | stack decisions |
 | `main/docs/history_archives/history.md` | Yes | all modes | preserve | No | history seed |
-| `main/specs/_template/spec.md` | Yes | all modes | never | No | minimal spec mode |
-| `main/specs/_template/contracts.md` | Yes | all modes | never | No | minimal completion contract |
 | `main/work_queue/progress.md` | Yes | all modes | preserve | No | project progress seed |
 | `main/src/.gitkeep` | Yes | all modes | preserve | No | workspace seed |
 | `main/tests/.gitkeep` | Yes | all modes | preserve | No | workspace seed |

@@ -8,7 +8,14 @@ requirements/<requirement-id>/evidence.md
 
 Record direct evidence for review, verification, and accepted criteria satisfaction. Summarize long logs and link to full artifacts when needed.
 
-For `research.md`, `technical-design.md`, optional `architecture.md`, and UI-bearing `plan-design-review`, record source evidence, artifact paths or chat-only review outcomes, gate status evidence, and any Requirement Impact approval evidence. Evidence should make it possible to tell whether unresolved items are blocking/non-blocking and whether a required artifact or review outcome is missing, stale, or contradicted by progress state.
+For `research.md`, `technical-design.md`, optional `architecture.md`, conditional plan-stage reviews (`plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`), and conditional live reviews (`ux-review`, `devex-review`), record source evidence, artifact paths, gate status evidence, and any Requirement Impact approval evidence. Triggered plan-stage reviews must point to their durable review artifacts:
+
+- `plans/<plan-id>/reviews/plan-design-review.md`
+- `plans/<plan-id>/reviews/plan-ux-review.md`
+- `plans/<plan-id>/reviews/plan-devex-review.md`
+- `plans/<plan-id>/reviews/plan-eng-review.md`
+
+Evidence should make it possible to tell whether unresolved items are blocking/non-blocking and whether a required artifact or review outcome is missing, stale, or contradicted by progress state.
 
 ```markdown
 # Requirement Evidence
@@ -120,7 +127,7 @@ For conformance review evidence, include:
 - Result:
 - Files:
 - Gate status:
-- Source artifact: research.md | technical-design.md | architecture.md | plan-design-review outcome | progress.md | other
+- Source artifact: research.md | technical-design.md | architecture.md | plans/<plan-id>/reviews/<gate>.md | progress.md | other
 - Requirement Impact:
 - Blocking/non-blocking unresolved items:
 ```

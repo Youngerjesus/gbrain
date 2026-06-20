@@ -46,6 +46,13 @@ Primary audience: coding agents and maintainers working inside this product repo
 - Refactor only when the change improves boundaries, dependency direction, testability, or local reasoning; do not split files just to make them smaller.
 - Add an abstraction only when it reduces real complexity, removes meaningful duplication, or clearly matches an established local pattern.
 
+## Coverage Ledger Gates
+
+- Broad or high-risk requirement slices must record a structured `requirements/<requirement-id>/coverage-decision.yml`. Create `coverage-ledger.yml` when any strong trigger applies, including 10 or more subtasks, 10 or more screens or screenshots, multi-state UI, bulk data migration, multiple modules or packages, or many acceptance criteria.
+- If `coverage-decision.yml` says a ledger is required, `coverage-ledger.yml` is the authoritative coverage contract. Each row must carry typed status, obligation type, requirement reference, evidence references, verification command and result, and obligation-appropriate proof such as screenshots, DOM/tests, migration counts/checksums, or generated artifact plus consumer proof.
+- `implementation-brake` may not emit `[SHIP]` while a required `coverage-ledger.yml` is missing, incomplete, stale, route-only, prose-only, split from `coverage-decision.yml`, or backed by incompatible evidence. Route missing-ledger broad-work cases back to `requirement-clarifier` and post-review, and record the gap in `progress.md`.
+- Use `scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>` before implementation-brake decisions that depend on ledger presence, and `--mode closure` before closeout when a ledger exists or is required. The validator is authoritative for ledger state; text scans are drift hints only.
+
 ## Anti Coding Patterns
 
 - Do not use substring, regex, or string-presence checks to decide semantic acceptance, boundary, safety, evidence correctness, or state diagnosis.
@@ -66,14 +73,14 @@ Primary audience: coding agents and maintainers working inside this product repo
 
 ## Execution Source Selection
 
-- If the task provides or selects `specs/<feature>/spec.md` and `specs/<feature>/contracts.md`, use the specs-based SDD path. Treat `contracts.md` as the completion contract: every listed behavior, non-goal, required check, and acceptance artifact must be satisfied or explicitly blocked.
 - If the task provides or selects `goal-requirements/<id>/sequence.md`, use the goal-requirements path. Start with the first unchecked requirement and read `requirements/<requirement-id>/requirements.md`, `requirements/<requirement-id>/research.md`, `requirements/<requirement-id>/technical-design.md`, `requirements/<requirement-id>/architecture.md`, `requirements/<requirement-id>/progress.md`, `requirements/<requirement-id>/decisions.md`, `requirements/<requirement-id>/evidence.md`, any accepted `plans/<plan-id>/plan.md` and `plans/<plan-id>/secondary_plan.md`, plus current git status/diff.
 - If a broad initiative has no accepted sequence yet, use `goal-requirement-orchestrator` to create `goal-requirements/<id>/sequence.md`, `goal-requirements/<id>/progress.md`, and the first requirement's requirement/progress/decisions/evidence state; later requirement documents remain deferred until their slice starts.
 - A ready requirement document is not permission to implement directly. For each goal-requirements slice, evaluate the conditional hard gates in this order: `requirement-clarifier`, `research`, `technical-design`, `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, `scenario-brake`, `secondary-plan`, then after implementation and applicable live evidence `ux-review` and `devex-review`; `research` writes `requirements/<requirement-id>/research.md` when required, `technical-design` writes `requirements/<requirement-id>/technical-design.md` when required, optional architecture design writes `requirements/<requirement-id>/architecture.md` only when needed, `plan-design-review` is required before `plan-eng-review` for UI-bearing slices, `plan-ux-review` is required before `plan-eng-review` for user-facing experience slices, and `plan-devex-review` is required before `plan-eng-review` for developer-facing experience slices.
+- During `requirement-clarifier`, broad or high-risk work must either produce `coverage-decision.yml` plus required `coverage-ledger.yml`, or record a structured not-required decision. The post-draft reviewer must verify the decision and ledger state before `Readiness Status: Ready`.
 - For goal-requirements research/design gates, record `not_required` skips with reasons. Artifact existence alone is insufficient: progress, artifact path or chat-only review outcome, evidence, decisions, unresolved-item classification, and approval state must agree before `plan-eng-review`.
 - After planning is accepted, run `context-loading` before `tdd-workflow` when the context-loading triggers apply; for UI-bearing work, run `visual-qa-hardening` with the `visual-qa-reviewer` companion after browser screenshot verification and before `implementation-brake`, and also use the `reference-fidelity-reviewer` companion for reference-driven visual work; for user-facing experience work, run `ux-review` after runnable/browser evidence exists and before `implementation-brake`; for developer-facing experience work, run `devex-review` after runnable docs/API/CLI/SDK evidence exists and before `implementation-brake`; after implementation and verification, run `implementation-brake`, then `closeout` only after `[SHIP]`. UI-bearing work must have passed `plan-design-review` before planning is accepted; user-facing experience work must have passed `plan-ux-review` before planning is accepted; developer-facing experience work must have passed `plan-devex-review` before planning is accepted; non-triggered slices must record the relevant review gates as `not_required` with the reason.
 - For MVP, beta, launch, or production-bound goal sequences, reserve a final production readiness requirement slice and run `production-readiness` as the sequence-level launch gate before marking the goal sequence complete.
-- Treat scheduler result artifacts, including run-local `result.md`/`status.txt` and any legacy `result_<phase>.md` files, as scheduler-owned phase status reports. They express phase outcome, next owner, and readiness only; they are not substitutes for `contracts.md`, requirement evidence, product acceptance evidence, or verification artifacts.
+- Treat scheduler result artifacts, including run-local `result.md`/`status.txt` and any legacy `result_<phase>.md` files, as scheduler-owned phase status reports. They express phase outcome, next owner, and readiness only; they are not substitutes for requirement evidence, product acceptance evidence, or verification artifacts.
 - Before editing, identify the affected product contract: public API, CLI behavior, persisted data, UI behavior, external integration, tests, docs, or migration state.
 - Preserve existing public behavior unless the active spec, contract, or accepted requirement explicitly changes it.
 - If the selected source of truth and repo reality conflict, stop and report the conflict instead of weakening the contract.
@@ -99,7 +106,8 @@ Primary audience: coding agents and maintainers working inside this product repo
 - `scripts/verify` must be local, secret-free, and expected to finish in roughly one minute or less.
 - If ordinary `scripts/verify` runtime exceeds roughly one minute, prioritize refactoring the verification path before expanding it: parallelize deterministic checks, remove redundant work, improve test isolation, or move slow non-baseline checks into separate `scripts/verify*` entrypoints.
 - `scripts/verify` should run all stable baseline checks required before ordinary task completion.
-- When the stable baseline changes, update `scripts/verify`, this section, and any spec/contract templates or task contracts that reference required verification.
+- The stable baseline includes the coverage ledger validator regression suite at `tests/verify_coverage_ledger.py`; keep `scripts/coverage_ledger.py`, its fixtures/tests, and `scripts/verify` aligned when the ledger contract changes.
+- When the stable baseline changes, update `scripts/verify`, this section, and any task contracts that reference required verification.
 - Slow checks, external-service checks, real-service smoke checks, and checks expected to exceed roughly one minute belong in separate scripts named `scripts/verify*`, such as `scripts/verify_full`, `scripts/verify_e2e`, or `scripts/verify_external`.
 - Verification scripts must fail clearly when required tools or environment variables are missing. They must not silently skip required checks.
 - A failing `scripts/verify*` check required by the active contract blocks completion just like a failing baseline.
@@ -122,11 +130,11 @@ Primary audience: coding agents and maintainers working inside this product repo
 - `docs/tech_stack.md`: chosen runtime, tooling, and delivery constraints.
 - `docs/history_archives/history.md`: durable project history and milestone notes.
 - `work_queue/progress.md`: current product progress summary.
-- `specs/<feature>/spec.md`: specs-based SDD implementation requirements when selected by the task.
-- `specs/<feature>/contracts.md`: specs-based SDD acceptance contract and required verification when selected by the task.
 - `goal-requirements/<id>/sequence.md`: multi-slice goal execution order and gate contract when selected by the task.
 - `goal-requirements/<id>/progress.md`: sequence-level state for the selected goal.
 - `requirements/<requirement-id>/requirements.md`: requirement-slice source of truth for goal-requirements execution.
+- `requirements/<requirement-id>/coverage-decision.yml`: structured decision for whether a coverage ledger is required, including trigger signals and any not-required rationale.
+- `requirements/<requirement-id>/coverage-ledger.yml`: structured coverage and typed evidence ledger for broad or high-risk requirement slices when required by `coverage-decision.yml`.
 - `requirements/<requirement-id>/research.md`: requirement-local technical research artifact when the `research` gate is required.
 - `requirements/<requirement-id>/technical-design.md`: requirement-local module-level technical design artifact when the `technical-design` gate is required.
 - `requirements/<requirement-id>/architecture.md`: optional requirement-local architecture design artifact when system-level design is required.

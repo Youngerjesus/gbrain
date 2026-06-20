@@ -8,7 +8,14 @@ requirements/<requirement-id>/decisions.md
 
 Record only material design, scope, ordering, constraint, or tradeoff decisions. Do not turn this into a full implementation diary.
 
-For `research.md`, `technical-design.md`, optional `architecture.md`, and UI-bearing `plan-design-review`, record material decisions here or link to the exact artifact or chat-only review outcome. Requirement Impact entries must say whether approval is pending, approved, denied, or superseded. Unresolved research/design items must be classified as blocking/non-blocking with rationale and downstream owner.
+For `research.md`, `technical-design.md`, optional `architecture.md`, conditional plan-stage reviews, and conditional live reviews, record material decisions here or link to the exact artifact. Plan-stage review artifacts live under the plan directory:
+
+- `plans/<plan-id>/reviews/plan-design-review.md`
+- `plans/<plan-id>/reviews/plan-ux-review.md`
+- `plans/<plan-id>/reviews/plan-devex-review.md`
+- `plans/<plan-id>/reviews/plan-eng-review.md`
+
+Requirement Impact entries must say whether approval is pending, approved, denied, or superseded. Unresolved research/design/review items must be classified as blocking/non-blocking with rationale and downstream owner.
 
 ```markdown
 # Requirement Decisions
@@ -21,7 +28,7 @@ For `research.md`, `technical-design.md`, optional `architecture.md`, and UI-bea
 - Rationale:
 - Alternatives considered:
 - Impact:
-- Source artifact: research.md | technical-design.md | architecture.md | plan-design-review outcome | progress.md | other
+- Source artifact: research.md | technical-design.md | architecture.md | plans/<plan-id>/reviews/<gate>.md | progress.md | other
 - Requirement Impact:
 - Blocking/non-blocking unresolved items:
 ```

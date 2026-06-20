@@ -59,6 +59,17 @@ start here.
    cross-brain federation works (latent-space only; the agent decides).
 5. [`./skills/RESOLVER.md`](./skills/RESOLVER.md) — skill dispatcher. Read before any task.
 
+## Human role and product direction
+
+The human user acts as the agent work environment designer. When the user points
+out an agent mistake, treat it as a signal to discuss the surrounding contracts,
+checks, docs, or workflow so future agents are less likely to repeat it.
+
+GBrain's product direction lives in `./CLAUDE.md`, especially the North Star and
+cross-cutting invariants. Do not replace that with generic scaffold language.
+When durable product direction, architecture boundaries, verification commands,
+or operating policy change, update this file and the linked GBrain docs together.
+
 ## Trust boundary (critical)
 
 GBrain distinguishes **trusted local CLI callers** (`OperationContext.remote = false`,
@@ -66,6 +77,138 @@ set by `src/cli.ts`) from **untrusted agent-facing callers** (`remote = true`, s
 `src/mcp/server.ts`). Security-sensitive operations like `file_upload` tighten filesystem
 confinement when `remote = true` and default to strict behavior when unset. If you are
 writing or reviewing an operation, consult `src/core/operations.ts` for the contract.
+
+## Codex operating rules
+
+- Plan non-trivial work before implementation, including verification steps and
+  repair assumptions when the change can affect stable contracts.
+- Read the direct task source of truth first, then inspect the affected
+  implementation and tests, then expand to durable docs only when they reduce
+  ambiguity.
+- Keep durable documentation aligned when user-facing behavior, compatibility
+  guarantees, architecture boundaries, or verification commands change.
+- Do not silently downgrade the user's requested behavior, execution boundary,
+  artifact class, or evidence level. If the requested contract cannot be met
+  with this repo's current capabilities, stop and state the gap before changing
+  scope.
+- Prefer root-cause fixes, deterministic behavior, deterministic tests, and
+  narrow changes over temporary workarounds or broad compatibility branches.
+- Preserve compatibility-sensitive behavior unless the active spec, contract,
+  accepted requirement, or user request explicitly changes it.
+- Make errors explicit at product boundaries. Add dependencies only when the
+  task needs them and this repo's policy allows them.
+- Keep real secrets, machine-specific env files, automation runtime state, logs,
+  and local paths out of committed artifacts. Track only placeholders such as
+  `.env.example` or setup docs.
+
+## Context loading before implementation
+
+Use `.codex/skills/context-loading/SKILL.md` before `.codex/skills/tdd-workflow/SKILL.md`
+when the user asks for delegated context, or when the task requires inspecting
+three or more files, crosses module/component/package/service/policy/evidence
+boundaries, has an unclear implementation path or test strategy, or touches
+safety, persistence/state, external side effects, or a verification contract.
+
+A context-loading report is exploratory context only, not acceptance evidence.
+It should name inspected files or directories, core findings, candidate change
+files, and a test strategy.
+
+## Engineering rules
+
+- Keep changes scoped to the active spec and contract.
+- Keep hand-written implementation files small and cohesive, but do not split
+  files merely to satisfy a line count. Split only along real ownership
+  boundaries that improve stability, testability, reviewability, or delivery
+  speed.
+- Treat very large hand-written files as a maintenance signal. Before adding
+  behavior there, consider whether a focused refactor would make the change
+  safer.
+- Prefer modules with small public interfaces, cohesive internals, one-way
+  dependencies, and nearby test boundaries.
+- Avoid shallow wrappers, pass-through modules, role-free file splits, circular
+  dependencies, and scattered ownership.
+- Add abstractions only when they reduce real complexity, remove meaningful
+  duplication, or clearly match an established local pattern.
+
+## Anti coding patterns
+
+- Do not use substring, regex, or string-presence checks as authoritative proof
+  for semantic acceptance, safety, evidence correctness, state diagnosis, or
+  completion. String scans may be useful hints; promote them to decisions only
+  through structured sources, parsers, schemas, typed fields, or deterministic
+  validators.
+- Treat LLM prompt output contracts and deterministic validator input contracts
+  as one typed interface. Keep field names, enums, required/optional rules,
+  reference formats, and retry/error semantics synchronized across prompts,
+  parsers, validators, and fixtures.
+- For AI/model/Codex invocation boundaries, prompt/schema contracts,
+  multi-agent handoffs, repair/evaluator/generator loops, or live output
+  parsing, require deterministic verification plus the relevant live smoke
+  evidence when the active contract calls for it. If live proof cannot run,
+  report the gap.
+- Do not add or preserve fallback or legacy compatibility paths unless the
+  active spec/contract requires them, the owner and removal condition are clear,
+  and regression coverage proves the fallback does not hide failures.
+- Do not complete a reusable foundation as documentation-only intent when later
+  slices are expected to rely on it. A foundation needs an explicit code path,
+  shared module, template helper, schema, validator, fixture, or verification
+  gate that downstream work can actually use.
+
+## Execution Source Selection
+
+- If the task provides or selects `goal-requirements/<id>/sequence.md`, use the
+  goal-requirements path. Start with the first unchecked requirement and read
+  the requirement's `requirements.md`, `research.md`, `technical-design.md`,
+  optional `architecture.md`, `progress.md`, `decisions.md`, `evidence.md`, any
+  accepted `plans/<plan-id>/plan.md` and `secondary_plan.md`, plus current git
+  status/diff.
+- If a broad initiative has no accepted sequence yet, use
+  `.codex/skills/goal-requirement-orchestrator/SKILL.md` to create the
+  sequence and first requirement state before implementation.
+- For each goal-requirements slice, evaluate the conditional hard gates in this order: `requirement-clarifier`, `research`, `technical-design`, `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, `scenario-brake`, `secondary-plan`, then after implementation and applicable live evidence `ux-review` and `devex-review`.
+  `plan-design-review` is required for UI-bearing work before
+  `plan-eng-review`; `plan-ux-review` is required for user-facing experience
+  work before `plan-eng-review`; `plan-devex-review` is required for
+  developer-facing experience work before `plan-eng-review`.
+- After planning is accepted, run context loading and TDD implementation as
+  required. For UI-bearing work, run `visual-qa-hardening` with the
+  `visual-qa-reviewer` companion after browser screenshot verification and
+  before implementation-brake, and also use the `reference-fidelity-reviewer`
+  companion for reference-driven visual work.
+- For MVP, beta, launch, or production-bound goal sequences, reserve a final
+  `production-readiness` requirement slice and run `production-readiness` as
+  the sequence-level launch gate before marking the goal sequence complete.
+- Record `not_required` skips with reasons where the gate workflow requires
+  them. Artifact existence alone is insufficient; progress, required artifact
+  paths, evidence, decisions, unresolved items, and approval state must agree.
+- Treat scheduler result artifacts as phase status reports only. They are not
+  substitutes for requirement evidence, product acceptance evidence, or
+  verification artifacts.
+- Before editing, identify the affected product contract: public API, CLI
+  behavior, persisted data, UI behavior, external integration, tests, docs, or
+  migration state.
+- If the selected source of truth and repo reality conflict, stop and report
+  the conflict instead of weakening the contract.
+- When no task-provided spec or goal requirement exists, use `CLAUDE.md`, the
+  reference docs, and the repo's tests as the fallback contract and keep the
+  change narrow.
+
+## Test and verification principles
+
+- Test additions should follow `.codex/skills/tdd-workflow/SKILL.md`: prove
+  behavior or executable acceptance criteria with the narrowest honest evidence,
+  and prefer observed red/green for behavior changes and bugfixes.
+- Avoid artificial duplicate tests for already-covered or non-behavioral
+  changes. Match verification type to the problem.
+- `bun run verify` is the fast local baseline for GBrain's guard scripts.
+  `bun test` runs the unit suite. `bun run ci:local` is the full pre-ship gate
+  described below.
+- Slow checks, external-service checks, Docker E2E, and checks that need secrets
+  belong in explicit commands such as `bun run test:e2e`, `bun run test:slow`,
+  `bun run ci:local`, or a documented `scripts/verify*` entrypoint. They must
+  fail clearly when required tools or env vars are missing.
+- Do not mark implementation work complete without concrete verification
+  evidence from the selected contract and the relevant GBrain gate.
 
 ## Common tasks
 
@@ -130,11 +273,37 @@ Ship via the `/ship` skill, not by hand. The full release + contributor process
 (CHANGELOG voice, version-locations sync, PR conventions, community-PR-wave) lives in
 [`./docs/RELEASING.md`](./docs/RELEASING.md); read it before shipping.
 
+## Document map
+
+- `AGENTS.md`: install and cross-agent operating protocol.
+- `CLAUDE.md`: always-loaded GBrain orientation, North Star, invariants,
+  reference map, and release rules.
+- `docs/architecture/KEY_FILES.md`: per-file index; read a file's entry before
+  editing that file.
+- `docs/TESTING.md`: test tiers, isolation lint, and E2E lifecycle.
+- `docs/architecture/brains-and-sources.md`: brain/source topology and routing
+  model.
+- `skills/RESOLVER.md`: GBrain skill dispatcher.
+- `.codex/skills/`: Codex skill workflows used for planning, implementation,
+  review, and closeout.
+- `goal-requirements/<id>/sequence.md`: multi-slice goal execution order and
+  gate contract when selected by the task.
+- `requirements/<requirement-id>/`: requirement-slice source of truth,
+  progress, decisions, evidence, research, and design artifacts.
+- `plans/<plan-id>/`: accepted primary and secondary implementation plans.
+
 ## Privacy
 
 Never commit real names of people, companies, or funds into public artifacts. See the
 Privacy rule in `./CLAUDE.md`. GBrain pages reference real contacts; public docs must
 use generic placeholders (`alice-example`, `acme-example`, `fund-a`).
+
+## AGENTS.md update policy
+
+Update this file when durable repo-level product direction, engineering rules,
+architecture boundaries, verification commands, env policy, document locations,
+or dependency policy change. Do not put temporary task notes, secrets, local
+machine paths, scheduler state, generated logs, or runtime output in this file.
 
 ## Forks
 
@@ -1881,9 +2050,12 @@ gbrain sync --no-schema-pack --no-pull --no-embed --yes
 `gbrain schema lint` now warns on the classic nested-quantifier ReDoS
 shapes (`(a+)+`, `(a*)*`, …) in pack regexes, and the runtime caps
 inference-regex input length (override via `GBRAIN_MAX_REGEX_INPUT_CHARS`).
-Third, on a PGLite brain, stop `gbrain serve` before a large sync —
-PGLite is single-writer and a live MCP server contends for the write
-lock. See [`docs/architecture/serve-sync-concurrency.md`](docs/architecture/serve-sync-concurrency.md)
+Third, PGLite is single-owner. Interactive `query`, `search`, and
+`think` callers can route through a live local owner broker, but
+maintenance commands such as `sync`, `embed`, and `extract` are deferred
+while another PGLite owner is live. Stop `gbrain serve` before a large
+maintenance run if you want it to start immediately. See
+[`docs/architecture/serve-sync-concurrency.md`](docs/architecture/serve-sync-concurrency.md)
 for the full triage. (Closes #1569.)
 
 **`gbrain init --migrate-only` / a schema migration fails on Windows
@@ -2102,6 +2274,29 @@ RRF fusion, multi-query expansion, and 4-layer dedup are engine-agnostic. They o
 - tsvector + ts_rank for full-text search (same as Postgres)
 - pg_trgm for fuzzy slug resolution (same as Postgres)
 
+**Concurrent local callers:** PGLite still has a single embedded database owner,
+but gbrain exposes a local operation broker while a CLI or stdio MCP process owns
+that database. When another local caller sees a live PGLite lock, `query`,
+free-text `search`, and `think` route over `~/.gbrain/brain.db/.gbrain-operation.sock`
+instead of trying to open PGLite directly. Requests are queued by the owner and
+interactive work (`query` / `search` / `think`) has priority over maintenance-class
+work in the broker contract. If no owner is present, CLI commands keep the old
+direct-open behavior. Maintenance commands (`sync`, `embed`, and `extract`) are
+not broker-executed; under a live owner they return `maintenance_deferred` and
+should be rerun after the owner exits.
+
+Verification recipe:
+
+```bash
+bun test test/pglite-concurrent-access.serial.test.ts
+bun test test/pglite-lock.test.ts test/pglite-operation-ipc.test.ts test/cli-pglite-operation-broker.test.ts
+```
+
+The real subprocess concurrency test starts a stdio MCP owner and a second stdio
+MCP proxy, then runs mixed CLI and MCP `query` / `search` / `think` callers
+against a seeded PGLite brain. The broker tests cover the recovery/status matrix
+and assert callers do not hit `Timed out waiting for PGLite lock`.
+
 **When to use PGLite vs Postgres:**
 
 | Factor | PGLite | PostgresEngine + Supabase |
@@ -2110,7 +2305,7 @@ RRF fusion, multi-query expansion, and 4-layer dedup are engine-agnostic. They o
 | Scale | Good for < 1,000 files | Production-proven at 10K+ |
 | Multi-device | Single machine only | Any device via remote MCP |
 | Cost | Free | Supabase Pro ($25/mo) |
-| Concurrency | Single process | Connection pooling |
+| Concurrency | Single DB owner; local `query`/`search`/`think` callers queue through owner broker | Connection pooling |
 | Backups | Manual (file copy) | Managed by Supabase |
 
 **Migration:** `gbrain migrate --to supabase` exports everything (pages, chunks, embeddings, links, tags, timeline) and imports into Supabase. `gbrain migrate --to pglite` goes the other direction. Bidirectional, lossless.
@@ -2158,7 +2353,7 @@ Every method in `BrainEngine`. The full interface. No optional methods, no featu
 | Graph traversal | Recursive CTE | Recursive CTE | Same SQL |
 | Transactions | Full ACID | Full ACID | Both support this |
 | JSONB queries | GIN index | GIN index | Identical |
-| Concurrent access | Connection pooling | Single process | PGLite limitation |
+| Concurrent access | Connection pooling | Single DB owner; local `query` / `search` / `think` callers queue through owner broker; `sync` / `embed` / `extract` defer under a live owner | Broker is local-only; no mandatory daemon when no owner exists |
 | Hosting | Supabase, self-hosted, Docker | Local file | |
 | Migration methods | runMigration, getChunksWithEmbeddings | Same | Added v0.7 |
 

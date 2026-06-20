@@ -8,7 +8,7 @@ Short description of the project.
 2. Fill `docs/project_overview.md`.
 3. Fill `docs/tech_stack.md`.
 4. Decide whether this project needs a root `DESIGN.md`.
-5. Copy `specs/_template/` to create the first feature spec.
+5. Create the first requirement under `requirements/` or the first goal sequence under `goal-requirements/`.
 
 ## Task Worktree Initialization
 

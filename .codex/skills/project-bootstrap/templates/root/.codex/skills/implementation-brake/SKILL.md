@@ -104,6 +104,9 @@ finding 을 아래 disposition 으로 분리합니다.
 - external dependency, timeout, partial failure, delayed consistency
 - idempotency, ownership, ordering, uniqueness, stale exclusion
 - 운영자가 로그/상태를 보고 후속 조치를 판단해야 하는 경로
+- CLI, agent workflow, prompt/runtime boundary, generated artifact, or control-plane behavior where misleading success output can hide failure
+- generated-artifact trust-domain contamination, especially when reviewer output, repair patches, compiler state, scheduler/operator-facing evidence, or persisted artifacts reuse shared field names such as `source_refs`, `status`, `approval`, or `result`
+- dirty worktree, stale local state, interrupted session, or cleanup/debris behavior that could affect correctness
 
 이때 필요한 렌즈만 고릅니다.
 
@@ -118,6 +121,51 @@ finding 을 아래 disposition 으로 분리합니다.
 - Observability
 
 새 시나리오 체계를 설계하거나 계획 자체의 scenario coverage 를 다시 짜야 하면 이 스킬 안에서 해결하지 말고 `scenario-brake`로 넘깁니다.
+
+### 4a. Conditional UltraQA scenario matrix
+
+Do not run UltraQA-style adversarial review for every small diff. Use it when the implementation touches stateful, runtime, workflow, safety, CLI/service, external-dependency, generated-artifact, or operator-facing behavior where normal tests could pass while the real behavior is still unsafe.
+
+When triggered, maintain a compact scenario matrix before `[SHIP]`:
+
+```text
+ID | Scenario | User/attacker model | Setup | Expected signal | Actual result | Evidence | Cleanup
+```
+
+Include normal-path coverage plus the relevant adversarial classes. Choose only classes that can realistically fail for the implementation under review:
+
+- Malformed input: invalid JSON, missing fields, invalid flags, oversized strings, unusual Unicode, path traversal-like values, or corrupted state files.
+- Repeated interruption: repeated `continue`, stop/cancel/abort wording, interrupted command output, retries after partial progress.
+- Prompt or instruction injection: user-controlled text that tries to override workflow rules, skip verification, exfiltrate secrets, or claim false success.
+- Generated-artifact trust-domain contamination: evidence or metadata from one trust domain is copied into another as authority, such as `reviewer.source_refs -> repairer.patch.source_refs -> authoritative provenance`; verify shared field names are typed, validated, or explicitly bounded before they can affect source evidence, approval, status, or scheduler/operator-facing output.
+- Cancel/resume: active state cleanup, resume detection, stale in-progress state, cancellation followed by a fresh run.
+- Stale state: old runtime files, mismatched session/run/task ids, missing timestamps, contradictory phase metadata.
+- Dirty worktree: unrelated modifications or untracked files are not hidden, overwritten, or treated as success evidence.
+- Hung or long-running command: bounded timeout handling, killed child processes, recovery notes.
+- Flaky behavior: rerun or clustering evidence prevents a lucky pass from becoming completion proof.
+- Misleading success output: success-like text with non-zero exits, skipped tests, partial logs, hidden failures, or stale evidence.
+- Cleanup/debris: temporary harnesses, fixtures, logs, spawned processes, and generated state are removed or intentionally tracked.
+
+The matrix can be satisfied by existing tests, targeted temporary harnesses, manual/browser checks, logs, or static evidence when runtime execution is unsafe or impossible. Generated harnesses must be cleaned up unless they are intentional deliverables.
+
+UltraQA matrix failures become normal implementation-brake findings:
+
+- behavior defect when behavior contradicts the contract
+- missing behavior when a required failure/recovery path is absent
+- verification gap when the behavior may be correct but lacks evidence
+- decision gap when risk acceptance or product policy requires the user
+
+Do not issue `[SHIP]` while a relevant matrix row is failed, skipped without justification, missing evidence, or has uncleaned debris. If the matrix is not triggered, state why the implementation is low-risk enough for normal implementation-brake evidence.
+
+### 4b. Agent Artifact Handoff Runtime Proof
+
+When the reviewed implementation depends on CLI/service/control-plane/prompt-runtime/subagent/generated-artifact behavior, require runtime proof at the correct boundary before `[SHIP]`.
+
+For Codex multi-agent runtime behavior, prompt-runtime behavior, subagent reviewer workflows, repair agents, worker agents, or generated compiler artifacts, treat missing proof as a `verification gap` and usually `must fix now` when the behavior is acceptance-critical.
+
+The proof must show that the consumer agent actually read the intended artifact. Evidence that the producer wrote it, that the parent prompt mentioned a path, or that a success message was printed is not enough.
+
+Reject `[SHIP]` when success output can be produced after a required consumer reports missing generated input. Do not issue `[SHIP]` until the implementation either hard-fails that path or supplies current runtime evidence that the required consumer-side artifact handoff works.
 
 ### 5. Hand off into TDD repair
 
@@ -165,7 +213,8 @@ commit, report, documentation sync, progress update, PR, merge 는 이 스킬의
 5. **What can be deferred**
 6. **Fix plan**
 7. **Verification result**
-8. **Ship-readiness verdict**
+8. **UltraQA matrix result** when triggered or explicitly skipped
+9. **Ship-readiness verdict**
 
 판정은 반드시 아래 중 하나를 사용합니다.
 
@@ -202,6 +251,24 @@ Unavailable policy:
 - Fallback evidence cannot masquerade as external conformance and cannot treat `BLOCKED_UNAVAILABLE` as normal conformance evidence.
 
 Reject prose-only approval, substring `CONFORMANT`, or `CONFORMANT` plus unresolved material findings as authoritative conformance evidence.
+
+## Coverage Ledger Ship Gate
+
+When a requirement has `requirements/<requirement-id>/coverage-ledger.yml`, treat that ledger as authoritative completion input before `[SHIP]`.
+
+Before `[SHIP]`, require deterministic closure validation over the actual requirement ledger, for example:
+
+```text
+python3 scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>
+```
+
+Do not issue `[SHIP]` when closure validation is missing, unavailable, crashes, times out, emits unparseable output, or reports incomplete rows, stale rows, missing typed evidence, incompatible evidence, missing artifacts, path escapes, split-brain decision/ledger state, or stale evidence.
+
+If strong broad-work signals are found but neither `coverage-ledger.yml` nor a structured `coverage-decision.yml` not-required decision exists, do not issue `[SHIP]`. Record a structured progress gap and route back to requirement clarification / post-draft review. The progress gap must include `requirement_id`, `route`, `blocking_reason`, `triggering_signals`, `expected_next_gate`, `closure_condition`, and `recorded_at`; the route is `requirement-clarifier-post-review-recheck`.
+
+A prior not-required decision can become stale. If implementation-time broad-work signals exceed the decision's accepted scope, treat the decision as `stale_needs_recheck` and block `[SHIP]` until requirement clarification/post-review updates the decision and any required ledger.
+
+Coverage-ledger semantic acceptance belongs to `scripts/coverage_ledger.py` or an equivalent structured validator. Skill text, substring checks, route existence, or prose-only reviewer approval are not authoritative coverage evidence.
 
 ## Companion Agent Routing
 

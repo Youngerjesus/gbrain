@@ -27,16 +27,17 @@ Do not use this skill for ordinary implementation notes, code review findings, o
 
 - Create or update a primary plan file: `plans/<plan-id>/plan.md`.
 - Create or update a secondary plan file: `plans/<plan-id>/secondary_plan.md`.
-- If `plans/<plan-id>/plan.md` is created before review as a requirement-based Draft Plan, set `Status: draft`, use the primary plan template shape, fill the required primary sections with task-specific content, and treat it only as review input. When this skill reconciles the completed `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, and `scenario-brake` findings, update that same primary plan and move it out of draft only when it is accepted for implementation.
+- When requirement-goal plan reviews run, create or update review artifacts beside the plan: `plans/<plan-id>/reviews/plan-design-review.md`, `plans/<plan-id>/reviews/plan-ux-review.md`, `plans/<plan-id>/reviews/plan-devex-review.md`, and `plans/<plan-id>/reviews/plan-eng-review.md` for the gates that ran. Record `not_required` gates in `plan.md` or `secondary_plan.md` instead of creating empty review files.
+- If `plans/<plan-id>/plan.md` is created before review as a requirement-based Draft Plan, set `Status: draft`, use the primary plan template shape, fill the required primary sections with task-specific content, and treat it only as review input. When this skill reconciles the completed review artifacts for `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, and `scenario-brake` findings, update that same primary plan and move it out of draft only when it is accepted for implementation.
 - Treat `plans/` as local runtime planning state; it must stay ignored by Git.
 - Use a concise kebab-case `plan-id` from the task name. If the user provided an id, use it. If the path already exists for a different plan, append a short disambiguator.
 - If `plans/<plan-id>/plan.md` already exists for the same task, update it instead of creating a parallel primary plan. Preserve still-valid goal, scope, acceptance, and verification constraints; replace stale steps explicitly.
 - If an earlier primary plan for the same task exists under a different `plan-id` and the user explicitly selects it, update that selected plan and write the secondary plan beside it.
-- The final Codex plan must link to both artifacts as `[primary plan](plans/<plan-id>/plan.md)` and `[secondary plan](plans/<plan-id>/secondary_plan.md)`.
+- The final Codex plan must link to both artifacts as `[primary plan](plans/<plan-id>/plan.md)` and `[secondary plan](plans/<plan-id>/secondary_plan.md)`. When review artifacts were produced in the current session, also link the relevant `plans/<plan-id>/reviews/*.md` files.
 - The final Codex plan must make the links operational, not merely informational: include a clear instruction such as `Before implementation or goal creation, read the [primary plan](plans/<plan-id>/plan.md) and [secondary plan](plans/<plan-id>/secondary_plan.md), then reconcile any drift with this plan.`
 - If a `requirement-clarifier` document created or explicitly selected in the current session exists at `requirements/<requirement-id>/requirements.md`, read it before writing the final Codex plan and link it from the plan with a clear instruction such as `Before implementation, read the [requirements document](requirements/<requirement-id>/requirements.md); it is the product requirements source of truth.`
 - The primary plan stores the executable planning contract for goal-driven work; the secondary plan supplements it with rationale and review guardrails. Neither file silently overrides the final Codex plan shown to the user.
-- Executable contract compatibility findings from `plan-eng-review` must be preserved when they are blocking implementation-readiness findings for schema, prompt, runtime, generated-artifact, or mutation-vocabulary work. Reflect execution-changing blockers in the primary plan and preserve the review rationale in `secondary_plan.md`.
+- Executable contract compatibility findings from `plans/<plan-id>/reviews/plan-eng-review.md` must be preserved when they are blocking implementation-readiness findings for schema, prompt, runtime, generated-artifact, or mutation-vocabulary work. Reflect execution-changing blockers in the primary plan and preserve the review rationale in `secondary_plan.md`.
 
 ## Session Provenance Rule
 
@@ -49,6 +50,7 @@ Do not use this skill for ordinary implementation notes, code review findings, o
 - The Codex `<proposed_plan>` owns the user-visible execution summary for the current Plan Mode response.
 - `plan.md` owns the goal-ready objective, scope, ordered work, acceptance evidence, verification, continuation rules, and stop/escalation conditions.
 - `secondary_plan.md` owns rationale, risks, guardrails, files/tests to inspect, review notes, and preserved conversation details.
+- `plans/<plan-id>/reviews/*.md` owns the durable source result for each plan-stage review gate that ran; `plan.md` and `secondary_plan.md` summarize and reconcile those files instead of becoming the only copy of review evidence.
 - Do not copy the full execution sequence into `secondary_plan.md`; keep it in `plan.md`.
 - If the Codex plan, `plan.md`, and `secondary_plan.md` conflict, pause and reconcile before implementation or goal creation.
 
@@ -108,7 +110,13 @@ Keep canonical product behavior in `requirements.md`, `spec.md`, or `contracts.m
    - continuation, stop, and escalation rules
    - final goal completion checklist
    - goal completion audit checklist with evidence mappings for requirements, plan steps, guardrails, review gates, deliverables, and verification
-6. Fill every required secondary plan section with task-specific content:
+6. For every plan-stage review gate that ran, create or update its review artifact under `plans/<plan-id>/reviews/`:
+   - `plans/<plan-id>/reviews/plan-design-review.md`
+   - `plans/<plan-id>/reviews/plan-ux-review.md`
+   - `plans/<plan-id>/reviews/plan-devex-review.md`
+   - `plans/<plan-id>/reviews/plan-eng-review.md`
+   Each artifact must include the reviewed Draft Plan path, review scope trigger, verdict, findings, blockers, required plan changes, deferred items, and whether the Draft Plan must be reconciled before the next gate.
+7. Fill every required secondary plan section with task-specific content:
    - why the chosen approach is valid
    - RALPLAN-DR principles, decision drivers, viable options, and rejected alternatives when the plan involved meaningful choices
    - ADR decision record when the chosen path has architectural, operational, UX, data, or workflow consequences
@@ -116,17 +124,18 @@ Keep canonical product behavior in `requirements.md`, `spec.md`, or `contracts.m
    - required implementation constraints, allowed freedom, boundaries, and regression risks
    - files to inspect before editing
    - tests to run or add and what failures mean
-   - review notes from decision-brake, plan-design-review, plan-ux-review, plan-devex-review, plan-eng-review, and scenario-brake
+   - links to review artifacts and summary notes from decision-brake, plan-design-review, plan-ux-review, plan-devex-review, plan-eng-review, and scenario-brake
    - conversation details likely to disappear after compression
    - a locked handoff checklist
-7. When Plan Design Review, Plan Engineer Review, or Scenario Brake has been used or requested, put their conclusions in `secondary_plan.md` and reflect any execution-changing decisions back into `plan.md`.
-   - If Plan Engineer Review produced Executable contract compatibility findings, preserve blocking implementation-readiness findings in `secondary_plan.md` and reflect the required guardrail or stop condition into the primary plan before implementation starts.
-8. Keep the final Codex plan concise and include both plan links with an explicit instruction that the implementer must read them before implementation or goal creation. If a requirements document exists, include the requirements link and the same read-before-implementation instruction.
-9. Before implementation, compare the Codex plan, requirements document, primary plan, and secondary plan for drift.
+8. When Plan Design Review, Plan UX Review, Plan DevEx Review, Plan Engineer Review, or Scenario Brake has been used or requested, put links and conclusions in `secondary_plan.md` and reflect any execution-changing decisions back into `plan.md`.
+   - If Plan Engineer Review produced Executable contract compatibility findings, preserve blocking implementation-readiness findings in `plans/<plan-id>/reviews/plan-eng-review.md` and `secondary_plan.md`, then reflect the required guardrail or stop condition into the primary plan before implementation starts.
+9. Keep the final Codex plan concise and include both plan links with an explicit instruction that the implementer must read them before implementation or goal creation. If review artifacts or a requirements document exist, include those links and the same read-before-implementation instruction.
+10. Before implementation, compare the Codex plan, requirements document, primary plan, secondary plan, and review artifacts for drift.
 
 ## Plan Mode And Write Constraints
 
 - When file writes are available, create or update `plans/<plan-id>/plan.md` and `plans/<plan-id>/secondary_plan.md` before presenting the final Codex plan.
+- When plan-stage review gates ran, create or update their `plans/<plan-id>/reviews/*.md` artifacts before presenting the final Codex plan.
 - When file writes are not available, do not pretend the files exist. Include the intended paths, provide the complete primary and secondary plan content in the response, and mark the links as pending creation.
 - If an existing secondary plan is being updated, preserve still-valid user constraints and review notes; replace stale guardrails explicitly.
 - If an existing primary plan is being updated, preserve still-valid goal, scope, acceptance, and verification content; replace stale steps explicitly.
@@ -135,5 +144,5 @@ Keep canonical product behavior in `requirements.md`, `spec.md`, or `contracts.m
 
 - Do not store secrets, credentials, private runtime logs, or unrelated conversation history in `secondary_plan.md`.
 - Do not store secrets, credentials, private runtime logs, or unrelated conversation history in `plan.md`.
-- Do not add extra files beyond `plan.md` and `secondary_plan.md` unless the user explicitly asks for a larger planning package.
+- Do not add extra files beyond `plan.md`, `secondary_plan.md`, and required `plans/<plan-id>/reviews/*.md` review artifacts unless the user explicitly asks for a larger planning package.
 - Do not duplicate decision-brake, plan-design-review, plan-ux-review, plan-devex-review, plan-eng-review, or scenario-brake skills. Summarize the retained conclusions and link or cite local artifacts when they already exist.

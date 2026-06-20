@@ -14,8 +14,6 @@ Default rule: preserve existing files and report conflicts instead of overwritin
 - `DESIGN.md`
 - `README.md`
 - `main/docs/project_overview.md`
-- `main/specs/_template/spec.md`
-- `main/specs/_template/contracts.md`
 
 ## Report Labels
 

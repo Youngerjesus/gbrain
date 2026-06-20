@@ -18,6 +18,10 @@ The Requirement Quality Gate includes:
 - readiness status matches Open Questions, assumptions, reviewer status, and residual risk
 - ordinary reviewer fallback must not claim external reviewer approval
 - production-bound reviewer unavailability remains blocking
+- broad/high-risk drafts have a structured `coverage-decision.yml` and, when required, a separate `coverage-ledger.yml`
+- ledger-required and ledger-not-required decisions are machine-readable; prose-only, route-only, or embedded progress/evidence checklists do not satisfy coverage readiness
+
+Treat missing or invalid coverage-ledger decisions as material findings when strong omission-risk triggers are present, including 10+ subtasks, 10+ screens/screenshots, multi-state UI, bulk migration, multiple modules/packages, many acceptance criteria, or similar high-risk scope.
 
 Return a structured result with:
 - reviewer_result_status: "SHIP" | "FINDINGS" | "BLOCKED_INVALID" | "BLOCKED_UNAVAILABLE"

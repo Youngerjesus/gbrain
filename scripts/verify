@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+cd "$repo_root"
+
+git diff --check
+python3 tests/verify_goal_orchestrator_policy.py
+python3 tests/verify_coverage_ledger.py
+python3 tests/verify_behavior_text_contracts.py
+python3 tests/verify_behavior_contract_eval.py
+python3 tests/verify_grill_me_skill_contract.py
+python3 tests/verify_gstack_skill_contracts.py
+python3 tests/verify_skill_lifecycle_pack.py
+python3 tests/verify_subagent_lifecycle.py
+python3 tests/verify_visual_qa_skill_contract.py
