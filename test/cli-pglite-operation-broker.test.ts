@@ -4,7 +4,9 @@ import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync,
 import { join } from 'node:path';
 import {
   operationSocketPath,
+  releaseOperationStartup,
   startPgliteOperationIpcServer,
+  tryAcquireOperationStartup,
   type OperationIpcRequest,
 } from '../src/core/pglite-operation-ipc.ts';
 import { createEngine } from '../src/core/engine-factory.ts';
@@ -30,7 +32,7 @@ function makeHome(): { home: string; dbPath: string } {
   return { home, dbPath };
 }
 
-function writeLiveLock(dbPath: string): void {
+function writeLiveLock(dbPath: string, command = 'test owner'): void {
   const lockDir = join(dbPath, '.gbrain-lock');
   mkdirSync(lockDir, { recursive: true });
   const now = Date.now();
@@ -38,8 +40,14 @@ function writeLiveLock(dbPath: string): void {
     pid: process.pid,
     acquired_at: now,
     refreshed_at: now,
-    command: 'test owner',
+    command,
   }));
+}
+
+function writeCorruptLock(dbPath: string): void {
+  const lockDir = join(dbPath, '.gbrain-lock');
+  mkdirSync(lockDir, { recursive: true });
+  writeFileSync(join(lockDir, 'lock'), '{not-json');
 }
 
 function runCli(
@@ -147,6 +155,24 @@ function sendJson(child: ReturnType<typeof spawn>, message: Record<string, unkno
 }
 
 describe('CLI PGLite operation broker routing', () => {
+  const maintenanceCommands: Array<{ name: string; args: string[] }> = [
+    { name: 'sync', args: ['sync', '--no-pull', '--no-embed', '--no-extract', '--yes', '--no-hard-deadline'] },
+    { name: 'embed', args: ['embed', '--stale', '--dry-run'] },
+    { name: 'extract', args: ['extract', '--stale', '--dry-run'] },
+  ];
+
+  function expectNoRawPgliteLockFailure(result: { stderr: string }): void {
+    expect(result.stderr).not.toContain('Timed out waiting for PGLite lock');
+    expect(result.stderr).not.toContain('Could not acquire PGLite lock');
+  }
+
+  function expectNoMisleadingMaintenanceSuccess(result: { stderr: string; stdout: string }): void {
+    const combined = `${result.stdout}\n${result.stderr}`.toLowerCase();
+    expect(combined).not.toContain('queued');
+    expect(combined).not.toContain('completed');
+    expect(combined).not.toContain('successfully run');
+  }
+
   test('CLI-owned broker dispatch preserves MCP invalid_params envelope', async () => {
     const { home, dbPath } = makeHome();
     try {
@@ -250,6 +276,46 @@ describe('CLI PGLite operation broker routing', () => {
       rmSync(home, { recursive: true, force: true });
     }
   });
+
+  test('maintenance-like PGLite owner exposes broker for interactive callers', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath, 'gbrain sync');
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return { ok: true, result: request.operation === 'think'
+          ? {
+              answer: 'maintenance owner answer',
+              gaps: [],
+              modelUsed: 'test',
+              pagesGathered: 0,
+              takesGathered: 0,
+              graphHits: 0,
+              citations: [],
+              warnings: [],
+              saved_slug: null,
+              evidence_inserted: 0,
+            }
+          : [] };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const [query, search, think] = await Promise.all([
+        runCli(['query', 'maintenance-owner-query'], home),
+        runCli(['search', 'maintenance-owner-search'], home),
+        runCli(['think', 'maintenance owner think?', '--json'], home),
+      ]);
+
+      expect([query.status, search.status, think.status]).toEqual([0, 0, 0]);
+      for (const result of [query, search, think]) expectNoRawPgliteLockFailure(result);
+      expect(seen.map((r) => r.operation).sort()).toEqual(['query', 'search', 'think']);
+      expect(seen.every((r) => r.class === 'interactive')).toBe(true);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 30_000);
 
   test('no-owner query search and think keep direct-open CLI behavior', async () => {
     const { home } = makeHome();
@@ -440,6 +506,78 @@ describe('CLI PGLite operation broker routing', () => {
       rmSync(home, { recursive: true, force: true });
     }
   });
+
+  for (const command of maintenanceCommands) {
+    test(`second ${command.name} maintenance caller defers under live PGLite owner`, async () => {
+      const { home, dbPath } = makeHome();
+      try {
+        writeLiveLock(dbPath, 'gbrain sync');
+
+        const result = await runCliBounded(command.args, home, 2000);
+
+        expect(result.timedOut).toBe(false);
+        expect(result.status).toBe(1);
+        expect(result.stderr).toContain('maintenance_deferred');
+        expect(result.stderr).toContain(`gbrain ${command.name}`);
+        expectNoRawPgliteLockFailure(result);
+        expectNoMisleadingMaintenanceSuccess(result);
+      } finally {
+        rmSync(home, { recursive: true, force: true });
+      }
+    }, 10_000);
+  }
+
+  test('maintenance caller reports owner_starting when startup election is held', async () => {
+    const { home, dbPath } = makeHome();
+    const startup = tryAcquireOperationStartup(dbPath);
+    expect(startup).not.toBeNull();
+    try {
+      const result = await runCliBounded(['embed', '--stale', '--dry-run'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('owner_starting');
+      expectNoRawPgliteLockFailure(result);
+      expectNoMisleadingMaintenanceSuccess(result);
+    } finally {
+      releaseOperationStartup(startup);
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  test('maintenance caller fails fast on corrupt lock instead of opening PGLite', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeCorruptLock(dbPath);
+
+      const result = await runCliBounded(['extract', '--stale', '--dry-run'], home, 2000);
+
+      expect(result.timedOut).toBe(false);
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('lock_safety_blocked');
+      expectNoRawPgliteLockFailure(result);
+      expectNoMisleadingMaintenanceSuccess(result);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  }, 10_000);
+
+  for (const command of maintenanceCommands) {
+    test(`no-owner ${command.name} maintenance caller reaches direct command path`, async () => {
+      const { home } = makeHome();
+      try {
+        const result = await runCliBounded(command.args, home, 5000);
+
+        expect(result.timedOut).toBe(false);
+        expect(result.stderr).not.toContain('maintenance_deferred');
+        expect(result.stderr).not.toContain('owner_starting');
+        expect(result.stderr).not.toContain('lock_safety_blocked');
+        expectNoRawPgliteLockFailure(result);
+      } finally {
+        rmSync(home, { recursive: true, force: true });
+      }
+    }, 15_000);
+  }
 
   test('stdio MCP serve fails fast on corrupt lock instead of opening or cleaning PGLite', async () => {
     const { home, dbPath } = makeHome();

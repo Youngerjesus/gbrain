@@ -825,6 +825,7 @@ async function makeContext(engine: BrainEngine, params: Record<string, unknown>)
 }
 
 const BROKERED_OPERATIONS = new Set<OperationIpcOperation>(['query', 'search', 'think']);
+const PGLITE_MAINTENANCE_COMMANDS = new Set(['sync', 'embed', 'extract']);
 let operationStartupHandle: OperationStartupHandle | null = null;
 
 async function maybeRunBrokeredOperation(
@@ -903,6 +904,37 @@ async function maybeRunBrokeredThink(args: string[]): Promise<boolean> {
 function emitBrokerFailure(response: { status: string; message: string }): void {
   console.error(`PGLite owner broker error [${response.status}]: ${response.message}`);
   setCliExitVerdict(response.status === 'broker_timeout' || response.status === 'completion_unknown' ? 124 : 1);
+}
+
+async function maybeDeferPgliteMaintenanceCommand(command: string): Promise<boolean> {
+  if (!PGLITE_MAINTENANCE_COMMANDS.has(command)) return false;
+  const cfg = loadConfig();
+  if (cfg?.engine !== 'pglite' || !cfg.database_path) return false;
+
+  const lock = classifyPgliteLock(cfg.database_path);
+  if (lock.status === 'absent') {
+    operationStartupHandle = tryAcquireOperationStartup(cfg.database_path);
+    if (operationStartupHandle) return false;
+    emitBrokerFailure({
+      status: 'owner_starting',
+      message: `Another PGLite owner appears to be starting; gbrain ${command} was not started. Run it again after the owner broker is reachable or the owner exits.`,
+    });
+    return true;
+  }
+  if (lock.status === 'dead_or_stale_recoverable') return false;
+  if (lock.status === 'corrupt_recoverable' || lock.status === 'unknown') {
+    emitBrokerFailure({
+      status: 'lock_safety_blocked',
+      message: `PGLite lock inspection returned ${lock.status}; refusing direct open for gbrain ${command}.`,
+    });
+    return true;
+  }
+
+  emitBrokerFailure({
+    status: 'maintenance_deferred',
+    message: `Another PGLite owner is live; gbrain ${command} was not started. Run it again after the owner exits. Interactive query/search/think calls can use the owner broker while the owner is live.`,
+  });
+  return true;
 }
 
 async function maybeStartCliOperationBroker(engine: BrainEngine): Promise<import('node:net').Server | null> {
@@ -1741,6 +1773,8 @@ async function handleCliOnly(command: string, args: string[]) {
     }
     return;
   }
+
+  if (await maybeDeferPgliteMaintenanceCommand(command)) return;
 
   // #1633: out-of-band hard-deadline watchdog for `gbrain sync`. Installed
   // BEFORE connectEngine so a connect-phase hang (the reported zombie class) is

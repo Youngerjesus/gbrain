@@ -2,10 +2,10 @@
 
 ## Current State
 
-- Current requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Current requirement: `requirements/004-pglite-concurrency-verification/requirements.md`
 - Current gate: requirement-clarifier
-- Status: requirement_002_closed_requirement_003_pending
-- Next action: Create and accept requirement 003 for interactive priority and bounded maintenance behavior for `sync`, `embed`, and `extract`.
+- Status: requirement_003_closed_requirement_004_pending
+- Next action: Create and accept requirement 004 for end-to-end concurrency, stale-owner recovery, diagnostics, and documentation coverage.
 
 ## Outcome Contract
 
@@ -121,3 +121,59 @@
 - Gate: closeout
 - Result: Closeout completed with `[CLOSED_COMMITTED]`; sequence item 2 checked complete. Verification passed with 90 related tests and `tsc --noEmit`.
 - Next: Start `requirements/003-pglite-priority-scheduler/requirements.md` with requirement-clarifier.
+
+### 2026-06-20 19:35 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: requirement-clarifier-post-draft-review
+- Result: Reviewer rerun returned `reviewer_result_status: SHIP`; requirement 003 is accepted for research.
+- Next: Research current maintenance command paths, broker queue priority behavior, and safe per-command fallback/integration options.
+
+### 2026-06-20 19:50 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: research
+- Result: Completed `requirements/003-pglite-priority-scheduler/research.md`; no blocking open questions. Research selected existing IPC queue priority plus pre-connect maintenance deferral for second `sync`/`embed`/`extract` callers.
+- Next: Write technical design.
+
+### 2026-06-20 20:00 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: technical-design
+- Result: Completed `requirements/003-pglite-priority-scheduler/technical-design.md`; AC1-AC8 mapped to unchanged IPC queue priority plus pre-connect maintenance deferral.
+- Next: Create draft plan and run plan reviews.
+
+### 2026-06-20 20:15 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: plan-eng-review / scenario-brake / plan-devex-review
+- Result: Reviews returned `GO WITH CHANGES` and `SCENARIOS MISSING`; findings were reconciled into plan/design with mandatory startup-election, corrupt-lock, no-owner direct-open, and AC1 maintenance-owner evidence.
+- Next: Create secondary plan and implement.
+
+### 2026-06-20 20:20 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: secondary-plan
+- Result: Created `plans/003-pglite-priority-scheduler/secondary_plan.md`; primary plan marked accepted.
+- Next: Implement in task worktree.
+
+### 2026-06-20 20:45 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: implementation
+- Result: Implemented maintenance deferral in task worktree and verified targeted red-to-green plus full related suite. Full related suite: 99 pass, 0 fail; `bun run typecheck` passed.
+- Next: Run conformance review and implementation-brake.
+
+### 2026-06-20 20:55 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: implementation-brake
+- Result: Conformance reviewer returned `CONFORMANT`; implementation-brake recorded `[SHIP]`.
+- Next: Closeout and commit requirement 003.
+
+### 2026-06-20 21:00 KST
+
+- Requirement: `requirements/003-pglite-priority-scheduler/requirements.md`
+- Gate: closeout
+- Result: Closeout completed with `[CLOSED_COMMITTED]`; sequence item 3 checked complete. Verification passed with 99 related tests and `tsc --noEmit`.
+- Next: Start `requirements/004-pglite-concurrency-verification/requirements.md` with requirement-clarifier.
