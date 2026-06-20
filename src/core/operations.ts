@@ -1773,6 +1773,8 @@ const think: Operation = {
     model: { type: 'string', description: 'Model override (alias or full id). Falls through models.think → models.default → GBRAIN_MODEL → opus.' },
     since: { type: 'string', description: 'Start of temporal window (YYYY-MM-DD or YYYY-MM)' },
     until: { type: 'string', description: 'End of temporal window' },
+    with_calibration: { type: 'boolean', description: 'Apply the active calibration profile before synthesis.' },
+    calibration_holder: { type: 'string', description: 'Calibration holder override.' },
   },
   mutating: true,
   handler: async (ctx, p) => {
@@ -1801,6 +1803,8 @@ const think: Operation = {
       modelExplicit: !!p.model,
       since: p.since ? String(p.since) : undefined,
       until: p.until ? String(p.until) : undefined,
+      withCalibration: Boolean(p.with_calibration),
+      ...(p.calibration_holder ? { calibrationHolder: String(p.calibration_holder) } : {}),
       takesHoldersAllowList: ctx.takesHoldersAllowList,
       ...(scope.sourceId !== undefined ? { sourceId: scope.sourceId } : {}),
       ...(scope.sourceIds !== undefined ? { allowedSources: scope.sourceIds } : {}),

@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { acquireLock, releaseLock, type LockHandle } from '../src/core/pglite-lock';
+import { acquireLock, classifyPgliteLock, releaseLock, type LockHandle } from '../src/core/pglite-lock';
 import { withEnv } from './helpers/with-env.ts';
 
 const TEST_DIR = join(tmpdir(), 'gbrain-lock-test-' + process.pid);
@@ -191,5 +191,66 @@ describe('pglite-lock #2058 heartbeat + steal-grace', () => {
     await releaseLock(lock);
     expect(lock.heartbeat).toBeUndefined();
     expect(existsSync(join(TEST_DIR, '.gbrain-lock'))).toBe(false);
+  });
+});
+
+describe('pglite-lock classifier', () => {
+  beforeEach(() => {
+    if (existsSync(TEST_DIR)) rmSync(TEST_DIR, { recursive: true, force: true });
+    mkdirSync(TEST_DIR, { recursive: true });
+  });
+  afterEach(() => {
+    if (existsSync(TEST_DIR)) rmSync(TEST_DIR, { recursive: true, force: true });
+  });
+
+  function writeRawLock(raw: unknown) {
+    const lockDir = join(TEST_DIR, '.gbrain-lock');
+    mkdirSync(lockDir, { recursive: true });
+    writeFileSync(join(lockDir, 'lock'), typeof raw === 'string' ? raw : JSON.stringify(raw));
+  }
+
+  test('reports absent without creating the data directory or lock', () => {
+    const missingDataDir = join(TEST_DIR, 'missing-for-classifier');
+    const state = classifyPgliteLock(missingDataDir);
+    expect(state.status).toBe('absent');
+    expect(existsSync(missingDataDir)).toBe(false);
+  });
+
+  test('reports live without waiting or stealing a fresh heartbeat holder', () => {
+    const now = Date.now();
+    writeRawLock({
+      pid: process.pid,
+      acquired_at: now - 20 * 60_000,
+      refreshed_at: now,
+      command: 'live holder',
+    });
+
+    const started = Date.now();
+    const state = classifyPgliteLock(TEST_DIR);
+    expect(Date.now() - started).toBeLessThan(200);
+    expect(state.status).toBe('live');
+    expect(state.pid).toBe(process.pid);
+    expect(existsSync(join(TEST_DIR, '.gbrain-lock'))).toBe(true);
+  });
+
+  test('reports dead_or_stale_recoverable for a dead holder without deleting it', () => {
+    writeRawLock({
+      pid: 999999999,
+      acquired_at: Date.now() - 1000,
+      refreshed_at: Date.now() - 1000,
+      command: 'dead holder',
+    });
+
+    const state = classifyPgliteLock(TEST_DIR);
+    expect(state.status).toBe('dead_or_stale_recoverable');
+    expect(existsSync(join(TEST_DIR, '.gbrain-lock'))).toBe(true);
+  });
+
+  test('reports corrupt_recoverable for invalid lock JSON without deleting it', () => {
+    writeRawLock('{not-json');
+
+    const state = classifyPgliteLock(TEST_DIR);
+    expect(state.status).toBe('corrupt_recoverable');
+    expect(existsSync(join(TEST_DIR, '.gbrain-lock'))).toBe(true);
   });
 });

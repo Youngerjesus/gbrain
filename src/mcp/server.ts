@@ -14,6 +14,13 @@ import {
   cleanupStaleSocket,
 } from '../core/context/resolve-ipc.ts';
 import { resolveEntitiesToPointers, logDeliveredReflexPointers } from '../core/context/retrieval-reflex.ts';
+import {
+  OPERATION_IPC_UNAVAILABLE,
+  forwardOperationViaIpc,
+  operationSocketPath,
+  startPgliteOperationIpcServer,
+} from '../core/pglite-operation-ipc.ts';
+import { dispatchBrokeredOperation } from '../core/pglite-operation-dispatch.ts';
 
 export async function startMcpServer(engine: BrainEngine) {
   const server = new Server(
@@ -53,6 +60,21 @@ export async function startMcpServer(engine: BrainEngine) {
       metaHook: getBrainHotMemoryMeta,
     });
   });
+
+  let operationServer: import('node:net').Server | null = null;
+  let operationSocket: string | null = null;
+  try {
+    const cfg = loadConfig();
+    if (cfg?.engine === 'pglite' && cfg.database_path) {
+      operationSocket = operationSocketPath(cfg.database_path);
+      operationServer = await startPgliteOperationIpcServer(operationSocket, (req) =>
+        dispatchBrokeredOperation(engine, req),
+        { onDiagnostic: emitOperationBrokerDiagnostic },
+      );
+    }
+  } catch {
+    /* operation IPC is best-effort; direct owner serve remains available */
+  }
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
@@ -100,6 +122,7 @@ export async function startMcpServer(engine: BrainEngine) {
     if (shuttingDown) return;
     shuttingDown = true;
     process.stderr.write(`[gbrain-serve] shutdown: ${reason}\n`);
+    try { operationServer?.close(); } catch { /* noop */ }
     try { resolveServer?.close(); } catch { /* noop */ }
     if (resolveSocket) cleanupStaleSocket(resolveSocket);
     Promise.resolve(engine.disconnect?.())
@@ -120,6 +143,72 @@ export async function startMcpServer(engine: BrainEngine) {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGHUP', () => shutdown('SIGHUP'));
+}
+
+function emitOperationBrokerDiagnostic(event: { status: string; socketPath: string }): void {
+  if (event.status === 'stale_socket_recovered') {
+    console.error(`PGLite owner broker recovered stale operation socket: ${event.socketPath}`);
+  }
+}
+
+export async function startMcpOperationProxyServer(socketPath: string): Promise<void> {
+  const server = new Server(
+    { name: 'gbrain', version: VERSION },
+    { capabilities: { tools: {} } },
+  );
+  const brokerOps = operations.filter((op) => ['query', 'search', 'think'].includes(op.name));
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: buildToolDefs(brokerOps),
+  }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request: any): Promise<any> => {
+    const { name, arguments: params } = request.params;
+    if (!['query', 'search', 'think'].includes(name)) {
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ error: 'unknown_tool', message: `Unknown tool: ${name}` }, null, 2) }],
+        isError: true,
+      };
+    }
+
+    const response = await forwardOperationViaIpc(socketPath, {
+      protocolVersion: 1,
+      requestId: `mcp-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      caller: 'mcp-stdio',
+      operation: name,
+      class: 'interactive',
+      priority: 100,
+      params: params ?? {},
+      context: {
+        remote: true,
+        takesHoldersAllowList: ['world'],
+        sourceId: process.env.GBRAIN_SOURCE || 'default',
+        output: 'json',
+      },
+    });
+
+    if (response === OPERATION_IPC_UNAVAILABLE) {
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ error: 'owner_unreachable', message: 'PGLite owner broker is not reachable.' }, null, 2) }],
+        isError: true,
+      };
+    }
+    if (!response.ok) {
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ error: response.status, message: response.message }, null, 2) }],
+        isError: true,
+      };
+    }
+    if (isToolResult(response.result)) return response.result;
+    return { content: [{ type: 'text', text: JSON.stringify(response.result, null, 2) }] };
+  });
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
+function isToolResult(value: unknown): value is { content: { type: 'text'; text: string }[]; isError?: boolean; _meta?: Record<string, unknown> } {
+  return Boolean(value && typeof value === 'object' && Array.isArray((value as any).content));
 }
 
 // Backward compat: used by `gbrain call` command (trusted local path).
