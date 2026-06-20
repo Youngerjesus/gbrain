@@ -1,0 +1,24 @@
+requirement_id: 006-pglite-access-path-inventory
+decision_version: 1
+ledger_required: true
+ledger_path: coverage-ledger.yml
+decided_by_gate: requirement-clarifier
+decided_at: "2026-06-20T09:16:00Z"
+trigger_evaluation:
+  accepted_scope_digest: "all PGLite-touching CLI and MCP paths, including read, diagnostic, mutating, maintenance, migration, remediation, and file-touching operations"
+  signals:
+    subtask_count: 10
+    module_count: 6
+    package_count: 1
+    acceptance_criteria_count: 8
+    many_acceptance_criteria: true
+    multiple_workflow_skills: true
+    validator_and_fixture_foundation: true
+    bulk_data_migration: false
+    multi_state_ui: false
+    low_risk_mechanical_edits: false
+  broad_work_detected: true
+  reason: "The requirement is broad, cross-module, concurrency-sensitive, security-sensitive, and omission-prone."
+source_refs:
+  - requirements/006-pglite-access-path-inventory/requirements.md#Acceptance-Criteria
+  - goal-requirements/002-pglite-all-access-concurrency/sequence.md#Requirement-Sequence

@@ -1,0 +1,185 @@
+requirement_id: 006-pglite-access-path-inventory
+ledger_version: 1
+ledger_required: true
+status: verified
+last_updated_by_gate: implementation
+last_updated_at: "2026-06-20T13:24:00Z"
+closure_policy:
+  allowed_closed_statuses:
+    - verified
+    - not_required_with_reason
+    - deferred_with_user_acceptance
+  blocking_statuses:
+    - planned
+    - missing
+    - blocked
+    - stale_needs_recheck
+  evidence_rule: typed_evidence_required
+coverage_rows:
+  - row_id: inventory.cli_entrypoints
+    required: true
+    obligation_type: artifact_contract
+    description: CLI command registration and dispatch paths that can touch PGLite are inventoried.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC1
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC3
+    data_condition: all CLI command groups and direct DB helpers are inspected
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: artifact_role_test
+        ref: "test/pglite-access-inventory-validator.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: inventory.mcp_operations
+    required: true
+    obligation_type: artifact_contract
+    description: MCP operation handlers that can open PGLite are inventoried with remote exposure and authorization notes.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC1
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC4
+    data_condition: MCP server operation registry and operation handlers are inspected
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: artifact_role_test
+        ref: "requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: inventory.maintenance_mutation_paths
+    required: true
+    obligation_type: artifact_contract
+    description: sync, embed, extract, doctor remediation, migrations, upgrades, and file-touching paths are inventoried and side-effect classified.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC2
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC3
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC4
+    data_condition: mutating and heavy maintenance operations have trust-boundary and side-effect fields
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: artifact_role_test
+        ref: "requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: inventory.behavior_classification
+    required: true
+    obligation_type: schema_contract
+    description: Every inventory row is classified into an accepted behavior class with no unclassified rows.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC2
+    data_condition: inventory includes behavior_class for every PGLite-touching path
+    required_evidence:
+      - schema_validator_test
+      - negative_fixture_test
+    status: verified
+    evidence_refs:
+      - type: schema_validator_test
+        ref: "test/pglite-access-inventory-validator.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: negative_fixture_test
+        ref: "test/pglite-access-inventory-validator.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: gauntlet.named_matrix
+    required: true
+    obligation_type: regression_fixture
+    description: Minimal concurrency gauntlet covers live-runnable representative rows under a local PGLite owner and manifest-binds safe non-execution rows to the inventory.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC5
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC6
+    data_condition: concurrent attempts exercise the runnable representative matrix; destructive, migration, remote-authority, background, and filesystem rows are represented as inventory-bound safe non-execution rows with row-specific reasons
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: verified
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: "test/pglite-all-access-inventory-gauntlet.serial.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: expected_error_assertions
+        ref: "test/pglite-all-access-inventory-gauntlet.serial.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: gauntlet.timeout_detection
+    required: true
+    obligation_type: verification_contract
+    description: Gauntlet captures exit code, structured error shape, stderr, and raw PGLite lock/connect timeout text distinctly.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC5
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC6
+    data_condition: failures are classified as raw timeout, typed guard error, broker success, existing pass, or safe non-execution
+    required_evidence:
+      - targeted_validator_command
+    status: verified
+    evidence_refs:
+      - type: targeted_validator_command
+        ref: "bun test test/pglite-access-inventory-validator.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: trust_boundary.remote_local_parity
+    required: true
+    obligation_type: workflow_policy
+    description: Existing trusted-local versus remote-MCP restrictions remain explicit in the inventory and test plan.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC4
+      - requirements/006-pglite-access-path-inventory/requirements.md#Constraints
+    data_condition: OperationContext.remote, filesystem confinement, and local-only restrictions are represented
+    required_evidence:
+      - structured_contract_fixture
+      - positive_negative_trigger_tests
+    status: verified
+    evidence_refs:
+      - type: structured_contract_fixture
+        ref: "requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: positive_negative_trigger_tests
+        ref: "test/pglite-all-access-inventory-gauntlet.serial.test.ts"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: schema_validation
+        ref: "bun run scripts/validate-pglite-access-inventory.ts requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml --json"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
+  - row_id: handoff.requirement_007
+    required: true
+    obligation_type: artifact_contract
+    description: Closeout records the inventory artifact, gauntlet paths, operation-class risks, and next implementation requirement handoff.
+    source_refs:
+      - requirements/006-pglite-access-path-inventory/requirements.md#AC8
+      - requirements/006-pglite-access-path-inventory/requirements.md#Artifact-Handoff-Contract
+    data_condition: requirement 007 can consume the artifacts without rediscovering basic scope
+    required_evidence:
+      - schema_validation
+      - artifact_role_test
+    status: verified
+    evidence_refs:
+      - type: schema_validation
+        ref: "requirements/006-pglite-access-path-inventory/pglite-access-inventory.yml"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+      - type: artifact_role_test
+        ref: "requirements/006-pglite-access-path-inventory/evidence.md"
+        recorded_in: requirements/006-pglite-access-path-inventory/evidence.md
+    recorded_in:
+      - requirements/006-pglite-access-path-inventory/evidence.md
