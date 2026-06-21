@@ -22,6 +22,16 @@ Brain pages are not chat output. They are durable knowledge artifacts.
 - No placeholder dates ("YYYY-MM-DD", "recently", "in the near future")
 - Short paragraphs. Concrete facts. Inline citations.
 
+## Dense Brain Pages
+
+Brain pages are durable compiled truth, not transcript dumps.
+
+- Distill user notes into the smallest useful durable form.
+- Remove repeated ideas, setup chatter, generic metadata, and low-value context.
+- Preserve raw source separately when the full wording may matter later.
+- Keep one page focused on one primary subject; split or cross-link instead of duplicating.
+- Preserve exact phrasing only when the wording itself is the insight.
+
 ## Exact Phrasing Preservation
 
 When capturing someone's original thinking, use their exact words. Don't paraphrase.

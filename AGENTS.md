@@ -87,6 +87,9 @@ writing or reviewing an operation, consult `src/core/operations.ts` for the cont
 - Keep real secrets, machine-specific env files, automation runtime state, logs,
   and local paths out of committed artifacts. Track only placeholders such as
   `.env.example` or setup docs.
+- Brain writes must follow `skills/_output-rules.md`: distilled compiled truth,
+  raw-source preservation when needed, no filler, no duplicated ideas, and no
+  bloated transcript-style pages.
 
 ## Context loading before implementation
 
