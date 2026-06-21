@@ -1,0 +1,92 @@
+requirement_id: mompick-category-ia-positive
+reconciliation_version: 1
+source_inventory_digest: sha256:8199c2ce423e0774001542b13bac678df5ea7cf1071fc6ac421c00dca125cc4c
+source_inventory_version: 1
+accepted_scope_digest: sha256:7b708e1bd05faeb10b1bbb2e5b1122a48b66c91ce7e88d08f77b8ac18945c108
+reviewer_status: SHIP
+source_obligation_review_required: true
+reconciled_items:
+  - source_item_id: src.category.pregnancy_birth
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.newborn_care
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.feeding
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.sleep
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.health
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.growth
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.play_learning
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.kids_education
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.family_outings
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.parenting_life
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.shopping_gear
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.
+  - source_item_id: src.category.safety
+    disposition: included
+    obligation_ids:
+      - category.full_universe
+    coverage_row_ids:
+      - category.full_universe
+    rationale: Category is part of the full MomPick category IA source universe.

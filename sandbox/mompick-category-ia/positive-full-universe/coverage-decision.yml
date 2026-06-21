@@ -1,0 +1,15 @@
+requirement_id: mompick-category-ia-positive
+decision_version: 1
+ledger_required: true
+ledger_path: coverage-ledger.yml
+decided_by_gate: requirement-clarifier
+decided_at: "2026-06-21T20:45:00+09:00"
+trigger_evaluation:
+  accepted_scope_digest: sha256:7b708e1bd05faeb10b1bbb2e5b1122a48b66c91ce7e88d08f77b8ac18945c108
+  signals:
+    sandbox_regression: true
+    source_obligation_inventory_required: true
+    reference_parity_loss_pattern: true
+  broad_work_detected: true
+source_refs:
+  - sandbox/mompick-category-ia/manifest.yml#category_universe

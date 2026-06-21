@@ -1,0 +1,55 @@
+requirement_id: mompick-category-ia-positive
+ledger_version: 1
+ledger_required: true
+status: verified
+last_updated_by_gate: sandbox-fixture
+last_updated_at: "2026-06-21T20:45:00+09:00"
+source_inventory_digest: sha256:8199c2ce423e0774001542b13bac678df5ea7cf1071fc6ac421c00dca125cc4c
+source_inventory_version: 1
+accepted_scope_digest: sha256:7b708e1bd05faeb10b1bbb2e5b1122a48b66c91ce7e88d08f77b8ac18945c108
+reconciliation_version: 1
+closure_policy:
+  allowed_closed_statuses:
+    - verified
+    - not_required_with_reason
+    - deferred_with_user_acceptance
+  blocking_statuses:
+    - planned
+    - missing
+    - blocked
+    - stale_needs_recheck
+  evidence_rule: typed_evidence_required
+coverage_rows:
+  - row_id: category.full_universe
+    required: true
+    obligation_type: regression_fixture
+    description: All 12 MomPick category IA source categories are accepted and mapped.
+    source_refs:
+      - sandbox/mompick-category-ia/manifest.yml#category_universe
+    source_item_ids:
+      - src.category.pregnancy_birth
+      - src.category.newborn_care
+      - src.category.feeding
+      - src.category.sleep
+      - src.category.health
+      - src.category.growth
+      - src.category.play_learning
+      - src.category.kids_education
+      - src.category.family_outings
+      - src.category.parenting_life
+      - src.category.shopping_gear
+      - src.category.safety
+    data_condition: full category universe is accepted
+    required_evidence:
+      - negative_fixture_test_suite
+      - expected_error_assertions
+    status: planned
+    evidence_refs:
+      - type: negative_fixture_test_suite
+        ref: tests/verify_sandbox_mompick_category_ia.py::test_positive_fixture_passes_readiness
+        recorded_in: sandbox/mompick-category-ia/positive-full-universe/evidence.md
+      - type: expected_error_assertions
+        ref: positive fixture readiness pass
+        recorded_in: sandbox/mompick-category-ia/positive-full-universe/evidence.md
+    recorded_in:
+      - sandbox/mompick-category-ia/positive-full-universe/evidence.md

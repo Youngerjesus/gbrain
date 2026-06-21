@@ -1,0 +1,30 @@
+fixture_id: mompick-find-main-reference-parity
+description: Local Find main reference parity source universe used to prove search-only narrowing fails source-obligation validation.
+obligations:
+  - obligation_id: search-entry
+    label: Search entry field
+    source_item_id: src.find.search_entry
+    search_only_subset: true
+  - obligation_id: recent-products
+    label: Recent product rail
+    source_item_id: src.find.recent_product_rail
+    search_only_subset: false
+  - obligation_id: grouped-categories
+    label: Grouped category rows
+    source_item_id: src.find.grouped_category_rows
+    search_only_subset: false
+  - obligation_id: category-drilldown
+    label: Category drilldown affordance
+    source_item_id: src.find.category_drilldown
+    search_only_subset: false
+  - obligation_id: first-viewport-structure
+    label: First viewport structure
+    source_item_id: src.find.first_viewport_structure
+    search_only_subset: false
+search_only_subset_obligation_ids:
+  - search-entry
+negative_fixture:
+  expected_error_codes:
+    - E_SCOPE_RECONCILIATION_MISSING_ITEM
+  expected_routes:
+    - scope-reconciliation-recheck

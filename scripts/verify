@@ -9,6 +9,9 @@ cd "$repo_root"
 git diff --check
 python3 tests/verify_goal_orchestrator_policy.py
 python3 tests/verify_coverage_ledger.py
+python3 tests/verify_sandbox_mompick_category_ia.py
+python3 tests/verify_sandbox_httpie_migration.py
+python3 tests/verify_sandbox_mompick_find_main.py
 python3 tests/verify_behavior_text_contracts.py
 python3 tests/verify_behavior_contract_eval.py
 python3 tests/verify_removed_artifact_contract.py
