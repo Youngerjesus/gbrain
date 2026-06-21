@@ -1,0 +1,17 @@
+case_id: bad-stale-repair-checkpoint
+role: bad-stale-repair-checkpoint
+expected_valid: false
+design_contract:
+  text: "Repair reuses nested metadata from an old plan and checkpoint replay has no lineage."
+  state_owners:
+    chapter_id: system
+  precedence_rule: manifest_over_generated
+  invariants:
+    - product_identity_preserved
+  validators:
+    - identity_validator
+  recovery:
+    - stale_repair_metadata
+  checkpoint_lineage: []
+expected_errors:
+  - E_STALE_REPAIR_CHECKPOINT

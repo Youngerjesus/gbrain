@@ -251,6 +251,27 @@ Set `ledger_required: false` only with structured `ledger_not_required.reason`, 
 
 Semantic acceptance for coverage-ledger readiness belongs to `scripts/coverage_ledger.py` or an equivalent structured validator. Skill prose, substring checks, route existence, or reviewer praise are drift hints only and must not be treated as authoritative coverage proof.
 
+## Source Obligation Gate
+
+Before a broad or high-risk requirement can be accepted as `Ready`, decide whether source-obligation state is required. This gate protects the upstream source universe before requirements, plans, or coverage rows can silently narrow it.
+
+Set `trigger_evaluation.signals.source_obligation_inventory_required: true` in `coverage-decision.yml` when source-derived obligations must be preserved, including reference-parity work, codebase ports, migrations, multi-screen or multi-state UI, prompt/schema contracts, broad agent handoffs, or any slice where examples could be mistaken for total scope. When required, create or update:
+
+- `source-inventory.yml`
+- `scope-reconciliation.yml`
+- `coverage-decision.yml`
+- `coverage-ledger.yml`
+
+`source-inventory.yml` records raw source truth. `scope-reconciliation.yml` records the accepted-scope candidate. requirements are a projection of reviewer-approved accepted scope, and coverage-ledger rows are proof obligations for included accepted scope. Progress, evidence, reviewer prose, and closeout prose cannot override structured source-obligation conflicts.
+
+Run or record the `source-obligation-reviewer` result before `Ready`. Machine-consumed source review must use `source_obligation_review_status`; prose-only approval, reviewer praise, source-less scope narrowing, or a requirement draft that omits source artifacts cannot satisfy this gate. Required source-obligation readiness must also pass:
+
+```text
+scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>
+```
+
+A structured source-obligation not-required decision is allowed only when the accepted scope is explicitly narrow and records the reason, risk assessment, and accepted scope refs. Do not replace required source-obligation artifacts with a prose checklist.
+
 Reviewer unavailable policy:
 
 - If the post-draft reviewer is available, `Ready` requires structured `SHIP` or resolved material findings.

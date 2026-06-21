@@ -28,6 +28,7 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `.codex/agents/grill-me-requirement-shape-finder.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | grill-me candidate specialist |
 | `.codex/agents/requirement-clarifier-post-draft-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | requirement-clarifier review gate |
 | `.codex/agents/requirement-conformance-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | implementation-brake requirement conformance gate |
+| `.codex/agents/source-obligation-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | source inventory and scope reconciliation reviewer |
 | `.codex/agents/scenario-path-separation-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | scenario-brake companion reviewer |
 | `.codex/agents/scenario-parameter-mutation-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | scenario-brake companion reviewer |
 | `.codex/agents/scenario-recovery-observability-reviewer.toml` | Yes | all modes | safe in `upgrade-sync` | Yes | scenario-brake companion reviewer |
@@ -112,7 +113,6 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `main/docs/project_overview.md` | Yes | all modes | never | No | project SSOT seed |
 | `main/docs/tech_stack.md` | Yes | all modes | preserve | No | stack decisions |
 | `main/docs/history_archives/history.md` | Yes | all modes | preserve | No | history seed |
-| `main/work_queue/progress.md` | Yes | all modes | preserve | No | project progress seed |
 | `main/src/.gitkeep` | Yes | all modes | preserve | No | workspace seed |
 | `main/tests/.gitkeep` | Yes | all modes | preserve | No | workspace seed |
 | `main/contexts/.gitkeep` | Yes | all modes | preserve | No | context artifacts |

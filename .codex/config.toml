@@ -110,6 +110,10 @@ config_file = "agents/requirement-clarifier-post-draft-reviewer.toml"
 description = "Read-only implementation-brake companion for checking implementation conformance to accepted requirements, including acceptance coverage."
 config_file = "agents/requirement-conformance-reviewer.toml"
 
+[agents.source-obligation-reviewer]
+description = "Read-only reviewer for source inventory and scope reconciliation completeness before accepted scope is treated as Ready."
+config_file = "agents/source-obligation-reviewer.toml"
+
 [agents.scenario-path-separation-reviewer]
 description = "Read-only Scenario Brake companion for entry paths, actors, states, re-entry paths, and conflated scenario separation."
 config_file = "agents/scenario-path-separation-reviewer.toml"

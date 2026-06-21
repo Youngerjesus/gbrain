@@ -25,6 +25,7 @@
 - `grill-me-requirement-shape-finder`
 - `requirement-clarifier-post-draft-reviewer`
 - `requirement-conformance-reviewer`
+- `source-obligation-reviewer`
 - `scenario-path-separation-reviewer`
 - `scenario-parameter-mutation-reviewer`
 - `scenario-recovery-observability-reviewer`

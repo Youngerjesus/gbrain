@@ -270,6 +270,26 @@ A prior not-required decision can become stale. If implementation-time broad-wor
 
 Coverage-ledger semantic acceptance belongs to `scripts/coverage_ledger.py` or an equivalent structured validator. Skill text, substring checks, route existence, or prose-only reviewer approval are not authoritative coverage evidence.
 
+## Source Obligation Ship Gate
+
+When source-obligation state is required or present, do not issue `[SHIP]` until the actual requirement artifacts show compatible source-obligation closure evidence.
+
+Required source-obligation inputs before `[SHIP]`:
+
+- `source-inventory.yml`
+- `scope-reconciliation.yml`
+- `source-obligation-reviewer` evidence with structured `source_obligation_review_status`
+- coverage ledger lineage and source item mappings
+- deterministic closure validation:
+
+```text
+scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>
+```
+
+Do not issue `[SHIP]` when required source-obligation validation or reviewer evidence is missing, stale, failed, or unavailable. `FINDINGS`, `BLOCKED_INVALID`, `BLOCKED_UNAVAILABLE`, missing reviewer status, stale lineage, missing included-source ledger rows, or unparseable validator output are ship blockers.
+
+Prose-only approval, progress prose, evidence prose, reviewer praise, or route names cannot replace structured source-obligation status and validator evidence. If a source-obligation not-required decision exists, ensure it is structured and current before accepting it.
+
 ## Companion Agent Routing
 
 `implementation-brake`가 최종 ship-readiness verdict 를 소유합니다.

@@ -1,0 +1,15 @@
+split: heldout
+rows:
+  heldout_identity:
+    row_id: heldout-identity
+    scenario_id: heldout-chapter-identity
+    split: heldout
+    regression_family: chapter_plan_identity_mismatch
+    source_label: provider_regression
+    task: "Reject section identity changed during replan."
+    candidate_answer: "The model changes section_id during repair."
+    expected_disposition: reject
+    expected_signals:
+      - identity_owner_mismatch
+    state_fields:
+      section_id: system

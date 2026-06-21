@@ -1,0 +1,14 @@
+case_id: bad-llm-owned-identity
+role: bad-llm-owned-identity
+expected_valid: false
+design_contract:
+  text: "The model chooses chapter ids and the validator checks the final JSON."
+  state_owners:
+    chapter_id: llm
+  precedence_rule: generated_over_manifest
+  invariants:
+    - product_identity_preserved
+  validators:
+    - identity_validator
+expected_errors:
+  - E_LLM_OWNS_IDENTITY

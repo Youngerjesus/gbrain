@@ -117,6 +117,19 @@ For conformance review evidence, include:
 - evidence reference consumed by implementation-brake
 - whether partial_contract_state, cleanup_pending, or ready_after_parity_pass applies
 
+For source-obligation evidence, include:
+
+- source-obligation evidence claim
+- whether `source_obligation_inventory_required` is true, false, or not evaluated
+- `source-inventory.yml` path and digest/version when required
+- `scope-reconciliation.yml` path and accepted scope digest/version when required
+- source reviewer role: `source-obligation-reviewer`
+- `source_obligation_review_status`
+- readiness command: `scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>`
+- closure command: `scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>`
+- result, route, and blocker for missing, stale, failed, or unavailable source-obligation evidence
+- whether prose-only approval, progress text, or reviewer praise was rejected as authority
+
 ## Evidence
 
 ### YYYY-MM-DD HH:MM KST - <claim>

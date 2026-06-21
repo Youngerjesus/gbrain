@@ -32,8 +32,9 @@ python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --boot
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --dry-run
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --candidate candidate.md --proxy-from-skill-text
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --candidate candidate.md --rollouts rollouts.json --baseline-score 0.72
-python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --target-model gpt-5.3-codex-spark --optimizer-model gpt-5.5 --gemini-model gemini-2.5-pro --max-llm-calls 80
-python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --target-model gpt-5.3-codex-spark --optimizer-model gpt-5.5 --held-out held-out.jsonl --mutate
+python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --max-llm-calls 80
+python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --provider codex --max-llm-calls 80
+python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --held-out held-out.jsonl --mutate
 ```
 
 Pass `--held-out held-out.jsonl --held-out-rollouts held-out-rollouts.json` to
@@ -47,15 +48,19 @@ checking whether a candidate skill body covers benchmark criteria, but it is not
 evidence that a live agent executed the benchmark tasks.
 
 `--live` is the closed-loop mode: it runs target-model rollouts over benchmark
-tasks through `codex exec` with Gemini CLI fallback, scores them, asks the
-optimizer model for body-only edits, applies safe edits, and reruns the
-selection gate before promotion. The repo baseline uses a fake chat client to
-verify loop wiring. Real CLI smokes are request-local: run the `--live` command
-directly with explicit model flags or the `SKILLOPT_*` environment variables
-when CLI auth is present.
+tasks through the local Gemini CLI by default, scores them, asks the optimizer
+model for body-only edits, applies safe edits, and reruns the selection gate
+before promotion. Default live models are `gemini-2.5-flash` for target/judge
+evaluation and `gemini-3.5-flash` for optimizer edit synthesis. Pass
+`--provider codex` to use `codex exec` with Codex defaults, or `--provider auto`
+for the legacy Codex first / Gemini fallback path. The repo baseline uses a fake
+chat client to verify loop wiring. Real CLI smokes are request-local: run the
+`--live` command directly with explicit `--provider`, model flags, or the
+`SKILLOPT_*` environment variables when CLI auth is present.
 Same-model target/optimizer runs are useful for low-cost smoke tests. For real
 optimization, keep the target model representative of normal skill execution
-and use a stronger optimizer model such as `gpt-5.5` for edit synthesis.
+and use a stronger optimizer model such as `gemini-3.5-flash` for edit
+synthesis.
 The live runner records a duplicate-run lock, checkpoint, trace, receipt,
 rejected edit buffer, LLM call count, and Codex JSON event-derived tool calls
 when the CLI emits them.

@@ -44,10 +44,11 @@ python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --boot
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --dry-run
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --candidate candidate.md --proxy-from-skill-text
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --candidate candidate.md --rollouts rollouts.json --baseline-score 0.72
-python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --target-model gpt-5.3-codex-spark --optimizer-model gpt-5.5 --gemini-model gemini-2.5-pro --max-llm-calls 80
+python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --max-llm-calls 80
+python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --provider codex --max-llm-calls 80
 # Optional held-out safety gate:
 python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --candidate candidate.md --rollouts rollouts.json --baseline-score 0.72 --held-out held-out.jsonl --held-out-rollouts held-out-rollouts.json
-python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --target-model gpt-5.3-codex-spark --optimizer-model gpt-5.5 --held-out held-out.jsonl --mutate
+python3 .codex/skills/skill-optimizer/scripts/skillopt_runner.py my-skill --bootstrap-reviewed --split 1:1:1 --live --held-out held-out.jsonl --mutate
 ```
 
 The local runner does not hide live LLM execution inside a deterministic script.
@@ -58,16 +59,19 @@ It supports two deterministic evidence modes:
 - `--rollouts` accepts externally generated median-of-3 rollout evidence plus
   an explicit `--baseline-score`.
 
-It also supports `--live`, which calls `codex exec` first and falls back to the
-local `gemini` CLI when Codex fails. The live path executes benchmark tasks with
-the target model, asks the optimizer model for body-only edits, and validates the
+It also supports `--live`, which uses the local `gemini` CLI by default. Default
+live models are `gemini-2.5-flash` for target/judge rollout evaluation and
+`gemini-3.5-flash` for optimizer edit synthesis. Pass `--provider codex` to use
+`codex exec` with Codex defaults, or `--provider auto` to use the legacy Codex
+first / Gemini fallback path. The live path executes benchmark tasks with the
+target model, asks the optimizer model for body-only edits, and validates the
 candidate with median-of-3 rule or LLM judge scoring. It records a live lock,
 checkpoint, trace, receipt, rejected edit buffer, LLM call count, and Codex JSON
 event-derived tool call records when the CLI provides them.
 
 For smoke tests, using the same model for target and optimizer is acceptable.
 For real optimization, prefer the target model that represents normal skill use
-and a stronger optimizer model such as `gpt-5.5`; the optimizer is doing
+and a stronger optimizer model such as `gemini-3.5-flash`; the optimizer is doing
 meta-level edit synthesis from rollout failures and benefits from extra
 reasoning strength.
 
@@ -78,8 +82,8 @@ independent disjoint held-out gate; the live path runs that gate itself when
 `--held-out` is supplied.
 
 No repo-level live smoke script is bundled. When live CLI auth is available,
-run the `--live` command directly with explicit model flags or the
-`SKILLOPT_*` environment variables. Live evidence is intentionally separate
+run the `--live` command directly with explicit `--provider`, model flags, or
+the `SKILLOPT_*` environment variables. Live evidence is intentionally separate
 from the secret-free baseline `scripts/verify`.
 
 ## Output Format

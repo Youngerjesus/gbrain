@@ -81,15 +81,19 @@ Blocker reports should include:
 
 Check these first, in order:
 
-1. `work_queue/progress.md`
+1. active goal or requirement progress/evidence docs when the task is requirement-scoped
 2. `docs/history_archives/history.md`
 3. relevant `docs/*/memory.md`
 4. directly impacted companion docs under `specs/**`
 5. contributor-facing docs only if there is durable context that code cannot carry
 
-### `work_queue/progress.md`
+### Goal and requirement progress/evidence docs
 
-Always add a new progress entry for the finished task and keep only the latest 10 entries.
+Update `goal-requirements/<id>/progress.md`, `requirements/<id>/progress.md`, and/or `requirements/<id>/evidence.md` only when the task is tied to an active goal or requirement slice.
+
+Do not create a synthetic root progress queue for tasks that are not goal- or requirement-scoped. Use the final report and PR body for task-local closure notes instead.
+
+When updating active goal or requirement progress, add a concise closure entry for the finished task and keep the file focused on current slice or sequence state.
 
 ### `docs/history_archives/history.md`
 

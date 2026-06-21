@@ -1,0 +1,13 @@
+case_id: bad-missing-precedence
+role: bad-missing-precedence
+expected_valid: false
+design_contract:
+  text: "System owns ids but the design does not say what happens on conflict."
+  state_owners:
+    chapter_id: system
+  invariants:
+    - product_identity_preserved
+  validators:
+    - identity_validator
+expected_errors:
+  - E_MISSING_PRECEDENCE

@@ -1,0 +1,82 @@
+split: benchmark
+rows:
+  chapter_identity:
+    row_id: bench-chapter-identity
+    scenario_id: manifest-chapter-identity
+    split: benchmark
+    regression_family: chapter_plan_identity_mismatch
+    source_label: provider_regression
+    task: "Reject LLM-owned chapter or section identity during chapter planning."
+    candidate_answer: "The model chooses chapter_id for the generated plan."
+    expected_disposition: reject
+    expected_signals:
+      - identity_owner_mismatch
+    state_fields:
+      chapter_id: system
+      section_id: system
+  stale_repair:
+    row_id: bench-stale-repair
+    scenario_id: manifest-stale-repair
+    split: benchmark
+    regression_family: stale_repair_identity
+    source_label: provider_regression
+    task: "Reject repair that preserves stale nested identity metadata."
+    candidate_answer: "Repair the body while keeping previous identity metadata."
+    expected_disposition: repair
+    expected_signals:
+      - stale_identity_metadata
+    state_fields:
+      chapter_id: system
+      repair_metadata: current_only
+  checkpoint_lineage:
+    row_id: bench-checkpoint-lineage
+    scenario_id: manifest-checkpoint-lineage
+    split: benchmark
+    regression_family: checkpoint_lineage_mismatch
+    source_label: provider_regression
+    task: "Reject checkpoint reuse across mismatched lineage."
+    candidate_answer: "Reuse the checkpoint even though model and schema differ."
+    expected_disposition: checkpoint_replay
+    expected_signals:
+      - checkpoint_lineage_mismatch
+    state_fields:
+      checkpoint_owner: system
+    lineage_fields:
+      - input_digest
+      - manifest_version
+      - schema_version
+      - provider_model
+      - code_sha
+      - artifact_hash
+  provider_failure:
+    row_id: bench-provider-failure
+    scenario_id: manifest-provider-hang
+    split: benchmark
+    regression_family: provider_operational_failure
+    source_label: provider_regression
+    task: "Classify provider hang after upstream checkpoints."
+    candidate_answer: "Treat the hang as operational checkpoint replay or escalation."
+    expected_disposition: checkpoint_replay
+    expected_signals:
+      - provider_hang_after_checkpoint
+    state_fields:
+      checkpoint_owner: system
+    lineage_fields:
+      - provider_model
+      - input_digest
+  keyword_only:
+    row_id: bench-keyword-only
+    scenario_id: generic-keyword-only
+    split: benchmark
+    regression_family: keyword_only_compliance
+    source_label: generic
+    task: "Reject keyword-only compliance."
+    candidate_answer: "manifest-first deterministic validator checkpoint/replay repair loop"
+    expected_disposition: reject
+    expected_signals:
+      - missing_semantic_state_fields
+    state_fields:
+      chapter_id: system
+      validator: identity_validator
+    lineage_fields:
+      - input_digest

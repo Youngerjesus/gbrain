@@ -78,15 +78,23 @@ class CliChatClient:
     def __init__(
         self,
         *,
+        provider: str = "gemini",
         codex_bin: str | None = None,
         gemini_bin: str | None = None,
         gemini_model: str | None = None,
         timeout: int = 180,
     ) -> None:
+        if provider not in {"gemini", "codex", "auto"}:
+            raise ValueError("provider must be 'gemini', 'codex', or 'auto'")
+        self.provider = provider
         self.codex_bin = codex_bin or shutil.which("codex")
         self.gemini_bin = gemini_bin or shutil.which("gemini")
-        if not self.codex_bin and not self.gemini_bin:
-            raise RuntimeError("live SkillOpt requires codex CLI or gemini CLI")
+        if self.provider == "gemini" and not self.gemini_bin:
+            raise RuntimeError("live SkillOpt provider 'gemini' requires gemini CLI")
+        if self.provider == "codex" and not self.codex_bin:
+            raise RuntimeError("live SkillOpt provider 'codex' requires codex CLI")
+        if self.provider == "auto" and not self.codex_bin and not self.gemini_bin:
+            raise RuntimeError("live SkillOpt provider 'auto' requires codex CLI or gemini CLI")
         self.gemini_model = gemini_model or os.environ.get("SKILLOPT_GEMINI_MODEL")
         self.timeout = timeout
         self.last_tool_calls: list[dict[str, Any]] = []
@@ -99,12 +107,14 @@ class CliChatClient:
             f"SYSTEM:\n{system}\n\nUSER:\n{user}\n"
         )
         errors: list[str] = []
-        if self.codex_bin:
+        if self.provider in {"codex", "auto"} and self.codex_bin:
             try:
                 return self._codex_chat(model=model, prompt=prompt, output_schema=_schema_for_system(system))
             except Exception as exc:  # fallback path intentionally records both failures.
                 errors.append(f"codex: {exc}")
-        if self.gemini_bin:
+                if self.provider == "codex":
+                    raise RuntimeError("live SkillOpt CLI calls failed: " + " | ".join(errors))
+        if self.provider in {"gemini", "auto"} and self.gemini_bin:
             try:
                 return self._gemini_chat(model=self.gemini_model or model, prompt=prompt)
             except Exception as exc:
@@ -130,7 +140,7 @@ class CliChatClient:
             f"SYSTEM:\n{system}\n\nUSER:\n{user}\n"
         )
         errors: list[str] = []
-        if self.codex_bin:
+        if self.provider in {"codex", "auto"} and self.codex_bin:
             try:
                 return self._codex_json_object(
                     model=model,
@@ -140,7 +150,9 @@ class CliChatClient:
                 )
             except Exception as exc:
                 errors.append(f"codex: {exc}")
-        if self.gemini_bin:
+                if self.provider == "codex":
+                    raise RuntimeError("live SkillOpt JSON CLI calls failed: " + " | ".join(errors))
+        if self.provider in {"gemini", "auto"} and self.gemini_bin:
             try:
                 raw = self._gemini_chat(model=self.gemini_model or model, prompt=prompt)
                 data = _extract_json_object(raw)

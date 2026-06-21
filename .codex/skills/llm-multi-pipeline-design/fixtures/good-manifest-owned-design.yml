@@ -1,0 +1,24 @@
+case_id: good-manifest-owned-design
+role: good-manifest-owned-design
+expected_valid: true
+design_contract:
+  text: "Manifest owns product ids; validators check precedence and checkpoint lineage."
+  state_owners:
+    chapter_id: system
+    section_id: system
+  precedence_rule: manifest_over_generated
+  invariants:
+    - product_identity_preserved
+  validators:
+    - identity_validator
+  judge_rubric:
+    status: not_required
+    reason: identity preservation is owned by deterministic validators
+  recovery:
+    - checkpoint_replay
+  checkpoint_lineage:
+    - input_digest
+    - manifest_version
+    - schema_version
+    - provider_model
+expected_errors: []

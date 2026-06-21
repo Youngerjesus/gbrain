@@ -387,6 +387,36 @@ def assert_orchestrator_rehydrates_experience_gates(path: str) -> None:
         raise AssertionError(f"{path} older sequence rehydration rule must name all experience gates")
 
 
+def assert_sequence_boundary_scope_contract(path: str) -> None:
+    text = read(path)
+    required = [
+        "classify the user's requested artifact class",
+        "checklist's execution unit",
+        "Do not let a goal id, sequence title, or domain phrase",
+        "Adding, inserting, or rewriting a requirement path in an existing sequence changes that sequence's scope",
+        "ask for explicit user approval before inserting it into that sequence",
+        "Do not insert a new requirement into an existing sequence because it is adjacent, prerequisite-like, or related to the sequence name",
+        "Adding a related-looking requirement to an existing sequence without user approval",
+    ]
+    missing = [item for item in required if item not in text]
+    if missing:
+        raise AssertionError(f"{path} missing sequence boundary scope contract {missing}")
+
+
+def assert_sequence_template_boundary_contract(path: str) -> None:
+    text = read(path)
+    required = [
+        "confirm that the user's requested artifact class matches the checklist's execution unit",
+        "Do not add, insert, or rewrite requirement paths in an existing sequence merely because a new request seems related",
+        "Changing a sequence checklist changes sequence scope and requires explicit user approval",
+        "The outcome must name the artifact class this sequence produces",
+        "do not hide a distinct reference, clone-coding, design, or input-contract deliverable as a prerequisite note inside an implementation sequence",
+    ]
+    missing = [item for item in required if item not in text]
+    if missing:
+        raise AssertionError(f"{path} missing sequence template boundary contract {missing}")
+
+
 def assert_manifest_declares_orchestrator_scripts() -> None:
     manifest = read(".codex/skills/project-bootstrap/references/manifest.md")
     required = [
@@ -708,6 +738,63 @@ def conformance_result_valid(payload: dict, allowed_statuses: set[str]) -> bool:
     return True
 
 
+def assert_source_obligation_reviewer_agent(agent_path: str) -> None:
+    agent = read_toml(agent_path)
+    if agent.get("name") != "Source Obligation Reviewer":
+        raise AssertionError(f"{agent_path} must name Source Obligation Reviewer")
+    if agent.get("model") != "gpt-5.5":
+        raise AssertionError(f"{agent_path} must use gpt-5.5")
+    if agent.get("model_reasoning_effort") != "high":
+        raise AssertionError(f"{agent_path} must use high reasoning effort")
+    if agent.get("sandbox_mode") != "read-only":
+        raise AssertionError(f"{agent_path} must be read-only")
+    instructions = agent.get("developer_instructions", "")
+    required = [
+        "source_obligation_review_status",
+        '"SHIP"',
+        '"FINDINGS"',
+        '"BLOCKED_INVALID"',
+        '"BLOCKED_UNAVAILABLE"',
+        "source-inventory.yml",
+        "scope-reconciliation.yml",
+        "requirements.md",
+        "coverage-decision.yml",
+        "coverage-ledger.yml",
+        "progress.md",
+        "evidence.md",
+        "source inventory is raw source truth",
+        "scope reconciliation is the accepted-scope candidate",
+        "requirements are a projection",
+        "progress, evidence, reviewer prose, and closeout summaries are non-authoritative",
+        "missing inventory items",
+        "invented reconciliation items",
+        "included items without obligation ids or coverage ledger row ids",
+        "excluded, deferred, or ambiguous items without rationale",
+        "stale digest or version lineage",
+        "contradictory reviewer fields",
+        "prose-only approval",
+        "validator evidence",
+        "Do not edit files",
+        "Do not rewrite scope",
+        "Do not invent obligations",
+        "You must inspect all required source-obligation artifacts before returning SHIP",
+        "If a required source-obligation artifact cannot be inspected, return BLOCKED_UNAVAILABLE",
+        "missing or invalid ledger row references",
+    ]
+    missing = [item for item in required if item not in instructions]
+    if missing:
+        raise AssertionError(f"{agent_path} missing source-obligation reviewer contract {missing}")
+    allowed_line = next(
+        (line for line in instructions.splitlines() if "Allowed source_obligation_review_status values" in line),
+        "",
+    )
+    forbidden_allowed = {"APPROVED", "NOT_REQUIRED", "NOT_REVIEWED", "BLOCKED"}
+    allowed_tokens = set(re.findall(r'"([^"]+)"', allowed_line))
+    present = sorted(forbidden_allowed & allowed_tokens)
+    if present:
+        raise AssertionError(f"{agent_path} allowed status line contains forbidden statuses {present}")
+
+
 def assert_implementation_brake_conformance_contract(path: str) -> None:
     text = read(path)
     required = [
@@ -782,11 +869,197 @@ def assert_requirement_quality_gate_contracts() -> None:
     )
     assert_bootstrap_metadata_unique("requirement-conformance-reviewer")
 
+    for config_path in [
+        ".codex/config.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/config.toml",
+    ]:
+        assert_agent_registration_unique(config_path, "source-obligation-reviewer")
+
+    for agent_path in [
+        ".codex/agents/source-obligation-reviewer.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/agents/source-obligation-reviewer.toml",
+    ]:
+        assert_source_obligation_reviewer_agent(agent_path)
+
+    assert_mirrored_file_parity(
+        ".codex/agents/source-obligation-reviewer.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/agents/source-obligation-reviewer.toml",
+    )
+    assert_bootstrap_metadata_unique("source-obligation-reviewer")
+
     for skill_path in [
         ".codex/skills/implementation-brake/SKILL.md",
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/implementation-brake/SKILL.md",
     ]:
         assert_implementation_brake_conformance_contract(skill_path)
+
+
+def assert_source_obligation_workflow_contracts() -> None:
+    for skill_path in [
+        ".codex/skills/requirement-clarifier/SKILL.md",
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/requirement-clarifier/SKILL.md",
+    ]:
+        text = read(skill_path)
+        required = [
+            "## Source Obligation Gate",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "source-obligation-reviewer",
+            "source_obligation_review_status",
+            "scripts/coverage_ledger.py validate --mode readiness",
+            "source_obligation_inventory_required",
+            "structured source-obligation not-required decision",
+            "prose-only",
+            "source-less scope narrowing",
+            "requirements are a projection",
+        ]
+        missing = [item for item in required if item not in text]
+        if missing:
+            raise AssertionError(f"{skill_path} missing source-obligation gate guidance {missing}")
+
+    for agent_path in [
+        ".codex/agents/requirement-clarifier-post-draft-reviewer.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/agents/requirement-clarifier-post-draft-reviewer.toml",
+    ]:
+        instructions = read_toml(agent_path).get("developer_instructions", "")
+        required = [
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "source-obligation-reviewer",
+            "source_obligation_review_status",
+            "scripts/coverage_ledger.py validate --mode readiness",
+            "source_obligation_inventory_required",
+            "missing, stale, failed, or unavailable",
+            "prose-only",
+            "Readiness Status: Ready",
+        ]
+        missing = [item for item in required if item not in instructions]
+        if missing:
+            raise AssertionError(f"{agent_path} missing source-obligation post-draft review contract {missing}")
+
+    for orchestrator_path in [
+        ".codex/skills/goal-requirement-orchestrator/SKILL.md",
+        ".codex/skills/goal-requirement-orchestrator/references/sequence_template.md",
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/SKILL.md",
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/sequence_template.md",
+    ]:
+        text = read(orchestrator_path)
+        required = [
+            "source-obligation reviewer `SHIP`",
+            "structured source-obligation not-required decision",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "scripts/coverage_ledger.py validate --mode readiness",
+            "source_obligation_inventory_required",
+            "missing, stale, failed, or unavailable source-obligation",
+            "source-obligation-review",
+            "source-obligation state cannot be satisfied by prose",
+        ]
+        missing = [item for item in required if item not in text]
+        if missing:
+            raise AssertionError(f"{orchestrator_path} missing source-obligation orchestration contract {missing}")
+
+    for progress_path, evidence_path, decisions_path in [
+        (
+            ".codex/skills/goal-requirement-orchestrator/references/requirement_progress_template.md",
+            ".codex/skills/goal-requirement-orchestrator/references/evidence_template.md",
+            ".codex/skills/goal-requirement-orchestrator/references/decisions_template.md",
+        ),
+        (
+            ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/requirement_progress_template.md",
+            ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/evidence_template.md",
+            ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/decisions_template.md",
+        ),
+    ]:
+        progress = read(progress_path)
+        progress_required = [
+            "## Source Obligation Gate State",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "source_obligation_review_status",
+            "source_obligation_inventory_required",
+            "source-obligation-review",
+            "scripts/coverage_ledger.py validate --mode readiness",
+        ]
+        missing = [item for item in progress_required if item not in progress]
+        if missing:
+            raise AssertionError(f"{progress_path} missing source-obligation progress fields {missing}")
+        evidence = read(evidence_path)
+        evidence_required = [
+            "source-obligation evidence",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "source_obligation_review_status",
+            "scripts/coverage_ledger.py validate --mode readiness",
+            "scripts/coverage_ledger.py validate --mode closure",
+        ]
+        missing = [item for item in evidence_required if item not in evidence]
+        if missing:
+            raise AssertionError(f"{evidence_path} missing source-obligation evidence fields {missing}")
+        decisions = read(decisions_path)
+        decisions_required = [
+            "source-obligation decision",
+            "source_obligation_inventory_required",
+            "structured source-obligation not-required decision",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+        ]
+        missing = [item for item in decisions_required if item not in decisions]
+        if missing:
+            raise AssertionError(f"{decisions_path} missing source-obligation decision guidance {missing}")
+
+    for agents_path in [
+        "AGENTS.md",
+        ".codex/skills/project-bootstrap/templates/root/AGENTS.md",
+    ]:
+        text = read(agents_path)
+        required = [
+            "Source Obligation Gates",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "source-obligation-reviewer",
+            "scripts/coverage_ledger.py validate --mode readiness",
+            "scripts/coverage_ledger.py validate --mode closure",
+            "source_obligation_inventory_required",
+            "structured source-obligation not-required decision",
+            "cannot be overridden by prose",
+            "not warning-only",
+        ]
+        missing = [item for item in required if item not in text]
+        if missing:
+            raise AssertionError(f"{agents_path} missing source-obligation operating policy {missing}")
+
+    for brake_path in [
+        ".codex/skills/implementation-brake/SKILL.md",
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/implementation-brake/SKILL.md",
+    ]:
+        text = read(brake_path)
+        required = [
+            "## Source Obligation Ship Gate",
+            "source-inventory.yml",
+            "scope-reconciliation.yml",
+            "source-obligation-reviewer",
+            "source_obligation_review_status",
+            "scripts/coverage_ledger.py validate --mode closure",
+            "missing, stale, failed, or unavailable",
+            "Do not issue `[SHIP]`",
+            "prose-only",
+        ]
+        missing = [item for item in required if item not in text]
+        if missing:
+            raise AssertionError(f"{brake_path} missing source-obligation ship gate {missing}")
+
+    scanned_paths = [
+        "AGENTS.md",
+        ".codex/skills/requirement-clarifier/SKILL.md",
+        ".codex/agents/requirement-clarifier-post-draft-reviewer.toml",
+        ".codex/skills/goal-requirement-orchestrator/SKILL.md",
+        ".codex/skills/goal-requirement-orchestrator/references/sequence_template.md",
+        ".codex/skills/implementation-brake/SKILL.md",
+    ]
+    for path in scanned_paths:
+        if "coverage_inventory.py" in read(path):
+            raise AssertionError(f"{path} must not introduce coverage_inventory.py")
 
 
 def assert_reference_fidelity_agent(agent_path: str) -> None:
@@ -926,6 +1199,7 @@ def main() -> int:
     assert_agents_gate_order(".codex/skills/project-bootstrap/templates/root/AGENTS.md")
     assert_orchestrator_contract(".codex/skills/goal-requirement-orchestrator/SKILL.md")
     assert_orchestrator_rehydrates_experience_gates(".codex/skills/goal-requirement-orchestrator/SKILL.md")
+    assert_sequence_boundary_scope_contract(".codex/skills/goal-requirement-orchestrator/SKILL.md")
     assert_subagent_lifecycle_policy_projection(
         ".codex/skills/goal-requirement-orchestrator/SKILL.md",
         lifecycle,
@@ -934,6 +1208,9 @@ def main() -> int:
         ".codex/skills/goal-requirement-orchestrator/references/sequence_template.md"
     )
     assert_orchestrator_rehydrates_experience_gates(
+        ".codex/skills/goal-requirement-orchestrator/references/sequence_template.md"
+    )
+    assert_sequence_template_boundary_contract(
         ".codex/skills/goal-requirement-orchestrator/references/sequence_template.md"
     )
     assert_subagent_lifecycle_policy_projection(
@@ -946,6 +1223,9 @@ def main() -> int:
     assert_orchestrator_rehydrates_experience_gates(
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/SKILL.md"
     )
+    assert_sequence_boundary_scope_contract(
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/SKILL.md"
+    )
     assert_subagent_lifecycle_policy_projection(
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/SKILL.md",
         lifecycle,
@@ -954,6 +1234,9 @@ def main() -> int:
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/sequence_template.md"
     )
     assert_orchestrator_rehydrates_experience_gates(
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/sequence_template.md"
+    )
+    assert_sequence_template_boundary_contract(
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/sequence_template.md"
     )
     assert_subagent_lifecycle_policy_projection(
@@ -1023,6 +1306,7 @@ def main() -> int:
     )
     assert_visual_qa_contracts()
     assert_requirement_quality_gate_contracts()
+    assert_source_obligation_workflow_contracts()
     return 0
 
 

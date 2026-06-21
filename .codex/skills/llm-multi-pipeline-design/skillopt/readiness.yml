@@ -1,0 +1,16 @@
+readiness_version: 1
+owner_requirement: 003-llm-multi-pipeline-skillopt-readiness
+optimizer_execution: false
+benchmark_path: skillopt/benchmark.yml
+heldout_path: skillopt/heldout.yml
+future_consumer: skill_optimizer
+requirement_004_consumer: pipeline_methodology_retrofit
+forbidden_result_artifacts:
+  - skillopt/results.json
+  - skillopt/benchmark-results.jsonl
+required_regression_families:
+  - chapter_plan_identity_mismatch
+  - stale_repair_identity
+  - checkpoint_lineage_mismatch
+  - provider_operational_failure
+  - keyword_only_compliance

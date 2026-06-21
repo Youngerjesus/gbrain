@@ -112,6 +112,21 @@ Record `auto_merged` only after merge completion and post-merge verification pas
 
 Record requirement reviewer fallback, conformance reviewer fallback, AC coverage summary, unresolved findings, residual risk handling, and partial contract recovery state before treating a requirement as accepted or an implementation as ship-ready.
 
+## Source Obligation Gate State
+
+- Gate status: not_required | required_pending | reviewed_ship | blocked_findings | blocked_invalid | blocked_unavailable | stale_needs_recheck
+- Trigger signal: source_obligation_inventory_required = true | false | not_evaluated
+- Inventory artifact: source-inventory.yml | Missing | Not required
+- Reconciliation artifact: scope-reconciliation.yml | Missing | Not required
+- Source reviewer: source-obligation-review
+- Source reviewer status: source_obligation_review_status = SHIP | FINDINGS | BLOCKED_INVALID | BLOCKED_UNAVAILABLE | NOT_RUN
+- Readiness validator command: scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>
+- Readiness validator result:
+- Closure validator command: scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>
+- Structured source-obligation not-required decision:
+- Missing, stale, failed, or unavailable source-obligation blocker:
+- Next source-obligation action or repair route:
+
 ## Research / Design Gate State
 
 ### research

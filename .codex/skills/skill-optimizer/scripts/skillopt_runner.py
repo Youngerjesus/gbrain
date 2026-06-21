@@ -37,9 +37,12 @@ def _load_core():
 
 core = _load_core()
 
-DEFAULT_TARGET_MODEL = "gpt-5.3-codex-spark"
-DEFAULT_OPTIMIZER_MODEL = "gpt-5.5"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-pro"
+DEFAULT_PROVIDER = "gemini"
+DEFAULT_GEMINI_TARGET_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_OPTIMIZER_MODEL = "gemini-3.5-flash"
+DEFAULT_CODEX_TARGET_MODEL = "gpt-5.3-codex-spark"
+DEFAULT_CODEX_OPTIMIZER_MODEL = "gpt-5.5"
+LIVE_PROVIDERS = ("gemini", "codex", "auto")
 
 
 def skill_dir(root: Path, skill_name: str) -> Path:
@@ -348,6 +351,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--proxy-from-skill-text", action="store_true")
     parser.add_argument("--baseline-skill", type=Path)
     parser.add_argument("--live", action="store_true")
+    parser.add_argument("--provider", choices=LIVE_PROVIDERS)
     parser.add_argument("--target-model")
     parser.add_argument("--optimizer-model")
     parser.add_argument("--judge-model")
@@ -379,20 +383,21 @@ def main(argv: list[str] | None = None) -> int:
             no_mutate=not args.mutate,
         )
     elif args.live:
-        target_model = args.target_model or os.environ.get("SKILLOPT_TARGET_MODEL") or DEFAULT_TARGET_MODEL
-        optimizer_model = args.optimizer_model or os.environ.get("SKILLOPT_OPTIMIZER_MODEL") or DEFAULT_OPTIMIZER_MODEL
-        judge_model = args.judge_model or os.environ.get("SKILLOPT_JUDGE_MODEL") or target_model
-        gemini_model = args.gemini_model or os.environ.get("SKILLOPT_GEMINI_MODEL") or DEFAULT_GEMINI_MODEL
+        provider = _resolve_provider(args.provider)
+        model_defaults = _resolve_live_model_defaults(args, provider)
         live = _load_live_module()
         result = live.run_live_skillopt(
             root=args.root,
             skill_name=args.skill,
             models=live.LiveModels(
-                target=target_model,
-                optimizer=optimizer_model,
-                judge=judge_model,
+                target=model_defaults["target"],
+                optimizer=model_defaults["optimizer"],
+                judge=model_defaults["judge"],
             ),
-            chat_client=live.CliChatClient(gemini_model=gemini_model),
+            chat_client=live.CliChatClient(
+                provider=provider,
+                gemini_model=model_defaults["client_gemini_model"],
+            ),
             split_ratio=args.split,
             bootstrap_reviewed=args.bootstrap_reviewed,
             epochs=args.epochs,
@@ -436,6 +441,43 @@ def _load_live_module():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def _resolve_provider(flag_value: str | None) -> str:
+    provider = flag_value or os.environ.get("SKILLOPT_PROVIDER") or DEFAULT_PROVIDER
+    if provider not in LIVE_PROVIDERS:
+        raise ValueError(f"unsupported live provider {provider!r}; choose one of {', '.join(LIVE_PROVIDERS)}")
+    return provider
+
+
+def _resolve_live_model_defaults(args: argparse.Namespace, provider: str) -> dict[str, str | None]:
+    env_target = os.environ.get("SKILLOPT_TARGET_MODEL")
+    env_optimizer = os.environ.get("SKILLOPT_OPTIMIZER_MODEL")
+    env_judge = os.environ.get("SKILLOPT_JUDGE_MODEL")
+    single_gemini_model = args.gemini_model or os.environ.get("SKILLOPT_GEMINI_MODEL")
+
+    if provider == "gemini":
+        target_default = single_gemini_model or DEFAULT_GEMINI_TARGET_MODEL
+        optimizer_default = single_gemini_model or DEFAULT_GEMINI_OPTIMIZER_MODEL
+        client_gemini_model = None
+    elif provider == "codex":
+        target_default = DEFAULT_CODEX_TARGET_MODEL
+        optimizer_default = DEFAULT_CODEX_OPTIMIZER_MODEL
+        client_gemini_model = None
+    else:
+        target_default = DEFAULT_CODEX_TARGET_MODEL
+        optimizer_default = DEFAULT_CODEX_OPTIMIZER_MODEL
+        client_gemini_model = single_gemini_model or DEFAULT_GEMINI_TARGET_MODEL
+
+    target_model = args.target_model or env_target or target_default
+    optimizer_model = args.optimizer_model or env_optimizer or optimizer_default
+    judge_model = args.judge_model or env_judge or target_model
+    return {
+        "target": target_model,
+        "optimizer": optimizer_model,
+        "judge": judge_model,
+        "client_gemini_model": client_gemini_model,
+    }
 
 
 if __name__ == "__main__":

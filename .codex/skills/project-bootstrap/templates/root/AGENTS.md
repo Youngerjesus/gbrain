@@ -53,6 +53,14 @@ Primary audience: coding agents and maintainers working inside this product repo
 - `implementation-brake` may not emit `[SHIP]` while a required `coverage-ledger.yml` is missing, incomplete, stale, route-only, prose-only, split from `coverage-decision.yml`, or backed by incompatible evidence. Route missing-ledger broad-work cases back to `requirement-clarifier` and post-review, and record the gap in `progress.md`.
 - Use `scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>` before implementation-brake decisions that depend on ledger presence, and `--mode closure` before closeout when a ledger exists or is required. The validator is authoritative for ledger state; text scans are drift hints only.
 
+## Source Obligation Gates
+
+- Broad or high-risk source-derived work must decide whether source-obligation state is required. When required, set `source_obligation_inventory_required: true` and maintain `source-inventory.yml`, `scope-reconciliation.yml`, source-obligation reviewer evidence, and coverage-ledger lineage before readiness, planning, implementation, or closeout.
+- A structured source-obligation not-required decision must record the reason, risk assessment, and accepted scope refs. It is valid only when the accepted scope is explicitly narrow and no source universe can be silently lost.
+- Run `source-obligation-reviewer` and require structured `source_obligation_review_status`/reconciliation reviewer `SHIP` before treating `scope-reconciliation.yml` as accepted scope. Missing, stale, failed, or unavailable source-obligation evidence is a blocker, not warning-only.
+- Run `scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>` before planning/implementation when source-obligation state is required, and `scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>` before closeout.
+- Source inventory, scope reconciliation, reviewer status, and validator conflicts cannot be overridden by prose in requirements, progress, evidence, reviewer summaries, closeout, or chat.
+
 ## Anti Coding Patterns
 
 - Do not use substring, regex, or string-presence checks to decide semantic acceptance, boundary, safety, evidence correctness, or state diagnosis.
@@ -129,12 +137,13 @@ Primary audience: coding agents and maintainers working inside this product repo
 - `docs/project_overview.md`: durable product direction and product constraints.
 - `docs/tech_stack.md`: chosen runtime, tooling, and delivery constraints.
 - `docs/history_archives/history.md`: durable project history and milestone notes.
-- `work_queue/progress.md`: current product progress summary.
 - `goal-requirements/<id>/sequence.md`: multi-slice goal execution order and gate contract when selected by the task.
 - `goal-requirements/<id>/progress.md`: sequence-level state for the selected goal.
 - `requirements/<requirement-id>/requirements.md`: requirement-slice source of truth for goal-requirements execution.
 - `requirements/<requirement-id>/coverage-decision.yml`: structured decision for whether a coverage ledger is required, including trigger signals and any not-required rationale.
 - `requirements/<requirement-id>/coverage-ledger.yml`: structured coverage and typed evidence ledger for broad or high-risk requirement slices when required by `coverage-decision.yml`.
+- `requirements/<requirement-id>/source-inventory.yml`: structured source-obligation inventory for broad or high-risk source-derived work when `source_obligation_inventory_required` is true.
+- `requirements/<requirement-id>/scope-reconciliation.yml`: source-obligation reconciliation that maps inventory items to included, excluded, deferred, or ambiguous accepted-scope dispositions.
 - `requirements/<requirement-id>/research.md`: requirement-local technical research artifact when the `research` gate is required.
 - `requirements/<requirement-id>/technical-design.md`: requirement-local module-level technical design artifact when the `technical-design` gate is required.
 - `requirements/<requirement-id>/architecture.md`: optional requirement-local architecture design artifact when system-level design is required.

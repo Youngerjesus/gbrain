@@ -1,0 +1,7 @@
+case_id: bad-keyword-only
+role: bad-keyword-only
+expected_valid: false
+design_contract:
+  text: "Use manifest-first structured outputs, deterministic validator, checkpoint/replay, and repair loop."
+expected_errors:
+  - E_KEYWORD_ONLY

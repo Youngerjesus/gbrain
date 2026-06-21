@@ -17,6 +17,8 @@ For `research.md`, `technical-design.md`, optional `architecture.md`, conditiona
 
 Requirement Impact entries must say whether approval is pending, approved, denied, or superseded. Unresolved research/design/review items must be classified as blocking/non-blocking with rationale and downstream owner.
 
+For each source-obligation decision, record whether `source_obligation_inventory_required` is true or false, whether a structured source-obligation not-required decision was accepted, and how `source-inventory.yml`, `scope-reconciliation.yml`, reviewer status, and validator evidence preserve accepted scope. Do not use prose-only scope narrowing as a decision substitute.
+
 ```markdown
 # Requirement Decisions
 

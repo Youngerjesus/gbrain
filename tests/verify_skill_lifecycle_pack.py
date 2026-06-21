@@ -146,7 +146,7 @@ class SkillLifecyclePackStructureTest(unittest.TestCase):
             "proposed.md",
             "history.json",
             "rejected.json",
-            "gpt-5.5",
+            "gemini-3.5-flash",
             "same model for target and optimizer",
         ]:
             self.assertIn(required, text)
@@ -1269,7 +1269,7 @@ class SkillOptCoreTest(unittest.TestCase):
             self.assertFalse(result["mutated_skill_file"])
             self.assertTrue((copied / "proposed.md").is_file())
 
-    def test_live_runner_uses_default_models_when_env_and_flags_are_absent(self) -> None:
+    def test_live_runner_defaults_to_gemini_provider_and_models(self) -> None:
         captured: dict[str, object] = {}
 
         class FakeModels:
@@ -1277,7 +1277,8 @@ class SkillOptCoreTest(unittest.TestCase):
                 captured["models"] = {"target": target, "optimizer": optimizer, "judge": judge}
 
         class FakeClient:
-            def __init__(self, *, gemini_model: str | None = None) -> None:
+            def __init__(self, *, provider: str = "gemini", gemini_model: str | None = None) -> None:
+                captured["provider"] = provider
                 captured["gemini_model"] = gemini_model
 
         class FakeLive:
@@ -1297,6 +1298,7 @@ class SkillOptCoreTest(unittest.TestCase):
                 "SKILLOPT_OPTIMIZER_MODEL",
                 "SKILLOPT_JUDGE_MODEL",
                 "SKILLOPT_GEMINI_MODEL",
+                "SKILLOPT_PROVIDER",
             )
         }
         try:
@@ -1314,12 +1316,106 @@ class SkillOptCoreTest(unittest.TestCase):
         self.assertEqual(
             captured["models"],
             {
+                "target": "gemini-2.5-flash",
+                "optimizer": "gemini-3.5-flash",
+                "judge": "gemini-2.5-flash",
+            },
+        )
+        self.assertEqual(captured["provider"], "gemini")
+        self.assertIsNone(captured["gemini_model"])
+
+    def test_live_runner_provider_codex_switches_to_codex_defaults(self) -> None:
+        captured: dict[str, object] = {}
+
+        class FakeModels:
+            def __init__(self, *, target: str, optimizer: str, judge: str | None = None) -> None:
+                captured["models"] = {"target": target, "optimizer": optimizer, "judge": judge}
+
+        class FakeClient:
+            def __init__(self, *, provider: str = "gemini", gemini_model: str | None = None) -> None:
+                captured["provider"] = provider
+                captured["gemini_model"] = gemini_model
+
+        class FakeLive:
+            LiveModels = FakeModels
+            CliChatClient = FakeClient
+
+            @staticmethod
+            def run_live_skillopt(**kwargs: object) -> dict[str, object]:
+                captured["kwargs"] = kwargs
+                return {"outcome": "accepted"}
+
+        old_loader = self.runner._load_live_module
+        saved_env = {
+            key: os.environ.pop(key, None)
+            for key in (
+                "SKILLOPT_TARGET_MODEL",
+                "SKILLOPT_OPTIMIZER_MODEL",
+                "SKILLOPT_JUDGE_MODEL",
+                "SKILLOPT_GEMINI_MODEL",
+                "SKILLOPT_PROVIDER",
+            )
+        }
+        try:
+            self.runner._load_live_module = lambda: FakeLive
+            self.assertEqual(
+                self.runner.main(
+                    ["demo", "--root", "/tmp/skillopt-provider", "--bootstrap-reviewed", "--live", "--provider", "codex"]
+                ),
+                0,
+            )
+        finally:
+            self.runner._load_live_module = old_loader
+            for key, value in saved_env.items():
+                if value is not None:
+                    os.environ[key] = value
+
+        self.assertEqual(
+            captured["models"],
+            {
                 "target": "gpt-5.3-codex-spark",
                 "optimizer": "gpt-5.5",
                 "judge": "gpt-5.3-codex-spark",
             },
         )
-        self.assertEqual(captured["gemini_model"], "gemini-2.5-pro")
+        self.assertEqual(captured["provider"], "codex")
+        self.assertIsNone(captured["gemini_model"])
+
+    def test_cli_chat_client_gemini_provider_skips_codex_and_uses_per_call_model(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            codex = root / "codex"
+            gemini = root / "gemini"
+            gemini_argv = root / "gemini-argv.json"
+            codex_marker = root / "codex-called"
+            codex.write_text(
+                "#!/usr/bin/env bash\n"
+                f"touch {str(codex_marker)!r}\n"
+                "echo codex-should-not-run\n",
+                encoding="utf-8",
+            )
+            gemini.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json, pathlib, sys\n"
+                f"pathlib.Path({str(gemini_argv)!r}).write_text(json.dumps(sys.argv), encoding='utf-8')\n"
+                "print('gemini-direct')\n",
+                encoding="utf-8",
+            )
+            codex.chmod(0o755)
+            gemini.chmod(0o755)
+            client = self.live.CliChatClient(
+                provider="gemini",
+                codex_bin=str(codex),
+                gemini_bin=str(gemini),
+                timeout=5,
+            )
+            self.assertEqual(
+                client.chat(model="gemini-2.5-flash", system="system", user="user", max_tokens=10),
+                "gemini-direct",
+            )
+            self.assertFalse(codex_marker.exists())
+            argv = json.loads(gemini_argv.read_text(encoding="utf-8"))
+            self.assertEqual(argv[argv.index("--model") + 1], "gemini-2.5-flash")
 
     def test_cli_chat_client_falls_back_to_gemini(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1331,6 +1427,7 @@ class SkillOptCoreTest(unittest.TestCase):
             codex.chmod(0o755)
             gemini.chmod(0o755)
             client = self.live.CliChatClient(
+                provider="auto",
                 codex_bin=str(codex),
                 gemini_bin=str(gemini),
                 gemini_model="gemini-test",
@@ -1357,6 +1454,7 @@ class SkillOptCoreTest(unittest.TestCase):
             )
             codex.chmod(0o755)
             client = self.live.CliChatClient(
+                provider="codex",
                 codex_bin=str(codex),
                 gemini_bin=None,
                 timeout=5,
@@ -1389,6 +1487,7 @@ class SkillOptCoreTest(unittest.TestCase):
             )
             codex.chmod(0o755)
             client = self.live.CliChatClient(
+                provider="codex",
                 codex_bin=str(codex),
                 gemini_bin=None,
                 timeout=5,
@@ -1435,6 +1534,7 @@ class SkillOptCoreTest(unittest.TestCase):
             codex.chmod(0o755)
             gemini.chmod(0o755)
             client = self.live.CliChatClient(
+                provider="auto",
                 codex_bin=str(codex),
                 gemini_bin=str(gemini),
                 gemini_model="gemini-test",

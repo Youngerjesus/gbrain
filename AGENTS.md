@@ -78,6 +78,10 @@ writing or reviewing an operation, consult `src/core/operations.ts` for the cont
   artifact class, or evidence level. If the requested contract cannot be met
   with this repo's current capabilities, stop and state the gap before changing
   scope.
+- For broad or bulk work, maintain a structured coverage ledger or equivalent
+  source-obligation tracker before treating requirements, plans,
+  implementation, or closeout as complete. Do not collapse examples into total
+  scope or silently shrink requested source material.
 - Prefer root-cause fixes, deterministic behavior, deterministic tests, and
   narrow changes over temporary workarounds or broad compatibility branches.
 - Preserve compatibility-sensitive behavior unless the active spec, contract,
@@ -98,10 +102,49 @@ when the user asks for delegated context, or when the task requires inspecting
 three or more files, crosses module/component/package/service/policy/evidence
 boundaries, has an unclear implementation path or test strategy, or touches
 safety, persistence/state, external side effects, or a verification contract.
+If those triggers appear after a narrow first read, stop broad parent-side
+exploration and invoke context loading at that point.
 
 A context-loading report is exploratory context only, not acceptance evidence.
 It should name inspected files or directories, core findings, candidate change
 files, and a test strategy.
+
+## Coverage Ledger Gates
+
+- Broad or high-risk requirement slices must record
+  `requirements/<requirement-id>/coverage-decision.yml`. Create and maintain
+  `coverage-ledger.yml` when a strong trigger applies, including 10 or more
+  subtasks, 10 or more screens or screenshots, multi-state UI, bulk data
+  migration, multiple modules or packages, or many acceptance criteria.
+- If `coverage-decision.yml` says a ledger is required, `coverage-ledger.yml`
+  is the authoritative coverage contract. Each row must carry typed status,
+  obligation type, requirement reference, evidence references, verification
+  command and result, and obligation-appropriate proof.
+- Use `scripts/coverage_ledger.py validate --mode readiness` before planning
+  or implementation when a ledger or source-obligation state is required, and
+  `--mode closure` before closeout. The validator is authoritative for ledger
+  state; text scans are drift hints only.
+
+## Source Obligation Gates
+
+- Broad or high-risk source-derived work must decide whether source-obligation
+  state is required. When required, set
+  `source_obligation_inventory_required: true` and maintain
+  `source-inventory.yml`, `scope-reconciliation.yml`, reviewer evidence, and
+  coverage-ledger lineage before readiness, planning, implementation, or
+  closeout.
+- A structured source-obligation not-required decision must record the reason,
+  risk assessment, and accepted scope refs. It is valid only when the accepted
+  scope is explicitly narrow and no source universe can be silently lost.
+- Run `source-obligation-reviewer` before treating `scope-reconciliation.yml`
+  as accepted scope. Missing, stale, failed, or unavailable source-obligation
+  evidence is a blocker, not warning-only.
+- Run `scripts/coverage_ledger.py validate --mode closure --requirement-dir
+  requirements/<requirement-id>` before closeout when source-obligation state
+  is required.
+- Source inventory, scope reconciliation, reviewer status, and validator
+  conflicts cannot be overridden by prose in requirements, progress, evidence,
+  reviewer summaries, closeout, or chat.
 
 ## Engineering rules
 
@@ -113,6 +156,9 @@ files, and a test strategy.
 - Treat very large hand-written files as a maintenance signal. Before adding
   behavior there, consider whether a focused refactor would make the change
   safer.
+- Treat line count as pressure, not the quality target. Avoid growing a single
+  source file past roughly 220 lines when a real ownership boundary is already
+  visible; treat files near or above 1000 lines as a strong refactor signal.
 - Prefer modules with small public interfaces, cohesive internals, one-way
   dependencies, and nearby test boundaries.
 - Avoid shallow wrappers, pass-through modules, role-free file splits, circular
@@ -136,6 +182,15 @@ files, and a test strategy.
   parsing, require deterministic verification plus the relevant live smoke
   evidence when the active contract calls for it. If live proof cannot run,
   report the gap.
+- Treat full-pipeline live runs as final acceptance evidence, not the default
+  debugging tool. Before expensive AI/live boundaries, persist product-owned
+  checkpoints or intermediate artifacts that allow retry/resume without
+  repeating completed model calls.
+- Do not copy scheduler, control-plane, runtime, or automation ids into product
+  evidence identity fields, product tests, or acceptance artifacts. Product
+  evidence must be identified by product-owned inputs and outputs such as
+  scenario ids, repo-relative fixtures, report digests, artifact hashes, or
+  explicit CLI arguments.
 - Do not add or preserve fallback or legacy compatibility paths unless the
   active spec/contract requires them, the owner and removal condition are clear,
   and regression coverage proves the fallback does not hide failures.
@@ -143,6 +198,9 @@ files, and a test strategy.
   slices are expected to rely on it. A foundation needs an explicit code path,
   shared module, template helper, schema, validator, fixture, or verification
   gate that downstream work can actually use.
+- Do not reference removed root work queue artifacts in active guidance. The
+  goal-requirements and requirements progress files are the durable state
+  surfaces; `tests/verify_removed_artifact_contract.py` guards this.
 
 ## Execution Source Selection
 
@@ -160,6 +218,10 @@ files, and a test strategy.
   `plan-eng-review`; `plan-ux-review` is required for user-facing experience
   work before `plan-eng-review`; `plan-devex-review` is required for
   developer-facing experience work before `plan-eng-review`.
+- During `requirement-clarifier`, broad or high-risk work must either produce
+  `coverage-decision.yml` plus any required `coverage-ledger.yml` and
+  source-obligation state, or record a structured not-required decision with
+  the accepted risk and scope references.
 - After planning is accepted, run context loading and TDD implementation as
   required. For UI-bearing work, run `visual-qa-hardening` with the
   `visual-qa-reviewer` companion after browser screenshot verification and
@@ -190,6 +252,9 @@ files, and a test strategy.
   and prefer observed red/green for behavior changes and bugfixes.
 - Avoid artificial duplicate tests for already-covered or non-behavioral
   changes. Match verification type to the problem.
+- `scripts/verify` is the Codex scaffold policy baseline for the `.codex`
+  workflows and must work from any caller cwd. Keep it aligned with the tests it
+  invokes.
 - `bun run verify` is the fast local baseline for GBrain's guard scripts.
   `bun test` runs the unit suite. `bun run ci:local` is the full pre-ship gate
   described below.

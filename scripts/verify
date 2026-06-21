@@ -11,6 +11,7 @@ python3 tests/verify_goal_orchestrator_policy.py
 python3 tests/verify_coverage_ledger.py
 python3 tests/verify_behavior_text_contracts.py
 python3 tests/verify_behavior_contract_eval.py
+python3 tests/verify_removed_artifact_contract.py
 python3 tests/verify_grill_me_skill_contract.py
 python3 tests/verify_gstack_skill_contracts.py
 python3 tests/verify_skill_lifecycle_pack.py

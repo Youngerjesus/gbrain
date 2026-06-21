@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -112,6 +113,172 @@ def closed_ledger_text(evidence_path: str = "evidence/ui.txt", evidence_hash: st
     """
 
 
+def canonical_source_inventory_digest(items: list[dict]) -> str:
+    canonical = [
+        {
+            "source_item_id": item["source_item_id"],
+            "source_method": item["source_method"],
+            "source_refs": sorted(set(item["source_refs"])),
+            "metadata": item.get("metadata", {}),
+        }
+        for item in sorted(items, key=lambda value: value["source_item_id"])
+    ]
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+def canonical_scope_digest(items: list[dict]) -> str:
+    canonical = []
+    for item in sorted(items, key=lambda value: value["source_item_id"]):
+        canonical.append(
+            {
+                "source_item_id": item["source_item_id"],
+                "disposition": item["disposition"],
+                "obligation_ids": sorted(set(item.get("obligation_ids", []))),
+                "coverage_row_ids": sorted(set(item.get("coverage_row_ids", []))),
+                "rationale": item.get("rationale", ""),
+            }
+        )
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+
+def source_inventory_text(items: list[dict], digest: str | None = None, inventory_version: int = 1) -> str:
+    digest = digest or canonical_source_inventory_digest(items)
+    lines = [
+        "requirement_id: demo",
+        f"inventory_version: {inventory_version}",
+        f"source_inventory_digest: {digest}",
+        "source_items:",
+    ]
+    for item in items:
+        lines.extend(
+            [
+                f"  - source_item_id: {item['source_item_id']}",
+                f"    title: {item.get('title', item['source_item_id'])}",
+                f"    source_method: {item['source_method']}",
+                "    source_refs:",
+            ]
+        )
+        lines.extend(f"      - {ref}" for ref in item["source_refs"])
+        if "metadata" in item:
+            lines.append("    metadata:")
+            for key, value in item["metadata"].items():
+                lines.append(f"      {key}: {value}")
+    return "\n".join(lines) + "\n"
+
+
+def source_reconciliation_text(
+    *,
+    source_inventory_digest: str,
+    source_inventory_version: int = 1,
+    accepted_scope_digest: str,
+    reconciliation_version: int = 1,
+    items: list[dict],
+    reviewer_status: str = "SHIP",
+    review_required: bool = True,
+    not_required_reason: str | None = None,
+    reviewer_approved: bool | None = None,
+) -> str:
+    lines = [
+        "requirement_id: demo",
+        f"reconciliation_version: {reconciliation_version}",
+        f"source_inventory_digest: {source_inventory_digest}",
+        f"source_inventory_version: {source_inventory_version}",
+        f"accepted_scope_digest: {accepted_scope_digest}",
+        f"reviewer_status: {reviewer_status}",
+        f"source_obligation_review_required: {str(review_required).lower()}",
+    ]
+    if reviewer_approved is not None:
+        lines.append(f"reviewer_approved: {str(reviewer_approved).lower()}")
+    if not_required_reason:
+        lines.append(f"not_required_reason: {not_required_reason}")
+    lines.append("reconciled_items:")
+    for item in items:
+        lines.extend([f"  - source_item_id: {item['source_item_id']}", f"    disposition: {item['disposition']}"])
+        if "obligation_ids" in item:
+            lines.append("    obligation_ids:")
+            lines.extend(f"      - {row_id}" for row_id in item.get("obligation_ids", []))
+        if "coverage_row_ids" in item:
+            lines.append("    coverage_row_ids:")
+            lines.extend(f"      - {row_id}" for row_id in item.get("coverage_row_ids", []))
+        if item.get("rationale"):
+            lines.append(f"    rationale: {item['rationale']}")
+    return "\n".join(lines) + "\n"
+
+
+def source_ledger_text(
+    *,
+    source_inventory_digest: str | None = None,
+    source_inventory_version: int | None = None,
+    accepted_scope_digest: str | None = None,
+    reconciliation_version: int | None = None,
+    row_source_item_ids: list[str] | None = None,
+) -> str:
+    lines = [
+        "requirement_id: demo",
+        "ledger_version: 1",
+        "ledger_required: true",
+        "status: verified",
+        'last_updated_by_gate: implementation',
+        'last_updated_at: "2026-06-20T10:10:00Z"',
+    ]
+    if source_inventory_digest is not None:
+        lines.append(f"source_inventory_digest: {source_inventory_digest}")
+    if source_inventory_version is not None:
+        lines.append(f"source_inventory_version: {source_inventory_version}")
+    if accepted_scope_digest is not None:
+        lines.append(f"accepted_scope_digest: {accepted_scope_digest}")
+    if reconciliation_version is not None:
+        lines.append(f"reconciliation_version: {reconciliation_version}")
+    lines.extend(
+        [
+            "closure_policy:",
+            "  allowed_closed_statuses:",
+            "    - verified",
+            "    - not_required_with_reason",
+            "    - deferred_with_user_acceptance",
+            "  blocking_statuses:",
+            "    - planned",
+            "    - missing",
+            "    - blocked",
+            "    - stale_needs_recheck",
+            "  evidence_rule: typed_evidence_required",
+            "coverage_rows:",
+            "  - row_id: source.alpha",
+            "    required: true",
+            "    obligation_type: workflow_policy",
+            "    description: Source alpha maps to a covered workflow policy row.",
+            "    source_refs:",
+            "      - requirements/demo/requirements.md#AC-source",
+            "    data_condition: source alpha is included",
+            "    required_evidence:",
+            "      - structured_contract_fixture",
+            "      - positive_negative_trigger_tests",
+            "    status: verified",
+        ]
+    )
+    if row_source_item_ids is not None:
+        lines.append("    source_item_ids:")
+        lines.extend(f"      - {item_id}" for item_id in row_source_item_ids)
+    lines.extend(
+        [
+            "    evidence_refs:",
+            "      - type: structured_contract_fixture",
+            "        ref: source-contract",
+            "        recorded_in: requirements/demo/evidence.md",
+            "        path: evidence/source_contract.txt",
+            "      - type: positive_negative_trigger_tests",
+            "        ref: source-trigger",
+            "        recorded_in: requirements/demo/evidence.md",
+            "        path: evidence/trigger.txt",
+            "    recorded_in:",
+            "      - requirements/demo/evidence.md",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 class CoverageLedgerValidatorTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -147,11 +314,578 @@ class CoverageLedgerValidatorTest(unittest.TestCase):
         self.assertTrue(all("path" in error for error in payload["errors"]), payload)
         return payload
 
+    def install_valid_source_contract(self) -> tuple[str, str]:
+        write(self.req / "evidence" / "source_contract.txt", "source contract ok\n")
+        write(self.req / "evidence" / "trigger.txt", "trigger ok\n")
+        items = [
+            {
+                "source_item_id": "SRC-001",
+                "title": "Source alpha",
+                "source_method": "manual",
+                "source_refs": ["requirements/demo/requirements.md#AC-source"],
+                "metadata": {"owner": "tests"},
+            }
+        ]
+        source_digest = canonical_source_inventory_digest(items)
+        reconciled = [
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "included",
+                "obligation_ids": ["source.alpha"],
+                "coverage_row_ids": ["source.alpha"],
+            }
+        ]
+        scope_digest = canonical_scope_digest(reconciled)
+        write(self.req / "source-inventory.yml", source_inventory_text(items, source_digest))
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=scope_digest,
+                items=reconciled,
+            ),
+        )
+        write(self.req / "coverage-ledger.yml", source_ledger_text(
+            source_inventory_digest=source_digest,
+            source_inventory_version=1,
+            accepted_scope_digest=scope_digest,
+            reconciliation_version=1,
+            row_source_item_ids=["SRC-001"],
+        ))
+        write(
+            self.req / "coverage-decision.yml",
+            decision_text().replace(
+                "signals:\n    many_acceptance_criteria: true",
+                "signals:\n    many_acceptance_criteria: true\n    source_obligation_inventory_required: true",
+            ).replace('accepted_scope_digest: "current-scope"', f'accepted_scope_digest: "{scope_digest}"'),
+        )
+        return source_digest, scope_digest
+
     def test_valid_schema_readiness_and_closure_pass_from_external_cwd(self) -> None:
         self.assert_cli_ok("schema")
         self.assert_cli_ok("readiness")
         with tempfile.TemporaryDirectory() as other:
             self.assert_cli_ok("closure", cwd=Path(other))
+
+    def test_valid_source_inventory_reconciliation_and_lineage_pass(self) -> None:
+        self.install_valid_source_contract()
+        self.assert_cli_ok("schema")
+        self.assert_cli_ok("readiness")
+        self.assert_cli_ok("closure")
+
+    def test_source_validation_activation_requires_artifacts_and_reports_routes(self) -> None:
+        write(
+            self.req / "coverage-decision.yml",
+            decision_text().replace(
+                "signals:\n    many_acceptance_criteria: true",
+                "signals:\n    many_acceptance_criteria: true\n    source_obligation_inventory_required: true",
+            ),
+        )
+        payload = self.assert_cli_fails("readiness", "E_SOURCE_INVENTORY_REQUIRED")
+        self.assertIn("E_SCOPE_RECONCILIATION_REQUIRED", payload["error_codes"])
+        self.assertEqual(
+            payload["routes"],
+            ["scope-reconciliation-recheck", "source-inventory-rebuild"],
+        )
+        self.assertEqual(payload["route"], "source-inventory-rebuild")
+
+        self.install_valid_source_contract()
+        os.remove(self.req / "scope-reconciliation.yml")
+        payload = self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_REQUIRED")
+        self.assertTrue(any(error.get("route") == "scope-reconciliation-recheck" for error in payload["errors"]))
+
+        os.remove(self.req / "source-inventory.yml")
+        payload = self.assert_cli_fails("readiness", "E_SOURCE_INVENTORY_REQUIRED")
+        self.assertIn("E_SCOPE_RECONCILIATION_REQUIRED", payload["error_codes"])
+
+    def test_source_inventory_schema_rejects_empty_duplicate_and_coerced_item_ids(self) -> None:
+        source_digest, scope_digest = self.install_valid_source_contract()
+        write(
+            self.req / "source-inventory.yml",
+            f"""
+            requirement_id: demo
+            inventory_version: 1
+            source_inventory_digest: {source_digest}
+            source_items: []
+            """,
+        )
+        self.assert_cli_fails("readiness", "E_SOURCE_INVENTORY_SCHEMA")
+
+        items = [
+            {
+                "source_item_id": "SRC-001",
+                "source_method": "manual",
+                "source_refs": ["requirements/demo/requirements.md#AC-source"],
+            },
+            {
+                "source_item_id": "SRC-001",
+                "source_method": "manual",
+                "source_refs": ["requirements/demo/requirements.md#AC-other"],
+            },
+        ]
+        write(self.req / "source-inventory.yml", source_inventory_text(items, canonical_source_inventory_digest(items)))
+        self.assert_cli_fails("readiness", "E_SOURCE_ITEM_ID_DUPLICATE")
+
+        write(
+            self.req / "source-inventory.yml",
+            f"""
+            requirement_id: demo
+            inventory_version: 1
+            source_inventory_digest: {source_digest}
+            source_items:
+              - source_item_id: 123
+                source_method: manual
+                source_refs:
+                  - requirements/demo/requirements.md#AC-source
+            """,
+        )
+        payload = self.assert_cli_fails("readiness", "E_SOURCE_INVENTORY_SCHEMA")
+        self.assertIn("source-inventory.yml", payload["errors"][0]["path"])
+
+        write(self.req / "source-inventory.yml", "- not a mapping\n")
+        self.assert_cli_fails("readiness", "E_YAML_ROOT")
+
+        write(
+            self.req / "source-inventory.yml",
+            f"""
+            requirement_id: demo
+            inventory_version: 1
+            source_inventory_digest: {source_digest}
+            source_items:
+              - source_item_id: SRC-001
+                source_method: manual
+                source_refs: []
+                metadata:
+                  owner: tests
+            """,
+        )
+        self.assert_cli_fails("readiness", "E_SOURCE_ITEM_REF_MISSING")
+
+        write(
+            self.req / "source-inventory.yml",
+            f"""
+            requirement_id: demo
+            inventory_version: 1
+            source_inventory_digest: {source_digest}
+            source_items:
+              - source_item_id: SRC-001
+                source_method: telepathy
+                source_refs:
+                  - requirements/demo/requirements.md#AC-source
+                metadata:
+                  owner: tests
+            """,
+        )
+        self.assert_cli_fails("readiness", "E_SOURCE_INVENTORY_SCHEMA")
+
+        write(
+            self.req / "coverage-ledger.yml",
+            source_ledger_text(
+                source_inventory_digest=source_digest,
+                source_inventory_version=1,
+                accepted_scope_digest=scope_digest,
+                reconciliation_version=1,
+            ),
+        )
+
+    def test_source_inventory_methods_require_required_metadata_or_extraction_evidence(self) -> None:
+        for method in ["manual", "llm_observed", "human_manifest", "extracted", "hybrid"]:
+            with self.subTest(method=method):
+                self.install_valid_source_contract()
+                items = [
+                    {
+                        "source_item_id": "SRC-001",
+                        "source_method": method,
+                        "source_refs": ["requirements/demo/requirements.md#AC-source"],
+                        "metadata": {
+                            "owner": "tests",
+                            "extraction_count": 1,
+                            "extraction_digest": "sha256:1234567890abcdef",
+                        },
+                    }
+                ]
+                source_digest = canonical_source_inventory_digest(items)
+                reconciled = [
+                    {
+                        "source_item_id": "SRC-001",
+                        "disposition": "included",
+                        "obligation_ids": ["source.alpha"],
+                        "coverage_row_ids": ["source.alpha"],
+                    }
+                ]
+                scope_digest = canonical_scope_digest(reconciled)
+                write(self.req / "source-inventory.yml", source_inventory_text(items, source_digest))
+                write(
+                    self.req / "scope-reconciliation.yml",
+                    source_reconciliation_text(
+                        source_inventory_digest=source_digest,
+                        accepted_scope_digest=scope_digest,
+                        items=reconciled,
+                    ),
+                )
+                write(
+                    self.req / "coverage-ledger.yml",
+                    source_ledger_text(
+                        source_inventory_digest=source_digest,
+                        source_inventory_version=1,
+                        accepted_scope_digest=scope_digest,
+                        reconciliation_version=1,
+                        row_source_item_ids=["SRC-001"],
+                    ),
+                )
+                self.assert_cli_ok("readiness")
+
+        self.install_valid_source_contract()
+        items = [
+            {
+                "source_item_id": "SRC-001",
+                "source_method": "extracted",
+                "source_refs": ["requirements/demo/requirements.md#AC-source"],
+            }
+        ]
+        write(self.req / "source-inventory.yml", source_inventory_text(items, canonical_source_inventory_digest(items)))
+        payload = self.assert_cli_fails("readiness", "E_SOURCE_INVENTORY_SCHEMA")
+        self.assertTrue(any(error.get("source_item_id") == "SRC-001" for error in payload["errors"]))
+
+    def test_reconciliation_completeness_mapping_and_prose_override_fail(self) -> None:
+        source_digest, scope_digest = self.install_valid_source_contract()
+        write(self.req / "progress.md", "status: Ready\nsummary: prose says all source obligations are complete\n")
+        write(self.req / "reviewer.txt", "SHIP: looks complete in prose only\n")
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=scope_digest,
+                items=[],
+            ),
+        )
+        payload = self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_MISSING_ITEM")
+        self.assertTrue(any(error.get("source_item_id") == "SRC-001" for error in payload["errors"]))
+
+        reconciled = [
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "included",
+                "obligation_ids": ["source.alpha"],
+                "coverage_row_ids": ["source.missing"],
+            }
+        ]
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(reconciled),
+                items=reconciled,
+            ),
+        )
+        payload = self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_INCLUDED_MAPPING")
+        self.assertTrue(any(error.get("source_item_id") == "SRC-001" for error in payload["errors"]))
+        self.assertIn("E_SOURCE_LEDGER_ROW_MISSING", payload["error_codes"])
+
+        reconciled = [
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "included",
+                "obligation_ids": ["source.alpha"],
+                "coverage_row_ids": ["source.alpha"],
+            }
+        ]
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(reconciled),
+                items=reconciled,
+            ),
+        )
+        write(
+            self.req / "coverage-ledger.yml",
+            source_ledger_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(reconciled),
+                row_source_item_ids=["SRC-INVENTED"],
+            ),
+        )
+        payload = self.assert_cli_fails("readiness", "E_SOURCE_LEDGER_SOURCE_MISMATCH")
+        self.assertIn("E_SOURCE_LEDGER_INVENTED_ITEM", payload["error_codes"])
+
+    def test_reviewer_not_required_policy_does_not_bypass_mapping_or_lineage(self) -> None:
+        source_digest, scope_digest = self.install_valid_source_contract()
+        reconciled = [
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "included",
+                "obligation_ids": [],
+                "coverage_row_ids": [],
+            }
+        ]
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(reconciled),
+                items=reconciled,
+                reviewer_status="FINDINGS",
+                review_required=False,
+                not_required_reason="Requirement 010 owns the reviewer agent.",
+            ),
+        )
+        payload = self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_INCLUDED_MAPPING")
+        self.assertNotIn("E_SCOPE_RECONCILIATION_REVIEWER_NOT_APPROVED", payload["error_codes"])
+
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=scope_digest,
+                items=[
+                    {
+                        "source_item_id": "SRC-001",
+                        "disposition": "included",
+                        "obligation_ids": ["source.alpha"],
+                        "coverage_row_ids": ["source.alpha"],
+                    }
+                ],
+                reviewer_status="FINDINGS",
+            ),
+        )
+        self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_REVIEWER_NOT_APPROVED")
+
+    def test_reconciliation_schema_rejects_invalid_duplicate_missing_reviewer_and_missing_rationale(self) -> None:
+        source_digest, scope_digest = self.install_valid_source_contract()
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=scope_digest,
+                items=[
+                    {
+                        "source_item_id": "SRC-001",
+                        "disposition": "telepathic",
+                        "obligation_ids": ["source.alpha"],
+                        "coverage_row_ids": ["source.alpha"],
+                    }
+                ],
+            ),
+        )
+        self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_SCHEMA")
+
+        duplicate_items = [
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "included",
+                "obligation_ids": ["source.alpha"],
+                "coverage_row_ids": ["source.alpha"],
+            },
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "included",
+                "obligation_ids": ["source.alpha"],
+                "coverage_row_ids": ["source.alpha"],
+            },
+        ]
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(duplicate_items),
+                items=duplicate_items,
+            ),
+        )
+        payload = self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_DUPLICATE_ITEM")
+        self.assertTrue(any(error.get("source_item_id") == "SRC-001" for error in payload["errors"]))
+
+        write(
+            self.req / "scope-reconciliation.yml",
+            f"""
+            requirement_id: demo
+            reconciliation_version: 1
+            accepted_scope_digest: {scope_digest}
+            reviewer_status: SHIP
+            source_obligation_review_required: true
+            reconciled_items: []
+            """,
+        )
+        self.assert_cli_fails("readiness", "E_REQUIRED_FIELD")
+
+        write(
+            self.req / "scope-reconciliation.yml",
+            f"""
+            requirement_id: demo
+            reconciliation_version: 1
+            source_inventory_digest: {source_digest}
+            source_inventory_version: 1
+            accepted_scope_digest: {scope_digest}
+            source_obligation_review_required: true
+            reviewer_summary: "SHIP in prose only"
+            reconciled_items: []
+            """,
+        )
+        self.assert_cli_fails("readiness", "E_REQUIRED_FIELD")
+
+        invented = [
+            {
+                "source_item_id": "SRC-INVENTED",
+                "disposition": "included",
+                "obligation_ids": ["source.alpha"],
+                "coverage_row_ids": ["source.alpha"],
+            }
+        ]
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(invented),
+                items=invented,
+            ),
+        )
+        self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_INVENTED_ITEM")
+
+        excluded = [
+            {
+                "source_item_id": "SRC-001",
+                "disposition": "excluded",
+            }
+        ]
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=canonical_scope_digest(excluded),
+                items=excluded,
+            ),
+        )
+        self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_RATIONALE")
+
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=scope_digest,
+                items=[
+                    {
+                        "source_item_id": "SRC-001",
+                        "disposition": "included",
+                        "obligation_ids": ["source.alpha"],
+                        "coverage_row_ids": ["source.alpha"],
+                    }
+                ],
+                reviewer_status="MAYBE",
+            ),
+        )
+        self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_REVIEWER_STATUS")
+
+        for status in ["BLOCKED_INVALID", "BLOCKED_UNAVAILABLE"]:
+            with self.subTest(status=status):
+                write(
+                    self.req / "scope-reconciliation.yml",
+                    source_reconciliation_text(
+                        source_inventory_digest=source_digest,
+                        accepted_scope_digest=scope_digest,
+                        items=[
+                            {
+                                "source_item_id": "SRC-001",
+                                "disposition": "included",
+                                "obligation_ids": ["source.alpha"],
+                                "coverage_row_ids": ["source.alpha"],
+                            }
+                        ],
+                        reviewer_status=status,
+                    ),
+                )
+                payload = self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_REVIEWER_NOT_APPROVED")
+                self.assertNotIn("E_SCOPE_RECONCILIATION_REVIEWER_STATUS", payload["error_codes"])
+
+        write(
+            self.req / "scope-reconciliation.yml",
+            source_reconciliation_text(
+                source_inventory_digest=source_digest,
+                accepted_scope_digest=scope_digest,
+                items=[
+                    {
+                        "source_item_id": "SRC-001",
+                        "disposition": "included",
+                        "obligation_ids": ["source.alpha"],
+                        "coverage_row_ids": ["source.alpha"],
+                    }
+                ],
+                reviewer_status="FINDINGS",
+                reviewer_approved=True,
+            ),
+        )
+        self.assert_cli_fails("readiness", "E_SCOPE_RECONCILIATION_REVIEWER_STATUS")
+
+    def test_source_lineage_detects_stale_digest_and_missing_ledger_lineage(self) -> None:
+        source_digest, scope_digest = self.install_valid_source_contract()
+        write(
+            self.req / "source-inventory.yml",
+            """
+            requirement_id: demo
+            inventory_version: 1
+            source_inventory_digest: sha256:stale
+            source_items:
+              - source_item_id: SRC-001
+                source_method: manual
+                source_refs:
+                  - requirements/demo/requirements.md#AC-source
+                  - requirements/demo/requirements.md#AC-new
+                metadata:
+                  owner: tests
+            """,
+        )
+        payload = self.assert_cli_fails("readiness", "E_SOURCE_LINEAGE_STALE")
+        self.assertTrue(any(error.get("expected") and error.get("actual") for error in payload["errors"]))
+
+        self.install_valid_source_contract()
+        write(self.req / "coverage-ledger.yml", source_ledger_text(row_source_item_ids=["SRC-001"]))
+        payload = self.assert_cli_fails("closure", "E_SOURCE_LINEAGE_MISSING")
+        self.assertTrue(any(error.get("ledger_row_id") == "source.alpha" for error in payload["errors"]))
+
+        write(
+            self.req / "coverage-ledger.yml",
+            source_ledger_text(
+                source_inventory_digest=source_digest,
+                source_inventory_version=1,
+                accepted_scope_digest=scope_digest,
+                reconciliation_version=1,
+            ),
+        )
+
+    def test_source_lineage_rejects_inventory_and_reconciliation_version_changes(self) -> None:
+        self.install_valid_source_contract()
+        text = (self.req / "source-inventory.yml").read_text(encoding="utf-8")
+        write(self.req / "source-inventory.yml", text.replace("inventory_version: 1", "inventory_version: 2"))
+        payload = self.assert_cli_fails("closure", "E_SOURCE_LINEAGE_STALE")
+        self.assertTrue(any(error.get("expected") == "2" and error.get("actual") == "1" for error in payload["errors"]))
+
+        self.install_valid_source_contract()
+        text = (self.req / "scope-reconciliation.yml").read_text(encoding="utf-8")
+        write(self.req / "scope-reconciliation.yml", text.replace("reconciliation_version: 1", "reconciliation_version: 2"))
+        payload = self.assert_cli_fails("closure", "E_SOURCE_LINEAGE_STALE")
+        self.assertTrue(any(error.get("expected") == "2" and error.get("actual") == "1" for error in payload["errors"]))
+
+    def test_source_artifacts_reject_yaml_constructs_and_template_test_exception_is_structured(self) -> None:
+        self.install_valid_source_contract()
+        write(
+            self.req / "scope-reconciliation.yml",
+            """
+            requirement_id: demo
+            reconciliation_version: 1
+            source_inventory_digest: &digest sha256:any
+            accepted_scope_digest: *digest
+            reviewer_status: SHIP
+            source_obligation_review_required: true
+            reconciled_items: []
+            """,
+        )
+        self.assert_cli_fails("readiness", "E_YAML_UNSUPPORTED_CONSTRUCT")
+
+        template_root = ROOT / ".codex" / "skills" / "project-bootstrap" / "templates" / "root"
+        root_test = (ROOT / "tests" / "verify_coverage_ledger.py").read_text(encoding="utf-8")
+        template_test = (template_root / "tests" / "verify_coverage_ledger.py").read_text(encoding="utf-8")
+        if root_test != template_test:
+            self.assertIn("BOOTSTRAP_COVERAGE_LEDGER_TEST_PARITY_EXCEPTION", template_test)
+            self.assertIn("test_valid_ledger_passes_and_missing_decision_fails", template_test)
 
     def test_trigger_matrix_requires_ledgers_and_allows_structured_low_risk_exception(self) -> None:
         cases = [

@@ -36,7 +36,7 @@ Use the repo-specific rules in `references/documentation-sync.md`.
 3. Treat `code + currently verified behavior` as the highest-priority source of truth. Use docs to reflect shipped reality, not to override it.
 4. Update only repo-core docs by default:
    - directly impacted companion docs under `specs/**` when shipped behavior makes current guidance stale
-   - `work_queue/progress.md`
+   - active goal or requirement progress/evidence docs when the task is requirement-scoped
    - `docs/history_archives/history.md`
    - relevant `docs/*/memory.md`
    - contributor-facing docs such as FAQ or runbooks only when code alone cannot carry the durable operating context
@@ -47,9 +47,9 @@ Use the repo-specific rules in `references/documentation-sync.md`.
 
 ### 3. Update project records
 
-1. Add a new entry to `work_queue/progress.md`.
-2. Keep only the latest 10 entries in `work_queue/progress.md`.
-3. Append one concise macro-history sentence to `docs/history_archives/history.md`.
+1. If the task is tied to a goal or requirement slice, update the active `goal-requirements/<id>/progress.md`, `requirements/<id>/progress.md`, and/or `requirements/<id>/evidence.md` records that already own that work.
+2. Do not create a synthetic root progress queue for tasks that are not goal- or requirement-scoped; summarize those in the final report and PR body instead.
+3. Append one concise macro-history sentence to `docs/history_archives/history.md` only when the task shipped a durable milestone worth preserving in project history.
 
 ### 4. Update component memory
 

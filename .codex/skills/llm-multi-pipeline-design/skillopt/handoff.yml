@@ -1,0 +1,6 @@
+optimizer_execution: false
+owner_requirement: 003-llm-multi-pipeline-skillopt-readiness
+readiness_path: skillopt/readiness.yml
+forbidden_result_artifacts:
+  - skillopt/results.json
+  - skillopt/benchmark-results.jsonl

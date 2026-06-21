@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "coverage_ledger.py"
+BOOTSTRAP_COVERAGE_LEDGER_TEST_PARITY_EXCEPTION = "bootstrap-smoke-verifier"
 
 
 def write(path: Path, text: str) -> None:
