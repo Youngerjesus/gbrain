@@ -37,6 +37,7 @@ import { classifyPgliteLock } from './core/pglite-lock.ts';
 import { dispatchBrokeredOperation } from './mcp/pglite-operation-dispatch.ts';
 import {
   OPERATION_IPC_UNAVAILABLE,
+  OPERATION_IPC_CALLER_ENV_KEYS,
   forwardOperationViaIpc,
   operationSocketPath,
   releaseOperationStartup,
@@ -1180,6 +1181,7 @@ async function forwardToLivePgliteOwner(
         cwd: process.cwd(),
         ...(opts.sourceId ? { sourceId: opts.sourceId } : {}),
         ...(process.env.GBRAIN_SOURCE ? { envSourceId: process.env.GBRAIN_SOURCE } : {}),
+        callerEnv: brokeredCallerEnv(),
         output: opts.output,
       },
     }, { connectTimeoutMs: 250, brokerTimeoutMs: getCliOptions().timeoutMs ?? 180_000 });
@@ -1191,6 +1193,15 @@ async function forwardToLivePgliteOwner(
     status: 'owner_unreachable',
     message: 'PGLite lock state requires owner-broker routing, but the operation broker is not reachable.',
   };
+}
+
+function brokeredCallerEnv(): Record<string, string> | undefined {
+  const env: Record<string, string> = {};
+  for (const key of OPERATION_IPC_CALLER_ENV_KEYS) {
+    const value = process.env[key];
+    if (typeof value === 'string' && value.length > 0) env[key] = value;
+  }
+  return Object.keys(env).length > 0 ? env : undefined;
 }
 
 function parseCallBrokerParams(args: string[]): { operation: OperationIpcOperation; params: Record<string, unknown>; sourceId?: string } | null {

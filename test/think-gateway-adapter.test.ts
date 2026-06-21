@@ -17,7 +17,12 @@
 
 import { describe, test, expect } from 'bun:test';
 import { __thinkAdapter } from '../src/core/think/index.ts';
-import { resetGateway } from '../src/core/ai/gateway.ts';
+import {
+  __setChatTransportForTests,
+  configureGateway,
+  resetGateway,
+  withGatewayEnvOverlay,
+} from '../src/core/ai/gateway.ts';
 import { withEnv, emptyHome } from './helpers/with-env.ts';
 
 describe('think gateway adapter — response shape conversion', () => {
@@ -74,6 +79,45 @@ describe('think gateway adapter — model-id normalization', () => {
     await withEnv({ GOOGLE_GENERATIVE_AI_API_KEY: 'fake-google' }, async () => {
       const client = await __thinkAdapter.tryBuildGatewayClient('google:gemini-3.5-flash', { explicitModel: true });
       expect(client).not.toBeNull();
+    });
+  });
+
+  test('broker caller env overlay lets owner-side think use caller Google key', async () => {
+    await withEnv({ GOOGLE_GENERATIVE_AI_API_KEY: undefined, GBRAIN_HOME: emptyHome() }, async () => {
+      resetGateway();
+      configureGateway({ env: {}, chat_model: 'google:gemini-3.5-flash' });
+      __setChatTransportForTests(async (opts) => ({
+        text: '{"answer":"ok","citations":[],"gaps":[]}',
+        blocks: [],
+        stopReason: 'end',
+        usage: { input_tokens: 1, output_tokens: 1, cache_read_tokens: 0, cache_creation_tokens: 0 },
+        model: opts.model ?? 'google:gemini-3.5-flash',
+        providerId: 'google',
+      }));
+      try {
+        await withGatewayEnvOverlay({ GOOGLE_GENERATIVE_AI_API_KEY: 'caller-google-key' }, async () => {
+          expect(process.env.GOOGLE_GENERATIVE_AI_API_KEY).toBeUndefined();
+          const client = await __thinkAdapter.tryBuildGatewayClient('google:gemini-3.5-flash', { explicitModel: true });
+          expect(client).not.toBeNull();
+          const msg = await client!.create({
+            model: 'google:gemini-3.5-flash',
+            max_tokens: 16,
+            system: 'sys',
+            messages: [{ role: 'user', content: 'hi' }],
+          } as any);
+          const block = msg.content[0];
+          expect(block.type).toBe('text');
+          if (block.type === 'text') {
+            expect(block.text).toContain('"answer":"ok"');
+          }
+        });
+
+        await expect(
+          __thinkAdapter.tryBuildGatewayClient('google:gemini-3.5-flash', { explicitModel: true }),
+        ).rejects.toThrow(/unavailable/);
+      } finally {
+        __setChatTransportForTests(null);
+      }
     });
   });
 

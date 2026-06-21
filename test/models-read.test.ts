@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from 'bun:test';
 import { runModels } from '../src/commands/models.ts';
+import { withEnv } from './helpers/with-env.ts';
 
 class StubEngine {
   readonly kind = 'pglite' as const;
@@ -10,29 +11,24 @@ class StubEngine {
 
 let stdoutCapture = '';
 const origStdoutWrite = process.stdout.write.bind(process.stdout);
-let origGbrainModel: string | undefined;
 
 beforeEach(() => {
   stdoutCapture = '';
-  origGbrainModel = process.env.GBRAIN_MODEL;
   process.stdout.write = ((chunk: string | Uint8Array) => {
     stdoutCapture += typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
     return true;
   }) as typeof process.stdout.write;
-  delete process.env.GBRAIN_MODEL;
 });
 
 afterEach(() => {
   process.stdout.write = origStdoutWrite;
-  if (origGbrainModel === undefined) delete process.env.GBRAIN_MODEL;
-  else process.env.GBRAIN_MODEL = origGbrainModel;
 });
 
 describe('gbrain models read report', () => {
   test('reports the same default model that gbrain think uses', async () => {
     const engine = new StubEngine();
 
-    await runModels(engine as never, ['models', '--json']);
+    await withEnv({ GBRAIN_MODEL: undefined }, () => runModels(engine as never, ['models', '--json']));
     const report = JSON.parse(stdoutCapture);
     const thinkEntry = report.per_task.find((entry: { key: string }) => entry.key === 'models.think');
 
@@ -44,7 +40,7 @@ describe('gbrain models read report', () => {
     const engine = new StubEngine();
     engine.set('models.tier.deep', 'anthropic:claude-opus-4-7');
 
-    await runModels(engine as never, ['models', '--json']);
+    await withEnv({ GBRAIN_MODEL: undefined }, () => runModels(engine as never, ['models', '--json']));
     const report = JSON.parse(stdoutCapture);
     const thinkEntry = report.per_task.find((entry: { key: string }) => entry.key === 'models.think');
 
@@ -54,9 +50,8 @@ describe('gbrain models read report', () => {
 
   test('attributes tier rows to GBRAIN_MODEL when env wins', async () => {
     const engine = new StubEngine();
-    process.env.GBRAIN_MODEL = 'haiku';
 
-    await runModels(engine as never, ['models', '--json']);
+    await withEnv({ GBRAIN_MODEL: 'haiku' }, () => runModels(engine as never, ['models', '--json']));
     const report = JSON.parse(stdoutCapture);
 
     expect(report.tiers.deep.resolved).toBe('anthropic:claude-haiku-4-5-20251001');

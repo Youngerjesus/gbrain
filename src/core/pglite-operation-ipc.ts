@@ -7,6 +7,25 @@ export const OPERATION_IPC_UNAVAILABLE = Symbol.for('gbrain.operationIpc.unavail
 export type OperationIpcCaller = 'cli' | 'mcp-stdio';
 export type OperationIpcOperation = string;
 export type OperationIpcClass = 'interactive' | 'maintenance';
+export const OPERATION_IPC_CALLER_ENV_KEYS = [
+  'ANTHROPIC_API_KEY',
+  'OPENAI_API_KEY',
+  'GOOGLE_GENERATIVE_AI_API_KEY',
+  'ZEROENTROPY_API_KEY',
+  'VOYAGE_API_KEY',
+  'OPENROUTER_API_KEY',
+  'DEEPSEEK_API_KEY',
+  'TOGETHER_API_KEY',
+  'GROQ_API_KEY',
+  'MINIMAX_API_KEY',
+  'DASHSCOPE_API_KEY',
+  'ZHIPUAI_API_KEY',
+  'AZURE_OPENAI_API_KEY',
+  'AZURE_OPENAI_ENDPOINT',
+  'AZURE_OPENAI_DEPLOYMENT',
+  'LITELLM_API_KEY',
+] as const;
+export type OperationIpcCallerEnvKey = typeof OPERATION_IPC_CALLER_ENV_KEYS[number];
 export type OperationIpcTarget =
   | { kind: 'operation'; name: string }
   | { kind: 'cli_command'; surfaceId: string; command: string; args: string[]; profile?: string };
@@ -26,6 +45,7 @@ export interface OperationIpcContext {
   remote: boolean;
   sourceId?: string;
   output?: 'json' | 'text';
+  callerEnv?: Partial<Record<OperationIpcCallerEnvKey, string>>;
   auth?: {
     token: string;
     clientId: string;
@@ -453,6 +473,15 @@ function validateRequest(value: unknown): { ok: true; request: OperationIpcReque
   if (!candidate.params || typeof candidate.params !== 'object' || Array.isArray(candidate.params)) return invalidRequest('Operation broker params must be an object.');
   if (!candidate.context || typeof candidate.context !== 'object' || Array.isArray(candidate.context)) return invalidRequest('Operation broker context must be an object.');
   if (typeof (candidate.context as OperationIpcContext).remote !== 'boolean') return invalidRequest('Operation broker context must include remote.');
+  const callerEnv = (candidate.context as OperationIpcContext).callerEnv;
+  if (callerEnv !== undefined) {
+    if (!callerEnv || typeof callerEnv !== 'object' || Array.isArray(callerEnv)) return invalidRequest('Operation broker callerEnv must be an object.');
+    const allowed = new Set<string>(OPERATION_IPC_CALLER_ENV_KEYS);
+    for (const [key, value] of Object.entries(callerEnv)) {
+      if (!allowed.has(key)) return invalidRequest('Operation broker callerEnv contains an unsupported key.');
+      if (typeof value !== 'string') return invalidRequest('Operation broker callerEnv values must be strings.');
+    }
+  }
 
   return { ok: true, request: candidate as OperationIpcRequest };
 }

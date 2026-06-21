@@ -95,7 +95,7 @@ To switch an existing brain, use `gbrain reinit-pglite --embedding-model voyage:
 
 ### Google Gemini
 
-Set `GOOGLE_GENERATIVE_AI_API_KEY` (the AI Studio public API key). Model: `gemini-embedding-001`. Default 768 dims; Matryoshka up to 3072. Cheap.
+Set `GOOGLE_GENERATIVE_AI_API_KEY` (the AI Studio public API key), or persist it with `gbrain config set google_generative_ai_api_key ...`. Model: `gemini-embedding-001`. Default 768 dims; Matryoshka up to 3072. Cheap.
 
 For GCP service-account / Vertex AI auth (production deployments), see the v0.32.x follow-up — Vertex ADC is on the roadmap.
 

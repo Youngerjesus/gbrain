@@ -115,6 +115,12 @@ const DEFAULT_RERANKER_MODEL = 'zeroentropyai:zerank-2';
 
 let _config: AIGatewayConfig | null = null;
 const _modelCache = new Map<string, any>();
+const __gatewayEnvOverlayStore = new AsyncLocalStorage<Record<string, string>>();
+
+function activeGatewayEnvOverlay(): Record<string, string> | null {
+  const overlay = __gatewayEnvOverlayStore.getStore();
+  return overlay && Object.keys(overlay).length > 0 ? overlay : null;
+}
 
 /**
  * v0.31.12 recipe-models merge: per-gateway-instance set of model ids the
@@ -551,6 +557,17 @@ export function resetGateway(): void {
   _extendedModels.clear();
 }
 
+export async function withGatewayEnvOverlay<T>(
+  env: Record<string, string> | undefined,
+  fn: () => T | Promise<T>,
+): Promise<T> {
+  const overlay = Object.fromEntries(
+    Object.entries(env ?? {}).filter(([, value]) => typeof value === 'string' && value.length > 0),
+  );
+  if (Object.keys(overlay).length === 0) return await fn();
+  return await __gatewayEnvOverlayStore.run(overlay, fn);
+}
+
 /**
  * Test-only seam. Replaces the function the gateway calls to embed a
  * sub-batch. Pass `null` to restore the real `embedMany` from the AI SDK.
@@ -589,7 +606,8 @@ function requireConfig(): AIGatewayConfig {
       'This is a gbrain bug — file an issue at https://github.com/garrytan/gbrain/issues',
     );
   }
-  return _config;
+  const overlay = activeGatewayEnvOverlay();
+  return overlay ? { ..._config, env: { ..._config.env, ...overlay } } : _config;
 }
 
 /** Public config accessors (for schema setup, doctor, etc.). */
@@ -2468,7 +2486,8 @@ export type ChatModelProbe =
 export function probeChatModel(modelStr: string): ChatModelProbe {
   const v = validateModelId(modelStr);
   if (!v.ok) return { ok: false, reason: v.reason, detail: v.detail, fix: v.fix };
-  if (v.parsed.providerId === 'anthropic' && !hasAnthropicKey()) {
+  const effectiveGatewayEnv = { ...(_config?.env ?? {}), ...(activeGatewayEnvOverlay() ?? {}) };
+  if (v.parsed.providerId === 'anthropic' && !hasAnthropicKey() && !effectiveGatewayEnv.ANTHROPIC_API_KEY) {
     return {
       ok: false,
       reason: 'unavailable',
@@ -2478,7 +2497,7 @@ export function probeChatModel(modelStr: string): ChatModelProbe {
   if (
     v.parsed.providerId === 'google'
     && !process.env.GOOGLE_GENERATIVE_AI_API_KEY
-    && !_config?.env.GOOGLE_GENERATIVE_AI_API_KEY
+    && !effectiveGatewayEnv.GOOGLE_GENERATIVE_AI_API_KEY
   ) {
     return {
       ok: false,
@@ -2495,11 +2514,12 @@ async function resolveChatProvider(modelStr: string): Promise<{ model: any; reci
   const cfg = requireConfig();
 
   const cacheKey = `chat:${recipe.id}:${parsed.modelId}:${cfg.base_urls?.[recipe.id] ?? ''}`;
-  const cached = _modelCache.get(cacheKey);
+  const hasEnvOverlay = !!activeGatewayEnvOverlay();
+  const cached = hasEnvOverlay ? undefined : _modelCache.get(cacheKey);
   if (cached) return { model: cached, recipe, modelId: parsed.modelId };
 
   const model = instantiateChat(recipe, parsed.modelId, cfg);
-  _modelCache.set(cacheKey, model);
+  if (!hasEnvOverlay) _modelCache.set(cacheKey, model);
   return { model, recipe, modelId: parsed.modelId };
 }
 

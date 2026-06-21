@@ -49,6 +49,15 @@ function envFor(target: { envVar: string } | null): Record<string, string | unde
 }
 
 describe('buildGatewayConfig env-baseURL passthrough', () => {
+  test('file-plane google_generative_ai_api_key folds into gateway env', async () => {
+    await withEnv({ GOOGLE_GENERATIVE_AI_API_KEY: undefined }, async () => {
+      const cfg = buildGatewayConfig({
+        google_generative_ai_api_key: 'file-plane-google-key',
+      } as unknown as GBrainConfig);
+      expect(cfg.env.GOOGLE_GENERATIVE_AI_API_KEY).toBe('file-plane-google-key');
+    });
+  });
+
   for (const passthrough of PASSTHROUGHS) {
     test(`${passthrough.envVar} flows through to base_urls.${passthrough.recipeId}`, async () => {
       await withEnv(envFor(passthrough), async () => {

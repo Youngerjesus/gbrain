@@ -1,6 +1,7 @@
 import type { BrainEngine } from '../core/engine.ts';
 import type { OperationIpcRequest, OperationIpcTarget } from '../core/pglite-operation-ipc.ts';
 import { resolvePgliteOwnerPolicy } from '../core/pglite-owner-policy.ts';
+import { withGatewayEnvOverlay } from '../core/ai/gateway.ts';
 
 export interface BrokeredCliCommandResult {
   stdout: string;
@@ -38,7 +39,10 @@ export async function dispatchBrokeredCliCommand(
 
   try {
     const cwd = typeof request.context.cwd === 'string' ? request.context.cwd : undefined;
-    return { ok: true, result: await runCliCommandAdapter(engine, target, cwd) };
+    const result = await withGatewayEnvOverlay(request.context.callerEnv, () =>
+      runCliCommandAdapter(engine, target, cwd),
+    );
+    return { ok: true, result };
   } catch {
     return { ok: false, status: 'handler_error', message: 'Brokered CLI command failed.' };
   }

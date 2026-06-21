@@ -6,6 +6,8 @@
 
 import { describe, expect, test } from 'bun:test';
 import { loadConfigWithEngine, type GBrainConfig } from '../src/core/config.ts';
+import { buildGatewayConfig } from '../src/core/ai/build-gateway-config.ts';
+import { withEnv } from './helpers/with-env.ts';
 
 interface FakeEngine {
   getConfig(key: string): Promise<string | null | undefined>;
@@ -45,6 +47,31 @@ describe('loadConfigWithEngine (Phase 4 / F3)', () => {
     const merged = await loadConfigWithEngine(engine, null);
     expect(merged?.search_embedding_column).toBe('embedding_voyage');
     expect(merged?.embedding_columns?.embedding_voyage?.dimensions).toBe(1024);
+  });
+
+  test('DB-plane google_generative_ai_api_key reaches gateway env when file/env are silent', async () => {
+    await withEnv({ GOOGLE_GENERATIVE_AI_API_KEY: undefined }, async () => {
+      const engine = makeEngine({
+        google_generative_ai_api_key: 'db-google-key',
+      });
+      const merged = await loadConfigWithEngine(engine, { engine: 'pglite' });
+      const gateway = buildGatewayConfig(merged!);
+      expect(gateway.env.GOOGLE_GENERATIVE_AI_API_KEY).toBe('db-google-key');
+    });
+  });
+
+  test('file/env google_generative_ai_api_key wins over DB-plane value', async () => {
+    await withEnv({ GOOGLE_GENERATIVE_AI_API_KEY: undefined }, async () => {
+      const engine = makeEngine({
+        google_generative_ai_api_key: 'db-google-key',
+      });
+      const merged = await loadConfigWithEngine(engine, {
+        engine: 'pglite',
+        google_generative_ai_api_key: 'file-google-key',
+      });
+      const gateway = buildGatewayConfig(merged!);
+      expect(gateway.env.GOOGLE_GENERATIVE_AI_API_KEY).toBe('file-google-key');
+    });
   });
 
   test('DB flag fills in when file/env did not set it', async () => {

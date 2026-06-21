@@ -7,6 +7,7 @@ import { getBrainHotMemoryMeta } from '../core/facts/meta-hook.ts';
 import type { OperationIpcContext, OperationIpcRequest } from '../core/pglite-operation-ipc.ts';
 import { resolvePgliteOwnerPolicy } from '../core/pglite-owner-policy.ts';
 import { dispatchBrokeredCliCommand } from './pglite-cli-command-dispatch.ts';
+import { withGatewayEnvOverlay } from '../core/ai/gateway.ts';
 
 export async function dispatchBrokeredOperation(
   engine: BrainEngine,
@@ -53,7 +54,10 @@ export async function dispatchBrokeredOperation(
       logger: { info: console.log, warn: console.warn, error: console.error },
       sourceId: await resolveBrokeredCliSourceId(engine, request),
     });
-    return { ok: true, result: await op.handler(ctx, request.params) };
+    const result = await withGatewayEnvOverlay(request.context.callerEnv, () =>
+      op.handler(ctx, request.params),
+    );
+    return { ok: true, result };
   } catch {
     return { ok: false, status: 'handler_error', message: 'Brokered operation failed.' };
   }

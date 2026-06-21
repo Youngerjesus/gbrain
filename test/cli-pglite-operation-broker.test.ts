@@ -11,6 +11,7 @@ import {
 } from '../src/core/pglite-operation-ipc.ts';
 import { createEngine } from '../src/core/engine-factory.ts';
 import { dispatchBrokeredOperation } from '../src/mcp/pglite-operation-dispatch.ts';
+import { withEnv } from './helpers/with-env.ts';
 
 const servers: Array<{ close: () => void }> = [];
 
@@ -331,6 +332,48 @@ describe('CLI PGLite operation broker routing', () => {
     }
   });
 
+  test('brokered think operation carries allowlisted caller LLM env without unrelated env', async () => {
+    const { home, dbPath } = makeHome();
+    try {
+      writeLiveLock(dbPath);
+      const seen: OperationIpcRequest[] = [];
+      const server = await startPgliteOperationIpcServer(operationSocketPath(dbPath), async (request) => {
+        seen.push(request);
+        return {
+          ok: true,
+          result: {
+            stdout: `${JSON.stringify({ answer: 'brokered', warnings: [] })}\n`,
+            stderr: '',
+            exitCode: 0,
+          },
+        };
+      });
+      expect(server).not.toBeNull();
+      servers.push(server!);
+
+      const result = await runCli(
+        ['think', 'env handoff?', '--json'],
+        home,
+        process.cwd(),
+        {
+          GOOGLE_GENERATIVE_AI_API_KEY: 'caller-google-key',
+          PRIVATE_UNRELATED_ENV_SENTINEL: 'must-not-cross',
+        },
+      );
+
+      expect(result.status).toBe(0);
+      expect(seen).toHaveLength(1);
+      expect(seen[0].operation).toBe('think');
+      expect(seen[0].context.callerEnv).toMatchObject({
+        GOOGLE_GENERATIVE_AI_API_KEY: 'caller-google-key',
+      });
+      expect(JSON.stringify(seen[0].context.callerEnv)).not.toContain('PRIVATE_UNRELATED_ENV_SENTINEL');
+      expect(JSON.stringify(seen[0].context.callerEnv)).not.toContain('must-not-cross');
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
   test('maintenance-like PGLite owner exposes broker for interactive callers', async () => {
     const { home, dbPath } = makeHome();
     try {
@@ -483,25 +526,23 @@ describe('CLI PGLite operation broker routing', () => {
 
   test('CLI command owner dispatch adapter captures config show stdout stderr and exit code', async () => {
     const { home } = makeHome();
-    const oldHome = process.env.GBRAIN_HOME;
     try {
-      process.env.GBRAIN_HOME = home;
-      const result = await dispatchBrokeredOperation({} as any, {
-        protocolVersion: 1,
-        requestId: 'cli-config-show',
-        caller: 'cli',
-        operation: '__cli_command__',
-        class: 'interactive',
-        priority: 100,
-        params: {},
-        context: { remote: false, output: 'text' },
-        target: {
-          kind: 'cli_command',
-          surfaceId: 'cli:config:show',
-          command: 'config',
-          args: ['show'],
-        },
-      } as any);
+      const result = await withEnv({ GBRAIN_HOME: home }, () => dispatchBrokeredOperation({} as any, {
+          protocolVersion: 1,
+          requestId: 'cli-config-show',
+          caller: 'cli',
+          operation: '__cli_command__',
+          class: 'interactive',
+          priority: 100,
+          params: {},
+          context: { remote: false, output: 'text' },
+          target: {
+            kind: 'cli_command',
+            surfaceId: 'cli:config:show',
+            command: 'config',
+            args: ['show'],
+          },
+        } as any));
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -513,8 +554,6 @@ describe('CLI PGLite operation broker routing', () => {
         expect((result.result as any).stdout).toContain('engine: pglite');
       }
     } finally {
-      if (oldHome === undefined) delete process.env.GBRAIN_HOME;
-      else process.env.GBRAIN_HOME = oldHome;
       rmSync(home, { recursive: true, force: true });
     }
   });
