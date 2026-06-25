@@ -59,11 +59,11 @@ It supports two deterministic evidence modes:
 - `--rollouts` accepts externally generated median-of-3 rollout evidence plus
   an explicit `--baseline-score`.
 
-It also supports `--live`, which uses the local `gemini` CLI by default. Default
-live models are `gemini-2.5-flash` for target/judge rollout evaluation and
-`gemini-3.5-flash` for optimizer edit synthesis. Pass `--provider codex` to use
-`codex exec` with Codex defaults, or `--provider auto` to use the legacy Codex
-first / Gemini fallback path. The live path executes benchmark tasks with the
+It also supports `--live`, which calls the Gemini API directly by default using
+`GEMINI_API_KEY`. Default live models are `gemini-2.5-flash` for target/judge
+rollout evaluation and `gemini-3.5-flash` for optimizer edit synthesis. Pass
+`--provider codex` to use `codex exec` with Codex defaults. Codex rollout calls
+are allowed at least 10 minutes each. The live path executes benchmark tasks with the
 target model, asks the optimizer model for body-only edits, and validates the
 candidate with median-of-3 rule or LLM judge scoring. It records a live lock,
 checkpoint, trace, receipt, rejected edit buffer, LLM call count, and Codex JSON
@@ -81,10 +81,10 @@ artifacts, and live receipts when applicable. Direct `--mutate` requires an
 independent disjoint held-out gate; the live path runs that gate itself when
 `--held-out` is supplied.
 
-No repo-level live smoke script is bundled. When live CLI auth is available,
-run the `--live` command directly with explicit `--provider`, model flags, or
-the `SKILLOPT_*` environment variables. Live evidence is intentionally separate
-from the secret-free baseline `scripts/verify`.
+No repo-level live smoke script is bundled. When live API auth is available,
+run the `--live` command directly with explicit `--provider`, model flags,
+`GEMINI_API_KEY`, or the `SKILLOPT_*` environment variables. Live evidence is
+intentionally separate from the secret-free baseline `scripts/verify`.
 
 ## Output Format
 

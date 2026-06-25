@@ -1,0 +1,152 @@
+[
+  {
+    "edits": [
+      {
+        "edit": {
+          "anchor": "## Named Source And Path Lookup",
+          "content": "\nQuick rule: for any named source, exact slug, source-root file path, or user correction that says you missed a specific document, run source-bound candidate discovery first. Broad or federated results may only supplement this path after direct source-local lookup and reads.\n",
+          "op": "add",
+          "reason": "Strengthens the named-source trigger so agents explicitly use the required source-bound discovery phrase and do not drift into federated-only lookup."
+        },
+        "epoch": 1,
+        "reason": "below_baseline",
+        "task_signal": {
+          "improved": [
+            {
+              "after": 0.6666666666666666,
+              "before": 0.3333333333333333,
+              "task_id": "gbrain-source-012"
+            }
+          ],
+          "regressed": [
+            {
+              "after": 0.3333333333333333,
+              "before": 0.6666666666666666,
+              "task_id": "gbrain-source-010"
+            }
+          ],
+          "unchanged": [
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "gbrain-source-007"
+            },
+            {
+              "after": 0.6666666666666666,
+              "before": 0.6666666666666666,
+              "task_id": "gbrain-source-008"
+            },
+            {
+              "after": 0.0,
+              "before": 0.0,
+              "task_id": "gbrain-source-009"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "gbrain-source-011"
+            }
+          ]
+        }
+      },
+      {
+        "edit": {
+          "anchor": "3. Run source-bound candidate discovery, not only federated search:",
+          "content": "\n   For `AI Notes`, substitute `<source-id>` with `ai-notes`; for business or mindset notes, use the verified live source id before running these commands.\n",
+          "op": "add",
+          "reason": "Makes the AI Notes case concrete while preserving the existing general source-bound command contract."
+        },
+        "epoch": 1,
+        "reason": "below_baseline",
+        "task_signal": {
+          "improved": [
+            {
+              "after": 0.6666666666666666,
+              "before": 0.3333333333333333,
+              "task_id": "gbrain-source-012"
+            }
+          ],
+          "regressed": [
+            {
+              "after": 0.3333333333333333,
+              "before": 0.6666666666666666,
+              "task_id": "gbrain-source-010"
+            }
+          ],
+          "unchanged": [
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "gbrain-source-007"
+            },
+            {
+              "after": 0.6666666666666666,
+              "before": 0.6666666666666666,
+              "task_id": "gbrain-source-008"
+            },
+            {
+              "after": 0.0,
+              "before": 0.0,
+              "task_id": "gbrain-source-009"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "gbrain-source-011"
+            }
+          ]
+        }
+      },
+      {
+        "edit": {
+          "anchor": "## Broad-To-Final Retrieval",
+          "content": "\nDo not use this broad retrieval path to bypass Named Source And Path Lookup. If a named source or exact path is present, complete that source-bound path first, then use broad retrieval only for related-note expansion.\n",
+          "op": "add",
+          "reason": "Clarifies precedence between broad retrieval and named-source lookup, reducing incomplete top-hit answers."
+        },
+        "epoch": 1,
+        "reason": "below_baseline",
+        "task_signal": {
+          "improved": [
+            {
+              "after": 0.6666666666666666,
+              "before": 0.3333333333333333,
+              "task_id": "gbrain-source-012"
+            }
+          ],
+          "regressed": [
+            {
+              "after": 0.3333333333333333,
+              "before": 0.6666666666666666,
+              "task_id": "gbrain-source-010"
+            }
+          ],
+          "unchanged": [
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "gbrain-source-007"
+            },
+            {
+              "after": 0.6666666666666666,
+              "before": 0.6666666666666666,
+              "task_id": "gbrain-source-008"
+            },
+            {
+              "after": 0.0,
+              "before": 0.0,
+              "task_id": "gbrain-source-009"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "gbrain-source-011"
+            }
+          ]
+        }
+      }
+    ],
+    "reason": "below_baseline",
+    "run_id": "gbrain-protocol-339b1154de3f"
+  }
+]

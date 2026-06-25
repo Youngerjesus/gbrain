@@ -8,9 +8,8 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 
 GATE_ORDER = [
-    "requirement-clarifier",
     "research",
-    "technical-design",
+    "design_depth",
     "plan-design-review",
     "plan-ux-review",
     "plan-devex-review",
@@ -20,6 +19,10 @@ GATE_ORDER = [
     "ux-review",
     "devex-review",
 ]
+
+THREE_MAIN_GATES = ["Plan", "Impl", "Review"]
+DESIGN_DEPTH_OPTIONS = ["none", "inline", "full_artifact_required"]
+REVIEW_LENSES = ["visual", "ux", "devex"]
 
 
 def read(relative_path: str) -> str:
@@ -67,6 +70,190 @@ def assert_subsequence(tokens: list[str], expected: list[str], label: str) -> No
         )
 
 
+def assert_three_gate_contract(path: str) -> None:
+    contract = read_toml(path)
+    if contract.get("main_gates") != THREE_MAIN_GATES:
+        raise AssertionError(f"{path} must define main_gates as {THREE_MAIN_GATES}")
+
+    preconditions = contract.get("preconditions", {})
+    if "requirement_acceptance" not in preconditions.get("outside_three_gates", []):
+        raise AssertionError(f"{path} must keep requirement acceptance outside the three gates")
+
+    lifecycle = contract.get("lifecycle_completion", {})
+    for required in ["closeout", "production_readiness"]:
+        if required not in lifecycle.get("outside_three_gates", []):
+            raise AssertionError(f"{path} must keep {required} outside the three gates")
+
+    plan = contract.get("plan", {})
+    if plan.get("skill") != "planning-orchestrator":
+        raise AssertionError(f"{path} Plan skill must be planning-orchestrator")
+    if plan.get("design_depth_options") != DESIGN_DEPTH_OPTIONS:
+        raise AssertionError(f"{path} must define design depth options {DESIGN_DEPTH_OPTIONS}")
+    if plan.get("top_level_removed_gates", {}).get("technical-design") != "design_depth.full_artifact_required":
+        raise AssertionError(f"{path} must relocate technical-design into Plan design-depth")
+    for required in [
+        "research",
+        "design_depth",
+        "plan-design-review",
+        "plan-ux-review",
+        "plan-devex-review",
+        "plan-eng-review",
+        "scenario-brake",
+        "secondary-plan",
+    ]:
+        if required not in plan.get("owned_subdecisions", []):
+            raise AssertionError(f"{path} Plan must own {required}")
+    handoff = plan.get("handoff", {})
+    for required in [
+        "accepted_plan_path",
+        "design_depth",
+        "invoked_subreviews",
+        "deferred_items",
+        "blockers",
+        "verification_strategy",
+        "stale_recheck_routing",
+    ]:
+        if required not in handoff.get("required_fields", []):
+            raise AssertionError(f"{path} Plan handoff missing field {required}")
+
+    impl = contract.get("impl", {})
+    if impl.get("skill") != "impl-orchestrator":
+        raise AssertionError(f"{path} Impl skill must be impl-orchestrator")
+    for required in [
+        "accepted_plan_handoff",
+        "worktree_preflight",
+        "scripts/init_worktree.sh",
+        "context-loading",
+        "tdd-workflow",
+    ]:
+        if required not in impl.get("requires", []):
+            raise AssertionError(f"{path} Impl missing required obligation {required}")
+
+    review = contract.get("review", {})
+    if review.get("skill") != "review-orchestrator":
+        raise AssertionError(f"{path} Review skill must be review-orchestrator")
+    if review.get("lenses") != REVIEW_LENSES:
+        raise AssertionError(f"{path} Review lenses must be {REVIEW_LENSES}")
+    if not review.get("subagent_review_required_when_any_lens_triggers"):
+        raise AssertionError(f"{path} must require subagent review when any Review lens triggers")
+    if not review.get("parallel_lens_execution_supported"):
+        raise AssertionError(f"{path} must allow triggered Review lenses to run in parallel")
+    if not review.get("implementation_brake_consumes_review_evidence"):
+        raise AssertionError(f"{path} must require implementation-brake to consume Review evidence")
+    if review.get("implementation_brake") != "required_after_post_implementation_reviews":
+        raise AssertionError(f"{path} must require implementation-brake after post-implementation reviews")
+    if review.get("ship_prerequisite") != "implementation-brake [SHIP]":
+        raise AssertionError(f"{path} closeout prerequisite must be implementation-brake [SHIP]")
+
+    fixtures = contract.get("fixtures", {})
+    observed_depth = [item["design_depth"] for item in fixtures.get("design_depth", [])]
+    if observed_depth != DESIGN_DEPTH_OPTIONS:
+        raise AssertionError(f"{path} design-depth fixtures must cover {DESIGN_DEPTH_OPTIONS}")
+    observed_lenses = [item["id"] for item in fixtures.get("review_lens", [])]
+    for required in ["visual_only", "ux_only", "devex_only", "multi_lens", "not_required"]:
+        if required not in observed_lenses:
+            raise AssertionError(f"{path} review lens fixtures missing {required}")
+    assert_plan_handoff_fixtures(path, contract)
+    assert_review_state_fixtures(path, contract)
+
+
+def plan_handoff_valid(payload: dict, required_fields: list[str]) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    if any(field not in payload for field in required_fields):
+        return False
+    if payload.get("design_depth") not in DESIGN_DEPTH_OPTIONS:
+        return False
+    subreviews = payload.get("invoked_subreviews")
+    if not isinstance(subreviews, list):
+        return False
+    for subreview in subreviews:
+        if not isinstance(subreview, dict):
+            return False
+        if not {"name", "status", "artifact_path"}.issubset(subreview):
+            return False
+    if payload.get("blockers") not in ([], None):
+        return False
+    return True
+
+
+def review_state_valid(payload: dict) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    lenses = payload.get("triggered_lenses", [])
+    if not isinstance(lenses, list):
+        return False
+    if payload.get("implementation_brake_verdict") != "[SHIP]":
+        return False
+    if payload.get("unresolved_blockers"):
+        return False
+    if not lenses:
+        return bool(payload.get("not_required_reason"))
+    reviews = payload.get("post_implementation_reviews")
+    if not isinstance(reviews, list):
+        return False
+    by_lens = {
+        review.get("lens"): review
+        for review in reviews
+        if isinstance(review, dict)
+    }
+    for lens in lenses:
+        review = by_lens.get(lens)
+        if not review:
+            return False
+        if review.get("status") != "passed":
+            return False
+        if review.get("evidence_type") == "cleanup_only":
+            return False
+        if not review.get("artifact_path"):
+            return False
+    return True
+
+
+def assert_plan_handoff_fixtures(path: str, contract: dict) -> None:
+    fixtures = contract.get("fixtures", {}).get("plan_handoff", [])
+    expected_ids = {
+        "valid_full",
+        "invalid_missing_required",
+        "invalid_design_depth",
+        "invalid_prose_only",
+        "invalid_missing_subreview_structure",
+    }
+    observed = {item.get("id") for item in fixtures if isinstance(item, dict)}
+    missing = expected_ids - observed
+    if missing:
+        raise AssertionError(f"{path} plan handoff fixtures missing {sorted(missing)}")
+    required_fields = contract["plan"]["handoff"]["required_fields"]
+    for fixture in fixtures:
+        payload = fixture.get("payload")
+        expected = fixture.get("expected_valid")
+        actual = plan_handoff_valid(payload, required_fields)
+        if actual is not expected:
+            raise AssertionError(f"{path} plan handoff fixture {fixture.get('id')} expected {expected}, got {actual}")
+
+
+def assert_review_state_fixtures(path: str, contract: dict) -> None:
+    fixtures = contract.get("fixtures", {}).get("review_state", [])
+    expected_ids = {
+        "valid_not_required_ship",
+        "valid_multi_lens_ship",
+        "invalid_triggered_lens_missing_evidence",
+        "invalid_cleanup_only_result",
+        "invalid_unresolved_blocker",
+        "invalid_missing_implementation_brake_ship",
+    }
+    observed = {item.get("id") for item in fixtures if isinstance(item, dict)}
+    missing = expected_ids - observed
+    if missing:
+        raise AssertionError(f"{path} review state fixtures missing {sorted(missing)}")
+    for fixture in fixtures:
+        payload = fixture.get("payload")
+        expected = fixture.get("expected_valid")
+        actual = review_state_valid(payload)
+        if actual is not expected:
+            raise AssertionError(f"{path} review state fixture {fixture.get('id')} expected {expected}, got {actual}")
+
+
 def assert_section_mentions(path: str, heading: str, required: list[str]) -> None:
     body = section(read(path), heading)
     missing = [item for item in required if item not in body]
@@ -79,18 +266,18 @@ def assert_agents_gate_order(path: str) -> None:
     gate_bullets = [
         line
         for line in body.splitlines()
-        if line.startswith("- ")
-        and "For each goal-requirements slice" in line
-        and "conditional hard gates" in line
+        if line.startswith("- ") and "three main gate surface" in line
     ]
     if len(gate_bullets) != 1:
-        raise AssertionError(f"{path} must declare exactly one goal gate order bullet")
-    assert_subsequence(inline_code_tokens(gate_bullets[0]), GATE_ORDER, path)
+        raise AssertionError(f"{path} must declare exactly one Plan -> Impl -> Review bullet")
+    assert_subsequence(inline_code_tokens(gate_bullets[0]), THREE_MAIN_GATES, path)
     required_policy = [
-        "plan-design-review",
-        "UI-bearing",
-        "before `plan-eng-review`",
-        "visual-qa-hardening",
+        "planning-orchestrator",
+        "design_depth",
+        "worktree preflight",
+        "implementation-brake",
+        "source-obligation",
+        "coverage-ledger",
     ]
     missing = [item for item in required_policy if item not in body]
     if missing:
@@ -111,12 +298,41 @@ def assert_agents_gate_order(path: str) -> None:
 def assert_orchestrator_contract(path: str) -> None:
     text = read(path)
     execution = section(text, "Execution Gates")
-    assert_subsequence(inline_code_tokens(execution), GATE_ORDER, f"{path} execution gates")
+    assert_subsequence(inline_code_tokens(execution), THREE_MAIN_GATES, f"{path} execution gates")
+    for forbidden in [
+        "Evaluate the `technical-design` gate",
+        "Run the remaining pre-implementation review gates in order",
+        "For this requirement, run the remaining pre-implementation review gates",
+    ]:
+        if forbidden in execution:
+            raise AssertionError(f"{path} retains old top-level gate wording: {forbidden}")
+    required_execution = [
+        "Requirement Acceptance Gate",
+        "`planning-orchestrator`",
+        "`design_depth`",
+        "`technical-design`",
+        "Plan-internal",
+        "worktree preflight",
+        "`context-loading`",
+        "`tdd-workflow`",
+        "`visual-qa-hardening`",
+        "`ux-review`",
+        "`devex-review`",
+        "`implementation-brake`",
+        "`[SHIP]`",
+        "`closeout`",
+        "`production-readiness`",
+    ]
+    missing = [item for item in required_execution if item not in execution]
+    if missing:
+        raise AssertionError(f"{path} execution gates missing three-gate contract terms {missing}")
     worktree = section(text, "Worktree Execution Policy")
     required_worktree_policy = [
+        "Goal-requirements implementation must run in an isolated task worktree",
+        "Do not use any root-worktree exception",
+        "branch is `main`",
         "scripts/init_worktree.sh",
-        "If `scripts/init_worktree.sh` is missing",
-        "create it before treating worktree setup as available",
+        "run `scripts/init_worktree.sh <task-worktree-path>`",
         "idempotent",
         "accept the task worktree path as its first argument",
         "avoid writing external automation runtime state into the repo",
@@ -125,6 +341,8 @@ def assert_orchestrator_contract(path: str) -> None:
     if missing:
         raise AssertionError(f"{path} worktree setup policy missing {missing}")
     forbidden_worktree_policy = [
+        "autopilot_root",
+        "Autopilot root",
         "project_manager",
         "scheduler setup",
         "worktree_env_files",
@@ -135,31 +353,30 @@ def assert_orchestrator_contract(path: str) -> None:
     required_bootstrap_policy = [
         "## Sequence Outcome",
         "outcome:",
-        "create this requirements file only when this slice starts",
+        "Create every listed requirement document during orchestration bootstrap",
+        "all listed requirement documents must exist",
         "requirement-clarifier-post-draft-reviewer",
         "structured `reviewer_status`",
         "rerun or revalidate the post-draft reviewer gate",
     ]
     missing = [item for item in required_bootstrap_policy if item not in text]
     if missing:
-        raise AssertionError(f"{path} missing sequence outcome or first requirement policy {missing}")
-    assert_section_mentions(
-        path,
-        "Execution Gates",
-        [
-            "When all listed requirements are checked complete",
-            "`production-readiness`",
-            "sequence-level",
-            "before marking the goal sequence complete",
-        ],
-    )
+        raise AssertionError(f"{path} missing sequence outcome or upfront requirement policy {missing}")
+    forbidden_bootstrap_policy = [
+        "create this requirements file only when this slice starts",
+        "Later requirement documents stay deferred until their slice starts",
+        "Do not write or rewrite later `requirements/<requirement-id>/requirements.md` files",
+    ]
+    present = [item for item in forbidden_bootstrap_policy if item in text]
+    if present:
+        raise AssertionError(f"{path} still defers later requirement documents {present}")
     assert_section_mentions(
         path,
         "Blocked Rules",
         [
-            "plan-design-review",
-            "UI-bearing",
-            "before `plan-eng-review`",
+            "Plan",
+            "Impl",
+            "Review",
             "production-readiness",
         ],
     )
@@ -167,12 +384,10 @@ def assert_orchestrator_contract(path: str) -> None:
         path,
         "Completion Contract",
         [
-            "plan-design-review",
-            "plan-ux-review",
-            "plan-devex-review",
-            "ux-review",
-            "devex-review",
-            "visual-qa-hardening",
+            "Plan",
+            "Impl",
+            "Review",
+            "implementation-brake",
             "production-readiness",
             "ready",
         ],
@@ -181,10 +396,7 @@ def assert_orchestrator_contract(path: str) -> None:
         path,
         "Execution Gates",
         [
-            "plans/<plan-id>/reviews/plan-design-review.md",
-            "plans/<plan-id>/reviews/plan-ux-review.md",
-            "plans/<plan-id>/reviews/plan-devex-review.md",
-            "plans/<plan-id>/reviews/plan-eng-review.md",
+            "plans/<plan-id>/plan_handoff.toml",
             "plan-ux-review",
             "user-facing experience",
             "plan-devex-review",
@@ -199,10 +411,7 @@ def assert_orchestrator_contract(path: str) -> None:
         path,
         "State Update Rules",
         [
-            "plans/<plan-id>/reviews/plan-design-review.md",
-            "plans/<plan-id>/reviews/plan-ux-review.md",
-            "plans/<plan-id>/reviews/plan-devex-review.md",
-            "plans/<plan-id>/reviews/plan-eng-review.md",
+            "plans/<plan-id>/plan_handoff.toml",
             "plan-ux-review",
             "plan-devex-review",
             "ux-review",
@@ -312,9 +521,9 @@ def assert_sequence_progress_template(path: str) -> None:
     required = [
         "## Outcome Contract",
         "Sequence outcome",
-        "First requirement path",
-        "First requirement acceptance status",
-        "Later requirement files deferred until reached: yes | no",
+        "Listed requirement paths",
+        "All requirement files created during bootstrap: yes | no",
+        "All requirement acceptance statuses recorded: yes | no",
     ]
     missing = [item for item in required if item not in progress]
     if missing:
@@ -378,13 +587,9 @@ def assert_secondary_plan_reconciles_design_review(skill_path: str, template_pat
 
 def assert_orchestrator_rehydrates_experience_gates(path: str) -> None:
     blocked = section(read(path), "Blocked Rules")
-    required_phrase = (
-        "lacks the `research`, `technical-design`, UI-bearing `plan-design-review`, "
-        "user-facing `plan-ux-review`, developer-facing `plan-devex-review`, "
-        "live `ux-review`, or live `devex-review` gate text"
-    )
+    required_phrase = "rehydrate against the current `Plan -> Impl -> Review` contract"
     if required_phrase not in blocked:
-        raise AssertionError(f"{path} older sequence rehydration rule must name all experience gates")
+        raise AssertionError(f"{path} older sequence rehydration rule must name the three-gate contract")
 
 
 def assert_sequence_boundary_scope_contract(path: str) -> None:
@@ -439,6 +644,95 @@ def assert_bootstrap_installs_plan_design_review() -> None:
     for source, label in [(manifest, "manifest"), (bundle, "curated bundle")]:
         if "plan-design-review" not in source:
             raise AssertionError(f"project-bootstrap {label} must list plan-design-review")
+
+
+def assert_bootstrap_installs_main_gate_orchestrators() -> None:
+    manifest = read(".codex/skills/project-bootstrap/references/manifest.md")
+    bundle = read(".codex/skills/project-bootstrap/references/curated-bundle.md")
+    for skill in ["planning-orchestrator", "impl-orchestrator", "review-orchestrator"]:
+        expected_path = ROOT / ".codex/skills/project-bootstrap/templates/root/.codex/skills" / skill / "SKILL.md"
+        if not expected_path.exists():
+            raise AssertionError(f"project-bootstrap template must include {skill} skill")
+        for source, label in [(manifest, "manifest"), (bundle, "curated bundle")]:
+            if skill not in source:
+                raise AssertionError(f"project-bootstrap {label} must list {skill}")
+        assert_mirrored_file_parity(
+            f".codex/skills/{skill}/SKILL.md",
+            f".codex/skills/project-bootstrap/templates/root/.codex/skills/{skill}/SKILL.md",
+        )
+    assert_mirrored_file_parity(
+        ".codex/skills/goal-requirement-orchestrator/references/three_gate_contract.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/three_gate_contract.toml",
+    )
+
+
+def assert_planning_orchestrator_skill(path: str) -> None:
+    text = read(path)
+    required = [
+        "name: planning-orchestrator",
+        "Plan",
+        "plans/<plan-id>/plan_handoff.toml",
+        "design_depth",
+        "none",
+        "inline",
+        "full_artifact_required",
+        "technical-design",
+        "Plan-internal",
+        "research",
+        "plan-design-review",
+        "plan-ux-review",
+        "plan-devex-review",
+        "plan-eng-review",
+        "scenario-brake",
+        "secondary-plan",
+        "conversation memory",
+    ]
+    missing = [item for item in required if item not in text]
+    if missing:
+        raise AssertionError(f"{path} missing planning orchestrator contract {missing}")
+
+
+def assert_impl_orchestrator_skill(path: str) -> None:
+    text = read(path)
+    required = [
+        "name: impl-orchestrator",
+        "Impl",
+        "accepted Plan handoff",
+        "worktree preflight",
+        "scripts/init_worktree.sh",
+        "context-loading",
+        "tdd-workflow",
+        "implementation evidence",
+        "Review",
+        "conversation memory",
+    ]
+    missing = [item for item in required if item not in text]
+    if missing:
+        raise AssertionError(f"{path} missing impl orchestrator contract {missing}")
+
+
+def assert_review_orchestrator_skill(path: str) -> None:
+    text = read(path)
+    required = [
+        "name: review-orchestrator",
+        "Review",
+        "implementation evidence",
+        "parallel",
+        "same Review gate",
+        "fan out",
+        "visual-qa-hardening",
+        "ux-review",
+        "devex-review",
+        "triggered lenses",
+        "implementation-brake",
+        "consumes the review evidence",
+        "[SHIP]",
+        "closeout",
+        "cleanup-only",
+    ]
+    missing = [item for item in required if item not in text]
+    if missing:
+        raise AssertionError(f"{path} missing review orchestrator contract {missing}")
 
 
 def assert_bootstrap_installs_experience_review_skills() -> None:
@@ -562,6 +856,8 @@ def assert_requirement_clarifier_quality_gate(path: str) -> None:
     text = read(path)
     required = [
         "## Requirement Quality Gate",
+        "## Original Intent Preservation",
+        "## Strict Target And Flexible Clause Priority",
         "AC-to-verification mapping",
         "Evidence Reviewed",
         "session_provenance",
@@ -571,6 +867,11 @@ def assert_requirement_clarifier_quality_gate(path: str) -> None:
         "production-bound",
         "self-review fallback",
         "must not silently claim external reviewer approval",
+        "Agent discretion is allowed only inside the user's strict target",
+        "Interpretation may clarify intent, but it must not replace intent",
+        "strict user target",
+        "flexible interpretation clause",
+        "deviation ledger",
     ]
     missing = [item for item in required if item not in text]
     if missing:
@@ -600,11 +901,17 @@ def assert_post_draft_reviewer_contract(agent_path: str) -> None:
         '"BLOCKED_INVALID"',
         '"BLOCKED_UNAVAILABLE"',
         "Requirement Quality Gate",
+        "Original Intent Preservation",
+        "Strict Target And Flexible Clause Priority",
         "AC-to-verification mapping",
         "Evidence Reviewed",
         "provenance",
         "Decision Boundaries",
         "must not claim external reviewer approval",
+        "strict target",
+        "flexible interpretation clause",
+        "deviation ledger",
+        "material omission, distortion, invented requirement",
     ]
     missing = [item for item in required if item not in instructions]
     if missing:
@@ -615,11 +922,11 @@ def assert_requirement_acceptance_gate(path: str) -> None:
     text = read(path)
     execution = section(text, "Execution Gates")
     acceptance_index = execution.find("Requirement Acceptance Gate")
-    research_index = execution.find("Evaluate the `research` gate")
+    plan_index = execution.find("`Plan`")
     if acceptance_index < 0:
         raise AssertionError(f"{path} missing Requirement Acceptance Gate")
-    if research_index < 0 or acceptance_index > research_index:
-        raise AssertionError(f"{path} must place Requirement Acceptance Gate before research")
+    if plan_index < 0 or acceptance_index > plan_index:
+        raise AssertionError(f"{path} must place Requirement Acceptance Gate before Plan")
     required = [
         "file existence alone is insufficient",
         "Ready",
@@ -707,6 +1014,11 @@ def assert_conformance_reviewer_agent(agent_path: str) -> None:
         "prose-only approval",
         "CONFORMANT plus unresolved material findings",
         "implementation-brake owns final",
+        "Escape Hatch Detection",
+        "flexible clause",
+        "stricter requirement",
+        "unapproved substitution",
+        "Only explicit accepted deviations can narrow the target",
     ]
     missing = [item for item in required if item not in instructions]
     if missing:
@@ -806,12 +1118,81 @@ def assert_implementation_brake_conformance_contract(path: str) -> None:
         "production/launch-bound",
         "missing conformance result",
         "cannot treat",
+        "## Review Gate Evidence Inputs",
+        "triggered review evidence",
+        "visual-qa-hardening",
+        "visual-qa-reviewer",
+        "reference-fidelity-reviewer",
+        "ux-review",
+        "devex-review",
+        "parallel Review lens execution",
         "main `implementation-brake`",
         "final ship-readiness verdict",
+        "## Contract Downgrade Ship Gate",
+        "weaker interpretation of the accepted requirement",
+        "Unapproved downgrade is must-fix, not polish",
     ]
     missing = [item for item in required if item not in text]
     if missing:
         raise AssertionError(f"{path} missing implementation conformance contract {missing}")
+
+
+def assert_implementation_brake_reviewer_agent(agent_path: str) -> None:
+    agent = read_toml(agent_path)
+    if agent.get("sandbox_mode") != "read-only":
+        raise AssertionError(f"{agent_path} must be read-only")
+    instructions = agent.get("developer_instructions", "")
+    required = [
+        "Contract Downgrade Review",
+        "weaker interpretation of the accepted requirement",
+        "flexible wording",
+        "strict user target",
+        "artifact class",
+        "evidence level",
+        "execution boundary",
+        "Only explicit accepted deviations can narrow the target",
+        "Unapproved downgrade is must-fix, not polish",
+    ]
+    missing = [item for item in required if item not in instructions]
+    if missing:
+        raise AssertionError(f"{agent_path} missing implementation-brake reviewer downgrade contract {missing}")
+
+
+def assert_worktree_preflight_distribution() -> None:
+    script_paths = [
+        "scripts/init_worktree.sh",
+        ".codex/skills/project-bootstrap/templates/root/scripts/init_worktree.sh",
+    ]
+    for path in script_paths:
+        script = read(path)
+        required = [
+            "usage: scripts/init_worktree.sh <task-worktree-path>",
+            "primary/main worktree",
+            "branch is main",
+            "scripts/verify",
+            "worktree setup ok",
+        ]
+        missing = [item for item in required if item not in script]
+        if missing:
+            raise AssertionError(f"{path} missing worktree preflight behavior {missing}")
+    assert_mirrored_file_parity(
+        "scripts/init_worktree.sh",
+        ".codex/skills/project-bootstrap/templates/root/scripts/init_worktree.sh",
+    )
+    assert_mirrored_file_parity(
+        "tests/verify_worktree_preflight.py",
+        ".codex/skills/project-bootstrap/templates/root/tests/verify_worktree_preflight.py",
+    )
+    manifest = read(".codex/skills/project-bootstrap/references/manifest.md")
+    required_manifest = [
+        "`scripts/init_worktree.sh`",
+        "`tests/verify_worktree_preflight.py`",
+        "isolated task worktree preflight",
+        "task worktree preflight tests",
+    ]
+    missing = [item for item in required_manifest if item not in manifest]
+    if missing:
+        raise AssertionError(f"project-bootstrap manifest missing worktree preflight entries {missing}")
 
 
 def assert_requirement_quality_gate_contracts() -> None:
@@ -892,6 +1273,17 @@ def assert_requirement_quality_gate_contracts() -> None:
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/implementation-brake/SKILL.md",
     ]:
         assert_implementation_brake_conformance_contract(skill_path)
+
+    for agent_path in [
+        ".codex/agents/implementation-brake-reviewer.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/agents/implementation-brake-reviewer.toml",
+    ]:
+        assert_implementation_brake_reviewer_agent(agent_path)
+
+    assert_mirrored_file_parity(
+        ".codex/agents/implementation-brake-reviewer.toml",
+        ".codex/skills/project-bootstrap/templates/root/.codex/agents/implementation-brake-reviewer.toml",
+    )
 
 
 def assert_source_obligation_workflow_contracts() -> None:
@@ -1074,6 +1466,17 @@ def assert_reference_fidelity_agent(agent_path: str) -> None:
     required = [
         "You are the Reference Fidelity Reviewer",
         "detailed similarity",
+        "Reference parity is concrete, not merely structural",
+        "header/status-bar height",
+        "safe-area treatment",
+        "tab/filter density",
+        "row height and list density",
+        "image scale, crop, realism, and product material feel",
+        "column position, alignment, width, and typography",
+        "repeated-item rhythm",
+        "Bounded Styling Variance",
+        "Accepted Deviation Enforcement",
+        "structure-level similarity",
         "Accepted differences inspected",
         "[REFERENCE FIDELITY PASS]",
         "[REFERENCE FIDELITY FIX REQUIRED]",
@@ -1090,6 +1493,10 @@ def assert_visual_qa_delegates_reference_fidelity(agent_path: str) -> None:
     instructions = agent.get("developer_instructions", "")
     required = [
         "reference-driven work 에서는 detailed similarity 판정을 `reference-fidelity-reviewer`가 맡습니다.",
+        "Reference-Driven Visual QA",
+        "usable, polished, unclipped, or internally consistent",
+        "hierarchy, geometry, density, navigation placement, safe-area treatment, imagery treatment, or repeated-list rhythm",
+        "accepted deviation",
         "reference-only prototype chrome, debug UI leakage, or missing reference evidence",
         "[VISUAL QA PASS]",
         "[VISUAL QA FIX REQUIRED]",
@@ -1195,6 +1602,9 @@ def main() -> int:
     lifecycle = load_module(
         ".codex/skills/goal-requirement-orchestrator/scripts/subagent_lifecycle.py"
     )
+    assert_three_gate_contract(
+        ".codex/skills/goal-requirement-orchestrator/references/three_gate_contract.toml"
+    )
     assert_agents_gate_order("AGENTS.md")
     assert_agents_gate_order(".codex/skills/project-bootstrap/templates/root/AGENTS.md")
     assert_orchestrator_contract(".codex/skills/goal-requirement-orchestrator/SKILL.md")
@@ -1259,6 +1669,18 @@ def main() -> int:
     assert_sequence_progress_template(
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/references/sequence_progress_template.md"
     )
+    assert_planning_orchestrator_skill(".codex/skills/planning-orchestrator/SKILL.md")
+    assert_planning_orchestrator_skill(
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/planning-orchestrator/SKILL.md"
+    )
+    assert_impl_orchestrator_skill(".codex/skills/impl-orchestrator/SKILL.md")
+    assert_impl_orchestrator_skill(
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/impl-orchestrator/SKILL.md"
+    )
+    assert_review_orchestrator_skill(".codex/skills/review-orchestrator/SKILL.md")
+    assert_review_orchestrator_skill(
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/review-orchestrator/SKILL.md"
+    )
     assert_mirrored_file_parity(
         ".codex/skills/goal-requirement-orchestrator/SKILL.md",
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/goal-requirement-orchestrator/SKILL.md",
@@ -1292,6 +1714,7 @@ def main() -> int:
         ".codex/skills/project-bootstrap/templates/root/.codex/skills/secondary-plan/references/secondary_plan_template.md",
     )
     assert_bootstrap_installs_plan_design_review()
+    assert_bootstrap_installs_main_gate_orchestrators()
     assert_manifest_declares_orchestrator_scripts()
     assert_bootstrap_installs_experience_review_skills()
     assert_experience_skill_template_parity()
@@ -1307,6 +1730,7 @@ def main() -> int:
     assert_visual_qa_contracts()
     assert_requirement_quality_gate_contracts()
     assert_source_obligation_workflow_contracts()
+    assert_worktree_preflight_distribution()
     return 0
 
 

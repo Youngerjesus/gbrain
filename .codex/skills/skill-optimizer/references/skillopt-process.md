@@ -48,15 +48,15 @@ checking whether a candidate skill body covers benchmark criteria, but it is not
 evidence that a live agent executed the benchmark tasks.
 
 `--live` is the closed-loop mode: it runs target-model rollouts over benchmark
-tasks through the local Gemini CLI by default, scores them, asks the optimizer
-model for body-only edits, applies safe edits, and reruns the selection gate
-before promotion. Default live models are `gemini-2.5-flash` for target/judge
+tasks through the Gemini API by default, scores them, asks the optimizer model
+for body-only edits, applies safe edits, and reruns the selection gate before
+promotion. Default live models are `gemini-2.5-flash` for target/judge
 evaluation and `gemini-3.5-flash` for optimizer edit synthesis. Pass
-`--provider codex` to use `codex exec` with Codex defaults, or `--provider auto`
-for the legacy Codex first / Gemini fallback path. The repo baseline uses a fake
-chat client to verify loop wiring. Real CLI smokes are request-local: run the
-`--live` command directly with explicit `--provider`, model flags, or the
-`SKILLOPT_*` environment variables when CLI auth is present.
+`--provider codex` to use `codex exec` with Codex defaults. Codex rollout calls
+are allowed at least 10 minutes each. The repo baseline uses a fake chat client to verify
+loop wiring. Real API smokes are request-local: run the `--live` command directly
+with explicit `--provider`, model flags, `GEMINI_API_KEY`, or the `SKILLOPT_*`
+environment variables when live auth is present.
 Same-model target/optimizer runs are useful for low-cost smoke tests. For real
 optimization, keep the target model representative of normal skill execution
 and use a stronger optimizer model such as `gemini-3.5-flash` for edit

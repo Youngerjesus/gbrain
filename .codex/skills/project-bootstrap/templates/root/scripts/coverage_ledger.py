@@ -60,9 +60,6 @@ REQUIRED_DECISION_FIELDS = {
     "decided_by_gate",
     "decided_at",
 }
-SOURCE_METHODS = {"manual", "llm_observed", "human_manifest", "extracted", "hybrid"}
-SOURCE_DISPOSITIONS = {"included", "excluded", "deferred", "ambiguous"}
-SOURCE_REVIEWER_STATUSES = {"SHIP", "FINDINGS", "BLOCKED_INVALID", "BLOCKED_UNAVAILABLE"}
 
 
 @dataclass
@@ -72,10 +69,6 @@ class Error:
     path: str
     row_id: str | None = None
     route: str | None = None
-    source_item_id: str | None = None
-    ledger_row_id: str | None = None
-    expected: str | None = None
-    actual: str | None = None
 
     def to_dict(self) -> dict[str, str]:
         data = {"code": self.code, "problem": self.problem, "path": self.path}
@@ -83,14 +76,6 @@ class Error:
             data["row_id"] = self.row_id
         if self.route:
             data["route"] = self.route
-        if self.source_item_id:
-            data["source_item_id"] = self.source_item_id
-        if self.ledger_row_id:
-            data["ledger_row_id"] = self.ledger_row_id
-        if self.expected:
-            data["expected"] = self.expected
-        if self.actual:
-            data["actual"] = self.actual
         return data
 
 
@@ -212,15 +197,12 @@ def parse_simple_yaml(text: str) -> dict[str, Any]:
 
 
 def result(mode: str, errors: list[Error]) -> tuple[int, str]:
-    routes = sorted({error.route for error in errors if error.route})
     payload: dict[str, Any] = {
         "status": "fail" if errors else "pass",
         "mode": mode,
         "error_codes": sorted({error.code for error in errors}),
         "errors": [error.to_dict() for error in errors],
     }
-    if routes:
-        payload["routes"] = routes
     for error in errors:
         if error.route:
             payload["route"] = error.route
@@ -228,28 +210,8 @@ def result(mode: str, errors: list[Error]) -> tuple[int, str]:
     return (1 if errors else 0), json.dumps(payload, sort_keys=True)
 
 
-def err(
-    code: str,
-    problem: str,
-    path: Path | str,
-    row_id: str | None = None,
-    route: str | None = None,
-    source_item_id: str | None = None,
-    ledger_row_id: str | None = None,
-    expected: str | None = None,
-    actual: str | None = None,
-) -> Error:
-    return Error(
-        code,
-        problem,
-        str(path),
-        row_id=row_id,
-        route=route,
-        source_item_id=source_item_id,
-        ledger_row_id=ledger_row_id,
-        expected=expected,
-        actual=actual,
-    )
+def err(code: str, problem: str, path: Path | str, row_id: str | None = None, route: str | None = None) -> Error:
+    return Error(code, problem, str(path), row_id=row_id, route=route)
 
 
 def has_forbidden_yaml_construct(text: str) -> str | None:
@@ -273,8 +235,14 @@ def load_yaml_file(path: Path) -> tuple[Any | None, list[Error]]:
         else:
             data = yaml.load(text, Loader=DuplicateKeyLoader)
     except ValueError as exc:
-        code = "E_YAML_DUPLICATE_KEY" if "duplicate key" in str(exc) else "E_YAML_PARSE"
-        return None, [err(code, str(exc), path)]
+        message = str(exc)
+        if "duplicate key" in message:
+            code = "E_YAML_DUPLICATE_KEY"
+        elif "YAML root must be a mapping" in message:
+            code = "E_YAML_ROOT"
+        else:
+            code = "E_YAML_PARSE"
+        return None, [err(code, message, path)]
     except Exception as exc:
         return None, [err("E_YAML_PARSE", str(exc), path)]
     if not isinstance(data, dict):
@@ -444,512 +412,6 @@ def validate_ledger_schema(req_dir: Path, ledger: dict[str, Any], ledger_path: P
     return errors
 
 
-def canonical_source_inventory_digest(items: list[dict[str, Any]]) -> str:
-    canonical = [
-        {
-            "source_item_id": item["source_item_id"],
-            "source_method": item["source_method"],
-            "source_refs": sorted(set(item["source_refs"])),
-            "metadata": item.get("metadata", {}),
-        }
-        for item in sorted(items, key=lambda value: value["source_item_id"])
-    ]
-    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
-
-
-def canonical_scope_digest(items: list[dict[str, Any]]) -> str:
-    canonical: list[dict[str, Any]] = []
-    for item in sorted(items, key=lambda value: value["source_item_id"]):
-        obligation_ids = string_list(item.get("obligation_ids", [])) or []
-        coverage_row_ids = string_list(item.get("coverage_row_ids", [])) or []
-        canonical.append(
-            {
-                "source_item_id": item["source_item_id"],
-                "disposition": item["disposition"],
-                "obligation_ids": sorted(set(obligation_ids)),
-                "coverage_row_ids": sorted(set(coverage_row_ids)),
-                "rationale": item.get("rationale", ""),
-            }
-        )
-    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
-
-
-def string_list(value: Any) -> list[str] | None:
-    if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
-        return None
-    return value
-
-
-def source_validation_active(req_dir: Path, decision: dict[str, Any] | None, ledger: dict[str, Any] | None) -> bool:
-    if (req_dir / "source-inventory.yml").exists() or (req_dir / "scope-reconciliation.yml").exists():
-        return True
-    trigger = decision.get("trigger_evaluation") if isinstance(decision, dict) else None
-    signals = trigger.get("signals") if isinstance(trigger, dict) else None
-    if isinstance(signals, dict) and signals.get("source_obligation_inventory_required") is True:
-        return True
-    if isinstance(ledger, dict):
-        if ledger.get("source_inventory_digest") or ledger.get("accepted_scope_digest"):
-            return True
-        rows = ledger.get("coverage_rows")
-        if isinstance(rows, list) and any(isinstance(row, dict) and row.get("source_item_ids") for row in rows):
-            return True
-    return False
-
-
-def validate_source_inventory(inventory: dict[str, Any], inventory_path: Path) -> tuple[list[dict[str, Any]], str | None, list[Error]]:
-    errors = require_fields(
-        inventory,
-        {"requirement_id", "inventory_version", "source_inventory_digest", "source_items"},
-        inventory_path,
-    )
-    items = inventory.get("source_items")
-    if not isinstance(items, list) or not items:
-        errors.append(
-            err("E_SOURCE_INVENTORY_SCHEMA", "source_items must be a non-empty list", inventory_path, route="source-inventory-rebuild")
-        )
-        return [], None, errors
-    valid_items: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for item in items:
-        if not isinstance(item, dict):
-            errors.append(err("E_SOURCE_INVENTORY_SCHEMA", "source item must be a mapping", inventory_path, route="source-inventory-rebuild"))
-            continue
-        source_item_id = item.get("source_item_id")
-        if not isinstance(source_item_id, str) or not source_item_id:
-            errors.append(err("E_SOURCE_INVENTORY_SCHEMA", "source_item_id must be a non-empty string", inventory_path, route="source-inventory-rebuild"))
-            continue
-        if source_item_id in seen:
-            errors.append(
-                err(
-                    "E_SOURCE_ITEM_ID_DUPLICATE",
-                    "source_item_id must be unique",
-                    inventory_path,
-                    route="source-inventory-rebuild",
-                    source_item_id=source_item_id,
-                )
-            )
-        seen.add(source_item_id)
-        refs = string_list(item.get("source_refs"))
-        method = item.get("source_method")
-        metadata = item.get("metadata")
-        if refs is None or not refs:
-            errors.append(
-                err(
-                    "E_SOURCE_ITEM_REF_MISSING",
-                    "source_refs must be a non-empty string list",
-                    inventory_path,
-                    route="source-inventory-rebuild",
-                    source_item_id=source_item_id,
-                )
-            )
-        if not isinstance(metadata, dict) or not metadata:
-            errors.append(
-                err(
-                    "E_SOURCE_INVENTORY_SCHEMA",
-                    "metadata must be a non-empty mapping",
-                    inventory_path,
-                    route="source-inventory-rebuild",
-                    source_item_id=source_item_id,
-                )
-            )
-        elif method in {"extracted", "hybrid"}:
-            extraction_count = metadata.get("extraction_count")
-            extraction_digest = metadata.get("extraction_digest")
-            if not isinstance(extraction_count, int) or extraction_count < 0 or not isinstance(extraction_digest, str) or not extraction_digest:
-                errors.append(
-                    err(
-                        "E_SOURCE_INVENTORY_SCHEMA",
-                        "extracted and hybrid items need extraction_count and extraction_digest metadata",
-                        inventory_path,
-                        route="source-inventory-rebuild",
-                        source_item_id=source_item_id,
-                    )
-                )
-        if method not in SOURCE_METHODS:
-            errors.append(
-                err(
-                    "E_SOURCE_INVENTORY_SCHEMA",
-                    "source_method is invalid",
-                    inventory_path,
-                    route="source-inventory-rebuild",
-                    source_item_id=source_item_id,
-                )
-            )
-        if refs and method in SOURCE_METHODS and isinstance(metadata, dict) and metadata:
-            valid_items.append(
-                {
-                    "source_item_id": source_item_id,
-                    "source_method": method,
-                    "source_refs": refs,
-                    "metadata": metadata,
-                }
-            )
-    digest = None
-    if valid_items:
-        digest = canonical_source_inventory_digest(valid_items)
-        declared = inventory.get("source_inventory_digest")
-        if declared != digest:
-            errors.append(
-                err(
-                    "E_SOURCE_LINEAGE_STALE",
-                    "source inventory digest does not match current source items",
-                    inventory_path,
-                    route="source-inventory-rebuild",
-                    expected=digest,
-                    actual=str(declared),
-                )
-            )
-    return valid_items, digest, errors
-
-
-def validate_source_reconciliation(
-    reconciliation: dict[str, Any],
-    reconciliation_path: Path,
-    inventory_items: list[dict[str, Any]],
-    inventory_version: Any,
-    source_digest: str | None,
-    ledger: dict[str, Any] | None,
-    ledger_path: Path,
-    decision: dict[str, Any] | None,
-) -> list[Error]:
-    errors = require_fields(
-        reconciliation,
-        {
-            "requirement_id",
-            "reconciliation_version",
-            "source_inventory_digest",
-            "source_inventory_version",
-            "accepted_scope_digest",
-            "reviewer_status",
-            "reconciled_items",
-        },
-        reconciliation_path,
-    )
-    items = reconciliation.get("reconciled_items")
-    if not isinstance(items, list):
-        errors.append(err("E_SCOPE_RECONCILIATION_SCHEMA", "reconciled_items must be a list", reconciliation_path, route="scope-reconciliation-recheck"))
-        items = []
-    if reconciliation.get("source_inventory_digest") != source_digest:
-        errors.append(
-            err(
-                "E_SOURCE_LINEAGE_STALE",
-                "reconciliation source_inventory_digest does not match inventory",
-                reconciliation_path,
-                route="scope-reconciliation-recheck",
-                expected=str(source_digest),
-                actual=str(reconciliation.get("source_inventory_digest")),
-            )
-        )
-    if reconciliation.get("source_inventory_version") != inventory_version:
-        errors.append(
-            err(
-                "E_SOURCE_LINEAGE_STALE",
-                "reconciliation source_inventory_version does not match inventory",
-                reconciliation_path,
-                route="scope-reconciliation-recheck",
-                expected=str(inventory_version),
-                actual=str(reconciliation.get("source_inventory_version")),
-            )
-        )
-    reviewer_status = reconciliation.get("reviewer_status")
-    if reviewer_status not in SOURCE_REVIEWER_STATUSES:
-        errors.append(err("E_SCOPE_RECONCILIATION_REVIEWER_STATUS", "reviewer_status is invalid", reconciliation_path, route="scope-reconciliation-recheck"))
-    review_required = reconciliation.get("source_obligation_review_required", True)
-    if not isinstance(review_required, bool):
-        errors.append(err("E_SCOPE_RECONCILIATION_REVIEWER_STATUS", "source_obligation_review_required must be boolean", reconciliation_path, route="scope-reconciliation-recheck"))
-    if review_required is True and reviewer_status != "SHIP":
-        errors.append(err("E_SCOPE_RECONCILIATION_REVIEWER_NOT_APPROVED", "reviewer_status must be SHIP", reconciliation_path, route="source-obligation-review"))
-    if review_required is False and not reconciliation.get("not_required_reason"):
-        errors.append(err("E_SCOPE_RECONCILIATION_REVIEWER_STATUS", "reviewer not-required policy needs not_required_reason", reconciliation_path, route="scope-reconciliation-recheck"))
-    if reconciliation.get("reviewer_approved") is True and reviewer_status != "SHIP":
-        errors.append(
-            err(
-                "E_SCOPE_RECONCILIATION_REVIEWER_STATUS",
-                "reviewer_approved true conflicts with non-SHIP reviewer_status",
-                reconciliation_path,
-                route="scope-reconciliation-recheck",
-            )
-        )
-
-    ledger_rows = ledger.get("coverage_rows") if isinstance(ledger, dict) and isinstance(ledger.get("coverage_rows"), list) else []
-    row_by_id = {row.get("row_id"): row for row in ledger_rows if isinstance(row, dict) and isinstance(row.get("row_id"), str)}
-    inventory_ids = {item["source_item_id"] for item in inventory_items}
-    reconciled_by_id: dict[str, dict[str, Any]] = {}
-    seen: set[str] = set()
-    for item in items:
-        if not isinstance(item, dict):
-            errors.append(err("E_SCOPE_RECONCILIATION_SCHEMA", "reconciled item must be a mapping", reconciliation_path, route="scope-reconciliation-recheck"))
-            continue
-        source_item_id = item.get("source_item_id")
-        if not isinstance(source_item_id, str) or not source_item_id:
-            errors.append(err("E_SCOPE_RECONCILIATION_SCHEMA", "source_item_id must be a string", reconciliation_path, route="scope-reconciliation-recheck"))
-            continue
-        if source_item_id in seen:
-            errors.append(
-                err(
-                    "E_SCOPE_RECONCILIATION_DUPLICATE_ITEM",
-                    "reconciled source_item_id must be unique",
-                    reconciliation_path,
-                    route="scope-reconciliation-recheck",
-                    source_item_id=source_item_id,
-                )
-            )
-        seen.add(source_item_id)
-        reconciled_by_id[source_item_id] = item
-        if source_item_id not in inventory_ids:
-            errors.append(
-                err(
-                    "E_SCOPE_RECONCILIATION_INVENTED_ITEM",
-                    "reconciliation references a source item not in inventory",
-                    reconciliation_path,
-                    route="scope-reconciliation-recheck",
-                    source_item_id=source_item_id,
-                )
-            )
-        disposition = item.get("disposition")
-        if disposition not in SOURCE_DISPOSITIONS:
-            errors.append(
-                err(
-                    "E_SCOPE_RECONCILIATION_SCHEMA",
-                    "disposition is invalid",
-                    reconciliation_path,
-                    route="scope-reconciliation-recheck",
-                    source_item_id=source_item_id,
-                )
-            )
-            continue
-        obligation_ids = string_list(item.get("obligation_ids", []))
-        row_ids = string_list(item.get("coverage_row_ids", []))
-        if disposition == "included":
-            if not obligation_ids or not row_ids or set(obligation_ids) != set(row_ids):
-                errors.append(
-                    err(
-                        "E_SCOPE_RECONCILIATION_INCLUDED_MAPPING",
-                        "included items need matching obligation_ids and coverage_row_ids",
-                        reconciliation_path,
-                        route="scope-reconciliation-recheck",
-                        source_item_id=source_item_id,
-                    )
-                )
-            for row_id in row_ids or []:
-                if row_id not in row_by_id:
-                    errors.append(
-                        err(
-                            "E_SOURCE_LEDGER_ROW_MISSING",
-                            "included item references a missing ledger row",
-                            ledger_path,
-                            row_id=row_id,
-                            ledger_row_id=row_id,
-                            route="coverage-ledger-repair",
-                            source_item_id=source_item_id,
-                        )
-                    )
-        elif not item.get("rationale"):
-            errors.append(
-                err(
-                    "E_SCOPE_RECONCILIATION_RATIONALE",
-                    "non-included items need structured rationale",
-                    reconciliation_path,
-                    route="scope-reconciliation-recheck",
-                    source_item_id=source_item_id,
-                )
-            )
-    for source_item_id in sorted(inventory_ids - set(reconciled_by_id)):
-        errors.append(
-            err(
-                "E_SCOPE_RECONCILIATION_MISSING_ITEM",
-                "inventory item is missing from reconciliation",
-                reconciliation_path,
-                route="scope-reconciliation-recheck",
-                source_item_id=source_item_id,
-            )
-        )
-
-    scope_digest = canonical_scope_digest([item for item in items if isinstance(item, dict) and isinstance(item.get("source_item_id"), str)])
-    if reconciliation.get("accepted_scope_digest") != scope_digest:
-        errors.append(
-            err(
-                "E_SOURCE_LINEAGE_STALE",
-                "accepted scope digest does not match reconciled items",
-                reconciliation_path,
-                route="scope-reconciliation-recheck",
-                expected=scope_digest,
-                actual=str(reconciliation.get("accepted_scope_digest")),
-            )
-        )
-    if isinstance(decision, dict):
-        trigger = decision.get("trigger_evaluation")
-        if isinstance(trigger, dict) and trigger.get("accepted_scope_digest") not in {None, scope_digest}:
-            errors.append(
-                err(
-                    "E_SOURCE_LINEAGE_STALE",
-                    "coverage decision accepted_scope_digest does not match reconciliation",
-                    req_dir_path(reconciliation_path),
-                    route="requirement-clarifier-post-review-recheck",
-                    expected=scope_digest,
-                    actual=str(trigger.get("accepted_scope_digest")),
-                )
-            )
-    if isinstance(ledger, dict):
-        first_row_id = next(
-            (str(row.get("row_id")) for row in ledger_rows if isinstance(row, dict) and isinstance(row.get("row_id"), str)),
-            None,
-        )
-        if ledger.get("source_inventory_digest") != source_digest:
-            errors.append(
-                err(
-                    "E_SOURCE_LINEAGE_MISSING",
-                    "coverage ledger source_inventory_digest is missing or stale",
-                    ledger_path,
-                    row_id=first_row_id,
-                    ledger_row_id=first_row_id,
-                    route="coverage-ledger-repair",
-                    expected=str(source_digest),
-                    actual=str(ledger.get("source_inventory_digest")),
-                )
-            )
-        if ledger.get("source_inventory_version") != inventory_version:
-            errors.append(
-                err(
-                    "E_SOURCE_LINEAGE_STALE",
-                    "coverage ledger source_inventory_version is missing or stale",
-                    ledger_path,
-                    row_id=first_row_id,
-                    ledger_row_id=first_row_id,
-                    route="coverage-ledger-repair",
-                    expected=str(inventory_version),
-                    actual=str(ledger.get("source_inventory_version")),
-                )
-            )
-        if ledger.get("accepted_scope_digest") != scope_digest:
-            errors.append(
-                err(
-                    "E_SOURCE_LINEAGE_MISSING",
-                    "coverage ledger accepted_scope_digest is missing or stale",
-                    ledger_path,
-                    row_id=first_row_id,
-                    ledger_row_id=first_row_id,
-                    route="coverage-ledger-repair",
-                    expected=scope_digest,
-                    actual=str(ledger.get("accepted_scope_digest")),
-                )
-            )
-        if ledger.get("reconciliation_version") != reconciliation.get("reconciliation_version"):
-            errors.append(
-                err(
-                    "E_SOURCE_LINEAGE_STALE",
-                    "coverage ledger reconciliation_version is missing or stale",
-                    ledger_path,
-                    row_id=first_row_id,
-                    ledger_row_id=first_row_id,
-                    route="coverage-ledger-repair",
-                    expected=str(reconciliation.get("reconciliation_version")),
-                    actual=str(ledger.get("reconciliation_version")),
-                )
-            )
-        expected_row_sources: dict[str, set[str]] = {}
-        for item in items:
-            if not isinstance(item, dict) or item.get("disposition") != "included":
-                continue
-            source_item_id = item.get("source_item_id")
-            for row_id in item.get("coverage_row_ids", []) if isinstance(item.get("coverage_row_ids"), list) else []:
-                expected_row_sources.setdefault(str(row_id), set()).add(str(source_item_id))
-        row_source_fields_present = any(isinstance(row, dict) and "source_item_ids" in row for row in ledger_rows)
-        if row_source_fields_present:
-            for row in ledger_rows:
-                if not isinstance(row, dict):
-                    continue
-                row_id = str(row.get("row_id", "unknown"))
-                actual_sources = string_list(row.get("source_item_ids", []))
-                if actual_sources is None:
-                    errors.append(err("E_SOURCE_LEDGER_SOURCE_MISMATCH", "source_item_ids must be a string list", ledger_path, row_id=row_id, ledger_row_id=row_id, route="coverage-ledger-repair"))
-                    continue
-                for source_item_id in actual_sources:
-                    if source_item_id not in inventory_ids:
-                        errors.append(
-                            err(
-                                "E_SOURCE_LEDGER_INVENTED_ITEM",
-                                "ledger row references a source item not in inventory",
-                                ledger_path,
-                                row_id=row_id,
-                                ledger_row_id=row_id,
-                                route="coverage-ledger-repair",
-                                source_item_id=source_item_id,
-                            )
-                        )
-                expected_sources = expected_row_sources.get(row_id, set())
-                if set(actual_sources) != expected_sources:
-                    errors.append(
-                        err(
-                            "E_SOURCE_LEDGER_SOURCE_MISMATCH",
-                            "ledger row source_item_ids do not match reconciliation mappings",
-                            ledger_path,
-                            row_id=row_id,
-                            ledger_row_id=row_id,
-                            route="coverage-ledger-repair",
-                            expected=",".join(sorted(expected_sources)),
-                            actual=",".join(sorted(actual_sources)),
-                        )
-                    )
-    return errors
-
-
-def req_dir_path(path: Path) -> Path:
-    return path.parent / "coverage-decision.yml"
-
-
-def validate_source_state(
-    req_dir: Path,
-    decision: dict[str, Any] | None,
-    ledger: dict[str, Any] | None,
-    ledger_path: Path,
-) -> list[Error]:
-    if not source_validation_active(req_dir, decision, ledger):
-        return []
-    errors: list[Error] = []
-    inventory_path = req_dir / "source-inventory.yml"
-    reconciliation_path = req_dir / "scope-reconciliation.yml"
-    if not inventory_path.exists():
-        errors.append(err("E_SOURCE_INVENTORY_REQUIRED", "source-inventory.yml is required", inventory_path, route="source-inventory-rebuild"))
-    if not reconciliation_path.exists():
-        errors.append(
-            err(
-                "E_SCOPE_RECONCILIATION_REQUIRED",
-                "scope-reconciliation.yml is required",
-                reconciliation_path,
-                route="scope-reconciliation-recheck",
-            )
-        )
-    if errors:
-        return errors
-    inventory, inventory_errors = load_yaml_file(inventory_path)
-    reconciliation, reconciliation_errors = load_yaml_file(reconciliation_path)
-    errors.extend(inventory_errors)
-    errors.extend(reconciliation_errors)
-    if errors:
-        return errors
-    assert isinstance(inventory, dict)
-    assert isinstance(reconciliation, dict)
-    inventory_items, source_digest, inventory_validation_errors = validate_source_inventory(inventory, inventory_path)
-    errors.extend(inventory_validation_errors)
-    if inventory_items:
-        errors.extend(
-            validate_source_reconciliation(
-                reconciliation,
-                reconciliation_path,
-                inventory_items,
-                inventory.get("inventory_version"),
-                source_digest,
-                ledger,
-                ledger_path,
-                decision,
-            )
-        )
-    return errors
-
-
 def validate_readiness(req_dir: Path) -> list[Error]:
     decision_path = req_dir / "coverage-decision.yml"
     ledger_path = req_dir / "coverage-ledger.yml"
@@ -980,9 +442,6 @@ def validate_readiness(req_dir: Path) -> list[Error]:
             if ledger.get("requirement_id") != decision.get("requirement_id"):
                 errors.append(err("E_DECISION_LEDGER_CONFLICT", "decision and ledger requirement_id differ", ledger_path))
             errors.extend(validate_ledger_schema(req_dir, ledger, ledger_path))
-            errors.extend(validate_source_state(req_dir, decision, ledger, ledger_path))
-    else:
-        errors.extend(validate_source_state(req_dir, decision, None, ledger_path))
     return errors
 
 
@@ -1036,7 +495,6 @@ def validate_closure(req_dir: Path) -> list[Error]:
         return errors
     assert isinstance(ledger, dict)
     errors = validate_ledger_schema(req_dir, ledger, ledger_path)
-    errors.extend(validate_source_state(req_dir, decision, ledger, ledger_path))
     rows = ledger.get("coverage_rows") if isinstance(ledger.get("coverage_rows"), list) else []
     for row in rows:
         if not isinstance(row, dict):
@@ -1074,21 +532,16 @@ def validate_schema(req_dir: Path) -> list[Error]:
     errors: list[Error] = []
     decision_path = req_dir / "coverage-decision.yml"
     ledger_path = req_dir / "coverage-ledger.yml"
-    decision: dict[str, Any] | None = None
     if decision_path.exists():
-        loaded_decision, decision_errors = load_yaml_file(decision_path)
+        decision, decision_errors = load_yaml_file(decision_path)
         errors.extend(decision_errors)
-        if isinstance(loaded_decision, dict):
-            decision = loaded_decision
+        if isinstance(decision, dict):
             errors.extend(validate_decision(req_dir, decision, decision_path))
     if ledger_path.exists():
         ledger, ledger_errors = load_yaml_file(ledger_path)
         errors.extend(ledger_errors)
         if isinstance(ledger, dict):
             errors.extend(validate_ledger_schema(req_dir, ledger, ledger_path))
-            errors.extend(validate_source_state(req_dir, decision if isinstance(decision, dict) else None, ledger, ledger_path))
-    elif isinstance(decision, dict):
-        errors.extend(validate_source_state(req_dir, decision, None, ledger_path))
     if not decision_path.exists() and not ledger_path.exists():
         errors.append(err("E_COVERAGE_ARTIFACT_MISSING", "coverage decision or ledger is required", req_dir))
     return errors

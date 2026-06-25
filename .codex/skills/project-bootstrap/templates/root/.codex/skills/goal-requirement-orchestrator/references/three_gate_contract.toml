@@ -1,0 +1,163 @@
+main_gates = ["Plan", "Impl", "Review"]
+
+[preconditions]
+outside_three_gates = [
+  "requirement_acceptance",
+  "source_obligation_readiness",
+  "coverage_ledger_readiness",
+]
+
+[lifecycle_completion]
+outside_three_gates = [
+  "closeout",
+  "production_readiness",
+]
+
+[plan]
+skill = "planning-orchestrator"
+owned_subdecisions = [
+  "research",
+  "design_depth",
+  "plan-design-review",
+  "plan-ux-review",
+  "plan-devex-review",
+  "plan-eng-review",
+  "scenario-brake",
+  "secondary-plan",
+]
+design_depth_options = ["none", "inline", "full_artifact_required"]
+
+[plan.top_level_removed_gates]
+technical-design = "design_depth.full_artifact_required"
+
+[plan.handoff]
+path_rule = "plans/<plan-id>/plan_handoff.toml"
+required_fields = [
+  "accepted_plan_path",
+  "design_depth",
+  "invoked_subreviews",
+  "deferred_items",
+  "blockers",
+  "verification_strategy",
+  "stale_recheck_routing",
+]
+
+[impl]
+skill = "impl-orchestrator"
+requires = [
+  "accepted_plan_handoff",
+  "worktree_preflight",
+  "scripts/init_worktree.sh",
+  "context-loading",
+  "tdd-workflow",
+]
+
+[review]
+skill = "review-orchestrator"
+lenses = ["visual", "ux", "devex"]
+subagent_review_required_when_any_lens_triggers = true
+parallel_lens_execution_supported = true
+implementation_brake_consumes_review_evidence = true
+implementation_brake = "required_after_post_implementation_reviews"
+ship_prerequisite = "implementation-brake [SHIP]"
+
+[review.lens_routes]
+visual = "visual-qa-hardening"
+ux = "ux-review"
+devex = "devex-review"
+
+[[fixtures.design_depth]]
+id = "no_design_risk"
+design_depth = "none"
+passes_without_technical_design = true
+
+[[fixtures.design_depth]]
+id = "inline_notes"
+design_depth = "inline"
+passes_without_technical_design = true
+
+[[fixtures.design_depth]]
+id = "boundary_state_invariant_risk"
+design_depth = "full_artifact_required"
+passes_without_technical_design = false
+requires_skill = "technical-design"
+
+[[fixtures.review_lens]]
+id = "visual_only"
+lenses = ["visual"]
+requires_subagent_review = true
+
+[[fixtures.review_lens]]
+id = "ux_only"
+lenses = ["ux"]
+requires_subagent_review = true
+
+[[fixtures.review_lens]]
+id = "devex_only"
+lenses = ["devex"]
+requires_subagent_review = true
+
+[[fixtures.review_lens]]
+id = "multi_lens"
+lenses = ["visual", "ux", "devex"]
+requires_subagent_review = true
+
+[[fixtures.review_lens]]
+id = "not_required"
+lenses = []
+requires_structured_not_required_reason = true
+
+[[fixtures.plan_handoff]]
+id = "valid_full"
+expected_valid = true
+payload = { accepted_plan_path = "plans/022/plan.md", design_depth = "full_artifact_required", invoked_subreviews = [{ name = "plan-eng-review", status = "passed", artifact_path = "plans/022/reviews/plan-eng-review.md" }], deferred_items = [], blockers = [], verification_strategy = "targeted policy tests plus scripts/verify", stale_recheck_routing = "none" }
+
+[[fixtures.plan_handoff]]
+id = "invalid_missing_required"
+expected_valid = false
+payload = { design_depth = "inline", invoked_subreviews = [], deferred_items = [], blockers = [], verification_strategy = "targeted tests", stale_recheck_routing = "none" }
+
+[[fixtures.plan_handoff]]
+id = "invalid_design_depth"
+expected_valid = false
+payload = { accepted_plan_path = "plans/022/plan.md", design_depth = "sketch_only", invoked_subreviews = [], deferred_items = [], blockers = [], verification_strategy = "targeted tests", stale_recheck_routing = "none" }
+
+[[fixtures.plan_handoff]]
+id = "invalid_prose_only"
+expected_valid = false
+payload = "conversation says the plan is accepted"
+
+[[fixtures.plan_handoff]]
+id = "invalid_missing_subreview_structure"
+expected_valid = false
+payload = { accepted_plan_path = "plans/022/plan.md", design_depth = "inline", invoked_subreviews = [{ name = "plan-eng-review", status = "passed" }], deferred_items = [], blockers = [], verification_strategy = "targeted tests", stale_recheck_routing = "none" }
+
+[[fixtures.review_state]]
+id = "valid_not_required_ship"
+expected_valid = true
+payload = { triggered_lenses = [], not_required_reason = "no UI, UX, or DevEx surface changed", implementation_brake_verdict = "[SHIP]", unresolved_blockers = [] }
+
+[[fixtures.review_state]]
+id = "valid_multi_lens_ship"
+expected_valid = true
+payload = { triggered_lenses = ["visual", "ux", "devex"], implementation_brake_verdict = "[SHIP]", unresolved_blockers = [], post_implementation_reviews = [{ lens = "visual", status = "passed", evidence_type = "subagent_review", artifact_path = "requirements/022/evidence.md#visual" }, { lens = "ux", status = "passed", evidence_type = "subagent_review", artifact_path = "requirements/022/evidence.md#ux" }, { lens = "devex", status = "passed", evidence_type = "subagent_review", artifact_path = "requirements/022/evidence.md#devex" }] }
+
+[[fixtures.review_state]]
+id = "invalid_triggered_lens_missing_evidence"
+expected_valid = false
+payload = { triggered_lenses = ["visual"], implementation_brake_verdict = "[SHIP]", unresolved_blockers = [], post_implementation_reviews = [] }
+
+[[fixtures.review_state]]
+id = "invalid_cleanup_only_result"
+expected_valid = false
+payload = { triggered_lenses = ["devex"], implementation_brake_verdict = "[SHIP]", unresolved_blockers = [], post_implementation_reviews = [{ lens = "devex", status = "passed", evidence_type = "cleanup_only", artifact_path = "requirements/022/evidence.md#cleanup" }] }
+
+[[fixtures.review_state]]
+id = "invalid_unresolved_blocker"
+expected_valid = false
+payload = { triggered_lenses = ["ux"], implementation_brake_verdict = "[SHIP]", unresolved_blockers = ["ux-review finding"], post_implementation_reviews = [{ lens = "ux", status = "passed", evidence_type = "subagent_review", artifact_path = "requirements/022/evidence.md#ux" }] }
+
+[[fixtures.review_state]]
+id = "invalid_missing_implementation_brake_ship"
+expected_valid = false
+payload = { triggered_lenses = ["devex"], implementation_brake_verdict = "[FIX BEFORE SHIP]", unresolved_blockers = [], post_implementation_reviews = [{ lens = "devex", status = "passed", evidence_type = "subagent_review", artifact_path = "requirements/022/evidence.md#devex" }] }

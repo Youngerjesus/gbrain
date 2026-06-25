@@ -8,13 +8,13 @@ Short description of the project.
 2. Fill `docs/project_overview.md`.
 3. Fill `docs/tech_stack.md`.
 4. Decide whether this project needs a root `DESIGN.md`.
-5. Create the first requirement under `requirements/` or the first goal sequence under `goal-requirements/`.
+5. Create a single requirement under `requirements/` or a complete upfront goal sequence under `goal-requirements/`.
 
 ## Task Worktree Initialization
 
-If new task worktrees need repo-specific setup, add an optional `scripts/init_worktree.sh`.
+Goal-requirements implementation uses isolated task worktrees. Run `scripts/init_worktree.sh <task-worktree-path>` before coding in a task worktree.
 
-The script must be idempotent, local-safe, and accept the task worktree path as its first argument. Use it only for setup that must happen when a fresh task worktree is created and is not covered by normal install or verification commands. Keep secrets and machine-specific values untracked; do not embed them in the script.
+The script is idempotent and local-safe. It rejects the primary/main worktree, requires a non-main task branch, checks that the target worktree has `scripts/verify`, and keeps secrets and machine-specific values untracked.
 
 ## Repository Layout
 

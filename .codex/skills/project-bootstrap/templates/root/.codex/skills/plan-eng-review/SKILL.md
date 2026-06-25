@@ -8,12 +8,13 @@ description: Lightweight pre-implementation engineering review for short-cycle w
 이 스킬은 짧은 주기 개발에서, 구현 직전에 "이 plan으로 바로 들어가도 되나"를 빠르게 압박 검토하는 엔지니어링 리뷰 스킬입니다.
 풀 `project_manager/specs/*` 실행 스펙 파이프라인을 대체하지 않습니다.
 이미 방향과 mini-plan 이 있는 상태에서 scope, reuse, architecture, test gap, failure mode 를 점검하는 preflight gate 역할을 합니다.
+`goal-requirements`의 세 main gate 모델에서는 `planning-orchestrator`가 `Plan` 내부에서 이 스킬을 호출합니다. 이때 `plan-eng-review`는 top-level gate가 아니라 Plan-internal engineering review evidence 입니다.
 
 ## Contract
 
 이 스킬이 제대로 수행된 리뷰는 다음을 보장합니다.
 
-- direct source of truth, mini-plan, 관련 requirement/design gate state 를 먼저 고정하고 drift 를 숨기지 않습니다.
+- direct source of truth, mini-plan, Plan handoff 또는 관련 requirement/design-depth state 를 먼저 고정하고 drift 를 숨기지 않습니다.
 - scope and reuse challenge 를 첫 번째 engineering gate 로 적용해 stated outcome 을 닫는 최소 변경 집합을 찾습니다.
 - 필요한 경우 Architecture review, Executable Contract Compatibility Gate, RALPLAN-DR decision review 를 실행하고, 실행 가능한 code-owned contract evidence 없이는 구현 readiness 를 승인하지 않습니다.
 - proof obligations 를 unit, integration, E2E/manual, observability 중 적절한 수준으로 분리하고 vague "add tests" finding 으로 끝내지 않습니다.
@@ -72,12 +73,14 @@ description: Lightweight pre-implementation engineering review for short-cycle w
 
 `requirement-clarifier`가 만든 `requirements/<requirement-id>/requirements.md`가 있으면 본 계획을 검토하거나 작성하기 전에 반드시 읽습니다. 이 파일을 product requirements source of truth 로 취급하고, mini-plan 이 requirements document 와 충돌하면 구현 리뷰를 계속하기 전에 drift 로 표시합니다.
 
-If the work is running through `goal-requirements`, also read the requirement-local research/design gate state before implementation readiness:
+If the work is running through `goal-requirements`, also read the Plan handoff and requirement-local research/design-depth state before implementation readiness:
 
 - `requirements/<requirement-id>/progress.md`
 - `requirements/<requirement-id>/decisions.md`
 - `requirements/<requirement-id>/evidence.md`
+- `plans/<plan-id>/plan_handoff.toml` when present
 - `requirements/<requirement-id>/research.md` when present or required
+- `requirements/<requirement-id>/technical-design.md` when Plan records `design_depth: full_artifact_required`
 - `requirements/<requirement-id>/technical-design.md` when present or required
 - `requirements/<requirement-id>/architecture.md` when present or required by architecture gate state
 

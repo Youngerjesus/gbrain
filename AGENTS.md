@@ -206,27 +206,62 @@ files, and a test strategy.
 
 - If the task provides or selects `goal-requirements/<id>/sequence.md`, use the
   goal-requirements path. Start with the first unchecked requirement and read
-  the requirement's `requirements.md`, `research.md`, `technical-design.md`,
-  optional `architecture.md`, `progress.md`, `decisions.md`, `evidence.md`, any
-  accepted `plans/<plan-id>/plan.md` and `secondary_plan.md`, plus current git
-  status/diff.
+  `requirements/<requirement-id>/requirements.md`, any Plan artifacts such as
+  `requirements/<requirement-id>/research.md`,
+  `requirements/<requirement-id>/technical-design.md`,
+  `requirements/<requirement-id>/architecture.md`,
+  `requirements/<requirement-id>/progress.md`,
+  `requirements/<requirement-id>/decisions.md`,
+  `requirements/<requirement-id>/evidence.md`, any accepted
+  `plans/<plan-id>/plan.md`, `plans/<plan-id>/secondary_plan.md`,
+  `plans/<plan-id>/plan_handoff.toml`, plus current git status/diff.
+- Before implementation for any goal-requirements slice, bind an isolated task
+  worktree and run `scripts/init_worktree.sh <task-worktree-path>`. A target on
+  branch `main`, the primary/base worktree, a missing worktree binding, stale
+  dynamic state, or a failed init script blocks implementation. Read-only
+  planning may inspect the active checkout after recording cwd, git root,
+  branch, HEAD, and dirty status, but implementation must not proceed in the
+  primary/main worktree.
 - If a broad initiative has no accepted sequence yet, use
   `.codex/skills/goal-requirement-orchestrator/SKILL.md` to create the
-  sequence and first requirement state before implementation.
-- For each goal-requirements slice, evaluate the conditional hard gates in this order: `requirement-clarifier`, `research`, `technical-design`, `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, `scenario-brake`, `secondary-plan`, then after implementation and applicable live evidence `ux-review` and `devex-review`.
-  `plan-design-review` is required for UI-bearing work before
-  `plan-eng-review`; `plan-ux-review` is required for user-facing experience
-  work before `plan-eng-review`; `plan-devex-review` is required for
-  developer-facing experience work before `plan-eng-review`.
+  sequence and every listed requirement's requirement/progress/decisions/evidence
+  state up front; a listed requirement may not remain an unwritten future
+  placeholder.
+- A ready requirement document is not permission to implement directly. After requirement acceptance plus source-obligation and coverage-ledger readiness, each goal-requirements slice uses the three main gate surface: `Plan` -> `Impl` -> `Review`. `Plan` is owned by `planning-orchestrator` and internally
+  handles `research`, `design_depth`, `plan-design-review`, `plan-ux-review`,
+  `plan-devex-review`, `plan-eng-review`, `scenario-brake`, and
+  `secondary-plan`; `technical-design` is available only as the Plan-internal
+  `design_depth: full_artifact_required` option when module boundaries, state,
+  invariants, architecture, testability, or cross-layer handoff risk require a
+  full artifact. `Impl` is owned by `impl-orchestrator`, starts only after
+  accepted Plan handoff, and preserves worktree preflight,
+  `scripts/init_worktree.sh`, context-loading, and TDD. `Review` is owned by
+  `review-orchestrator`, starts only after implementation evidence, and includes
+  triggered post-implementation visual/UX/DevEx review plus
+  `implementation-brake`.
 - During `requirement-clarifier`, broad or high-risk work must either produce
   `coverage-decision.yml` plus any required `coverage-ledger.yml` and
   source-obligation state, or record a structured not-required decision with
   the accepted risk and scope references.
-- After planning is accepted, run context loading and TDD implementation as
-  required. For UI-bearing work, run `visual-qa-hardening` with the
-  `visual-qa-reviewer` companion after browser screenshot verification and
-  before implementation-brake, and also use the `reference-fidelity-reviewer`
-  companion for reference-driven visual work.
+- For Plan-internal sub-decisions, record `not_required` skips with reasons.
+  Artifact existence alone is insufficient: progress, required artifact paths,
+  evidence, decisions, unresolved-item classification, and approval state must
+  agree before Plan can emit `plans/<plan-id>/plan_handoff.toml`. Triggered
+  plan-stage reviews must have durable artifacts under
+  `plans/<plan-id>/reviews/*.md`.
+- During Impl, run `context-loading` before `tdd-workflow` when the
+  context-loading triggers apply. During Review, run `visual-qa-hardening` with
+  the `visual-qa-reviewer` companion after browser screenshot verification for
+  UI-bearing work, and also use the `reference-fidelity-reviewer` companion for
+  reference-driven visual work; run `ux-review` for user-facing experience work;
+  run `devex-review` for developer-facing docs/API/CLI/SDK/library/platform or
+  agent-tool work. If multiple independent post-implementation review lenses
+  trigger, `review-orchestrator` may run them in parallel inside the same Review
+  gate; if any post-implementation review lens triggers, use subagent-based
+  review when runtime supports subagents. After triggered review blockers are
+  closed or recorded not required, run `implementation-brake` with the triggered
+  review evidence and related review agent findings as inputs, then `closeout`
+  only after `[SHIP]`.
 - For MVP, beta, launch, or production-bound goal sequences, reserve a final
   `production-readiness` requirement slice and run `production-readiness` as
   the sequence-level launch gate before marking the goal sequence complete.
@@ -255,6 +290,12 @@ files, and a test strategy.
 - `scripts/verify` is the Codex scaffold policy baseline for the `.codex`
   workflows and must work from any caller cwd. Keep it aligned with the tests it
   invokes.
+- The scaffold baseline includes the worktree preflight regression suite at
+  `tests/verify_worktree_preflight.py`, the coverage ledger validator regression
+  suite at `tests/verify_coverage_ledger.py`, and repo-local skill contract
+  checks such as `tests/verify_gbrain_protocol_skill_contract.py`; keep
+  `scripts/init_worktree.sh`, `scripts/coverage_ledger.py`, skill contract
+  fixtures/tests, and `scripts/verify` aligned when those contracts change.
 - `bun run verify` is the fast local baseline for GBrain's guard scripts.
   `bun test` runs the unit suite. `bun run ci:local` is the full pre-ship gate
   described below.

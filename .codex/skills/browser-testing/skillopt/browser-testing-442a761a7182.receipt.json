@@ -1,0 +1,4841 @@
+{
+  "baseline_gate": {
+    "accepted": true,
+    "per_task_medians": [
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "design-review"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_browser_evidence_if_needed"
+                    },
+                    {
+                      "key": "design-review",
+                      "value": "primary_for_visual_design_audit"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "design-review"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_browser_evidence_if_needed",
+                    "expected": "provide_browser_evidence_if_needed",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "primary_for_visual_design_audit",
+                    "expected": "primary_for_visual_design_audit",
+                    "key": "design-review",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2200,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "design-review"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_browser_evidence_if_needed"
+                      },
+                      {
+                        "key": "design-review",
+                        "value": "primary_for_visual_design_audit"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "design-review"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_browser_evidence_if_needed",
+                      "expected": "provide_browser_evidence_if_needed",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "primary_for_visual_design_audit",
+                      "expected": "primary_for_visual_design_audit",
+                      "key": "design-review",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2200,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "design-review"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_browser_evidence_if_needed"
+                    },
+                    {
+                      "key": "design-review",
+                      "value": "primary_for_visual_design_audit"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "design-review"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_browser_evidence_if_needed",
+                    "expected": "provide_browser_evidence_if_needed",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "primary_for_visual_design_audit",
+                    "expected": "primary_for_visual_design_audit",
+                    "key": "design-review",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2200,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "design-review"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_browser_evidence_if_needed"
+                      },
+                      {
+                        "key": "design-review",
+                        "value": "primary_for_visual_design_audit"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "design-review"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_browser_evidence_if_needed",
+                      "expected": "provide_browser_evidence_if_needed",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "primary_for_visual_design_audit",
+                      "expected": "primary_for_visual_design_audit",
+                      "key": "design-review",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2200,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "design-review"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_browser_evidence_if_needed"
+                    },
+                    {
+                      "key": "design-review",
+                      "value": "primary_for_visual_design_audit"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "design-review"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_browser_evidence_if_needed",
+                    "expected": "provide_browser_evidence_if_needed",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "primary_for_visual_design_audit",
+                    "expected": "primary_for_visual_design_audit",
+                    "key": "design-review",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2200,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "design-review"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_browser_evidence_if_needed"
+                      },
+                      {
+                        "key": "design-review",
+                        "value": "primary_for_visual_design_audit"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "design-review"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_browser_evidence_if_needed",
+                      "expected": "provide_browser_evidence_if_needed",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "primary_for_visual_design_audit",
+                      "expected": "primary_for_visual_design_audit",
+                      "key": "design-review",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2200,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-006"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "durable Playwright",
+                      "value": "add_if_contract_or_regression_risk_requires"
+                    },
+                    {
+                      "key": "decision driver",
+                      "value": "active_contract_and_bug_regression_risk"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                    },
+                    {
+                      "key": "required evidence",
+                      "value": "real login flow"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "add_if_contract_or_regression_risk_requires",
+                    "expected": "add_if_contract_or_regression_risk_requires",
+                    "key": "durable Playwright",
+                    "passed": true
+                  },
+                  {
+                    "actual": "active_contract_and_bug_regression_risk",
+                    "expected": "active_contract_and_bug_regression_risk",
+                    "key": "decision driver",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "real login flow",
+                    "expected": "real login flow",
+                    "key": "required evidence",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2300,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "durable Playwright",
+                        "value": "add_if_contract_or_regression_risk_requires"
+                      },
+                      {
+                        "key": "decision driver",
+                        "value": "active_contract_and_bug_regression_risk"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                      },
+                      {
+                        "key": "required evidence",
+                        "value": "real login flow"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "add_if_contract_or_regression_risk_requires",
+                      "expected": "add_if_contract_or_regression_risk_requires",
+                      "key": "durable Playwright",
+                      "passed": true
+                    },
+                    {
+                      "actual": "active_contract_and_bug_regression_risk",
+                      "expected": "active_contract_and_bug_regression_risk",
+                      "key": "decision driver",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "real login flow",
+                      "expected": "real login flow",
+                      "key": "required evidence",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2300,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "durable Playwright",
+                      "value": "add_if_contract_or_regression_risk_requires"
+                    },
+                    {
+                      "key": "decision driver",
+                      "value": "active_contract_and_bug_regression_risk"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                    },
+                    {
+                      "key": "required evidence",
+                      "value": "real login flow"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "add_if_contract_or_regression_risk_requires",
+                    "expected": "add_if_contract_or_regression_risk_requires",
+                    "key": "durable Playwright",
+                    "passed": true
+                  },
+                  {
+                    "actual": "active_contract_and_bug_regression_risk",
+                    "expected": "active_contract_and_bug_regression_risk",
+                    "key": "decision driver",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "real login flow",
+                    "expected": "real login flow",
+                    "key": "required evidence",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2300,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "durable Playwright",
+                        "value": "add_if_contract_or_regression_risk_requires"
+                      },
+                      {
+                        "key": "decision driver",
+                        "value": "active_contract_and_bug_regression_risk"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                      },
+                      {
+                        "key": "required evidence",
+                        "value": "real login flow"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "add_if_contract_or_regression_risk_requires",
+                      "expected": "add_if_contract_or_regression_risk_requires",
+                      "key": "durable Playwright",
+                      "passed": true
+                    },
+                    {
+                      "actual": "active_contract_and_bug_regression_risk",
+                      "expected": "active_contract_and_bug_regression_risk",
+                      "key": "decision driver",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "real login flow",
+                      "expected": "real login flow",
+                      "key": "required evidence",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2300,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "durable Playwright",
+                      "value": "add_if_contract_or_regression_risk_requires"
+                    },
+                    {
+                      "key": "decision driver",
+                      "value": "active_contract_and_bug_regression_risk"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                    },
+                    {
+                      "key": "required evidence",
+                      "value": "real login flow"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "add_if_contract_or_regression_risk_requires",
+                    "expected": "add_if_contract_or_regression_risk_requires",
+                    "key": "durable Playwright",
+                    "passed": true
+                  },
+                  {
+                    "actual": "active_contract_and_bug_regression_risk",
+                    "expected": "active_contract_and_bug_regression_risk",
+                    "key": "decision driver",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "real login flow",
+                    "expected": "real login flow",
+                    "key": "required evidence",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2300,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "durable Playwright",
+                        "value": "add_if_contract_or_regression_risk_requires"
+                      },
+                      {
+                        "key": "decision driver",
+                        "value": "active_contract_and_bug_regression_risk"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                      },
+                      {
+                        "key": "required evidence",
+                        "value": "real login flow"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "add_if_contract_or_regression_risk_requires",
+                      "expected": "add_if_contract_or_regression_risk_requires",
+                      "key": "durable Playwright",
+                      "passed": true
+                    },
+                    {
+                      "actual": "active_contract_and_bug_regression_risk",
+                      "expected": "active_contract_and_bug_regression_risk",
+                      "key": "decision driver",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "real login flow",
+                      "expected": "real login flow",
+                      "key": "required evidence",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2300,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-007"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "artifact root",
+                      "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                    },
+                    {
+                      "key": "spec-local qa verdict",
+                      "value": "skip_when_multiple_unrelated_specs"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "key": "artifact root",
+                    "passed": true
+                  },
+                  {
+                    "actual": "skip_when_multiple_unrelated_specs",
+                    "expected": "skip_when_multiple_unrelated_specs",
+                    "key": "spec-local qa verdict",
+                    "passed": true
+                  },
+                  {
+                    "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required",
+                    "expected": "required",
+                    "key": "cleanup",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": true
+                    },
+                    {
+                      "actual": "skip_when_multiple_unrelated_specs",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": true
+                    },
+                    {
+                      "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "`browser-testing`",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`contexts/browser-testing/<run-name>-<YYYYMMDD>`",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`skip_when_multiple_unrelated_specs`",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`separate_gate_per_ui_bearing_requirement_if_required`",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`required`",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": false
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": false,
+                  "score": 0.0
+                }
+              ],
+              "initial_score": 0.5,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "artifact root",
+                      "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                    },
+                    {
+                      "key": "spec-local qa verdict",
+                      "value": "skip_when_multiple_unrelated_specs"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "key": "artifact root",
+                    "passed": true
+                  },
+                  {
+                    "actual": "skip_when_multiple_unrelated_specs",
+                    "expected": "skip_when_multiple_unrelated_specs",
+                    "key": "spec-local qa verdict",
+                    "passed": true
+                  },
+                  {
+                    "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required",
+                    "expected": "required",
+                    "key": "cleanup",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": true
+                    },
+                    {
+                      "actual": "skip_when_multiple_unrelated_specs",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": true
+                    },
+                    {
+                      "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "artifact root",
+                      "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                    },
+                    {
+                      "key": "spec-local qa verdict",
+                      "value": "skip_when_multiple_unrelated_specs"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "key": "artifact root",
+                    "passed": true
+                  },
+                  {
+                    "actual": "skip_when_multiple_unrelated_specs",
+                    "expected": "skip_when_multiple_unrelated_specs",
+                    "key": "spec-local qa verdict",
+                    "passed": true
+                  },
+                  {
+                    "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required",
+                    "expected": "required",
+                    "key": "cleanup",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": true
+                    },
+                    {
+                      "actual": "skip_when_multiple_unrelated_specs",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": true
+                    },
+                    {
+                      "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-008"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "stop_env.sh_or_project_stop_command"
+                    },
+                    {
+                      "key": "left running exception",
+                      "value": "only_if_intentional_and_report_url_and_reason"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "stop_env.sh_or_project_stop_command",
+                    "expected": "stop_env.sh_or_project_stop_command",
+                    "key": "cleanup",
+                    "passed": true
+                  },
+                  {
+                    "actual": "only_if_intentional_and_report_url_and_reason",
+                    "expected": "only_if_intentional_and_report_url_and_reason",
+                    "key": "left running exception",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required",
+                    "expected": "not_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 1900,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": true
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 1900,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command (`./.codex/skills/browser-testing/scripts/stop_env.sh`)",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": false
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason (`none` for normal completion)",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": false
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": false,
+                  "score": 0.5
+                }
+              ],
+              "initial_score": 0.75,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "stop_env.sh_or_project_stop_command"
+                    },
+                    {
+                      "key": "left running exception",
+                      "value": "only_if_intentional_and_report_url_and_reason"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "stop_env.sh_or_project_stop_command",
+                    "expected": "stop_env.sh_or_project_stop_command",
+                    "key": "cleanup",
+                    "passed": true
+                  },
+                  {
+                    "actual": "only_if_intentional_and_report_url_and_reason",
+                    "expected": "only_if_intentional_and_report_url_and_reason",
+                    "key": "left running exception",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required",
+                    "expected": "not_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 1900,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": true
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 1900,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "stop_env.sh_or_project_stop_command"
+                    },
+                    {
+                      "key": "left running exception",
+                      "value": "only_if_intentional_and_report_url_and_reason"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "stop_env.sh_or_project_stop_command",
+                    "expected": "stop_env.sh_or_project_stop_command",
+                    "key": "cleanup",
+                    "passed": true
+                  },
+                  {
+                    "actual": "only_if_intentional_and_report_url_and_reason",
+                    "expected": "only_if_intentional_and_report_url_and_reason",
+                    "key": "left running exception",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required",
+                    "expected": "not_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 1900,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": true
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 1900,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-009"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "visual-qa-hardening"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                    },
+                    {
+                      "key": "companion reviewer",
+                      "value": "visual-qa-reviewer_when_available"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "visual-qa-hardening"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-reviewer_when_available",
+                    "expected": "visual-qa-reviewer_when_available",
+                    "key": "companion reviewer",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-reviewer_when_available",
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "`visual-qa-hardening`",
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`provide_same_run_browser_screenshots_and_flow_evidence`",
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`required_after_browser_screenshot_verification_before_implementation_brake`",
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`visual-qa-reviewer_when_available`",
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": false
+                    },
+                    {
+                      "actual": "`visual-qa-hardening`",
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": false
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": false,
+                  "score": 0.0
+                }
+              ],
+              "initial_score": 0.5,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "visual-qa-hardening"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                    },
+                    {
+                      "key": "companion reviewer",
+                      "value": "visual-qa-reviewer_when_available"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "visual-qa-hardening"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": null,
+                    "expected": "visual-qa-hardening",
+                    "key": "primary skill",
+                    "passed": false
+                  },
+                  {
+                    "actual": null,
+                    "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "key": "browser-testing role",
+                    "passed": false
+                  },
+                  {
+                    "actual": null,
+                    "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "key": "visual QA hardening",
+                    "passed": false
+                  },
+                  {
+                    "actual": null,
+                    "expected": "visual-qa-reviewer_when_available",
+                    "key": "companion reviewer",
+                    "passed": false
+                  },
+                  {
+                    "actual": null,
+                    "expected": "visual-qa-hardening",
+                    "key": "verdict owner",
+                    "passed": false
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": false,
+                "score": 0.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": false
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": false,
+                  "score": 0.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.5,
+              "initial_missing": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": false
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": false,
+                  "score": 0.0
+                }
+              ],
+              "initial_score": 0.5,
+              "missing": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": false
+                    },
+                    {
+                      "actual": null,
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": false
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": false,
+                  "score": 0.0
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.5
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "visual-qa-hardening"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                    },
+                    {
+                      "key": "companion reviewer",
+                      "value": "visual-qa-reviewer_when_available"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "visual-qa-hardening"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-reviewer_when_available",
+                    "expected": "visual-qa-reviewer_when_available",
+                    "key": "companion reviewer",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-reviewer_when_available",
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          0.5,
+          1.0
+        ],
+        "task_id": "browser-testing-010"
+      }
+    ],
+    "reason": null,
+    "sel_score": 1.0
+  },
+  "baseline_sel_score": 1.0,
+  "benchmark_sha256": "a44b07f03228d1373d87b53b977966d75a1c9cf773d08aecb65504ec83b4022c",
+  "candidate_sha256": "442a761a71829dc46cddb7441057bfd0f3dba8b9edb1d9abd9667991eacd3f36",
+  "held_out": null,
+  "llm_calls": 42,
+  "mode": "live_closed_loop",
+  "models": {
+    "judge": "gpt-5.3-codex-spark",
+    "optimizer": "gpt-5.5",
+    "target": "gpt-5.3-codex-spark"
+  },
+  "outcome": "no_improvement",
+  "rejected_edits": [
+    {
+      "edit": {
+        "anchor": "## Output Format",
+        "content": "\nWhen the task asks for Markdown key-value lines, emit plain values without backticks or extra decoration so automated mapping checks can read them. For example: `primary skill: browser-testing`, not `primary skill: `browser-testing``.\n",
+        "op": "add",
+        "reason": "Prevents parser failures where expected values are wrapped in Markdown code ticks."
+      },
+      "epoch": 1,
+      "reason": "below_baseline",
+      "task_signal": {
+        "improved": [],
+        "regressed": [],
+        "unchanged": [
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-006"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-007"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-008"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-009"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-010"
+          }
+        ]
+      }
+    },
+    {
+      "edit": {
+        "anchor": "## Output Format",
+        "content": "\nFor read-only verifier runs, set `mode: verifier`, `may modify code: false`, `durable Playwright: not_allowed_in_read_only_verifier`, `required evidence: contexts/browser-testing`, and `verdict: pass/fail/blocked` when asked for those keys. Use the report body to explain the specific pass, fail, or blocked reason without changing the machine-readable value.\n",
+        "op": "add",
+        "reason": "Makes verifier-mode key values align with the expected contract, especially required evidence and verdict."
+      },
+      "epoch": 1,
+      "reason": "below_baseline",
+      "task_signal": {
+        "improved": [],
+        "regressed": [],
+        "unchanged": [
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-006"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-007"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-008"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-009"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-010"
+          }
+        ]
+      }
+    },
+    {
+      "edit": {
+        "anchor": "## Output Format",
+        "content": "\nFor unclear click targets, prefer the exact values `interaction strategy: inspect_before_act`, `selector strategy: accessibility_or_role_visible_text_or_dom_observed_target`, `durable Playwright: optional_after_flow_understood`, and `visual QA hardening: not_required` unless the active contract adds a visual gate.\n",
+        "op": "add",
+        "reason": "Codifies the intended routing and selector wording for dynamic-page interaction tasks."
+      },
+      "epoch": 1,
+      "reason": "below_baseline",
+      "task_signal": {
+        "improved": [],
+        "regressed": [],
+        "unchanged": [
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-006"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-007"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-008"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-009"
+          },
+          {
+            "after": 1.0,
+            "before": 1.0,
+            "task_id": "browser-testing-010"
+          }
+        ]
+      }
+    }
+  ],
+  "run_id": "browser-testing-442a761a7182",
+  "sel_score": 1.0,
+  "split": {
+    "sel": 5,
+    "test": 5,
+    "train": 5
+  },
+  "test_gate": null,
+  "test_score": null,
+  "trace": ".codex/skills/browser-testing/skillopt/browser-testing-442a761a7182.trace.json",
+  "validation_gate": {
+    "accepted": false,
+    "per_task_medians": [
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "design-review"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_browser_evidence_if_needed"
+                    },
+                    {
+                      "key": "design-review",
+                      "value": "primary_for_visual_design_audit"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "design-review"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_browser_evidence_if_needed",
+                    "expected": "provide_browser_evidence_if_needed",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "primary_for_visual_design_audit",
+                    "expected": "primary_for_visual_design_audit",
+                    "key": "design-review",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2200,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "design-review"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_browser_evidence_if_needed"
+                      },
+                      {
+                        "key": "design-review",
+                        "value": "primary_for_visual_design_audit"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "design-review"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_browser_evidence_if_needed",
+                      "expected": "provide_browser_evidence_if_needed",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "primary_for_visual_design_audit",
+                      "expected": "primary_for_visual_design_audit",
+                      "key": "design-review",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2200,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "design-review"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_browser_evidence_if_needed"
+                    },
+                    {
+                      "key": "design-review",
+                      "value": "primary_for_visual_design_audit"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "design-review"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_browser_evidence_if_needed",
+                    "expected": "provide_browser_evidence_if_needed",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "primary_for_visual_design_audit",
+                    "expected": "primary_for_visual_design_audit",
+                    "key": "design-review",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2200,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "design-review"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_browser_evidence_if_needed"
+                      },
+                      {
+                        "key": "design-review",
+                        "value": "primary_for_visual_design_audit"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "design-review"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_browser_evidence_if_needed",
+                      "expected": "provide_browser_evidence_if_needed",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "primary_for_visual_design_audit",
+                      "expected": "primary_for_visual_design_audit",
+                      "key": "design-review",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2200,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "design-review"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_browser_evidence_if_needed"
+                    },
+                    {
+                      "key": "design-review",
+                      "value": "primary_for_visual_design_audit"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "design-review"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_browser_evidence_if_needed",
+                    "expected": "provide_browser_evidence_if_needed",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "primary_for_visual_design_audit",
+                    "expected": "primary_for_visual_design_audit",
+                    "key": "design-review",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "design-review",
+                    "expected": "design-review",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2200,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "design-review"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_browser_evidence_if_needed"
+                      },
+                      {
+                        "key": "design-review",
+                        "value": "primary_for_visual_design_audit"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_primary_unless_post_implementation_ui_requirement_gate"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "design-review"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_browser_evidence_if_needed",
+                      "expected": "provide_browser_evidence_if_needed",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "primary_for_visual_design_audit",
+                      "expected": "primary_for_visual_design_audit",
+                      "key": "design-review",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "expected": "not_primary_unless_post_implementation_ui_requirement_gate",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "design-review",
+                      "expected": "design-review",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2200,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-006"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "durable Playwright",
+                      "value": "add_if_contract_or_regression_risk_requires"
+                    },
+                    {
+                      "key": "decision driver",
+                      "value": "active_contract_and_bug_regression_risk"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                    },
+                    {
+                      "key": "required evidence",
+                      "value": "real login flow"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "add_if_contract_or_regression_risk_requires",
+                    "expected": "add_if_contract_or_regression_risk_requires",
+                    "key": "durable Playwright",
+                    "passed": true
+                  },
+                  {
+                    "actual": "active_contract_and_bug_regression_risk",
+                    "expected": "active_contract_and_bug_regression_risk",
+                    "key": "decision driver",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "real login flow",
+                    "expected": "real login flow",
+                    "key": "required evidence",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2300,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "durable Playwright",
+                        "value": "add_if_contract_or_regression_risk_requires"
+                      },
+                      {
+                        "key": "decision driver",
+                        "value": "active_contract_and_bug_regression_risk"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                      },
+                      {
+                        "key": "required evidence",
+                        "value": "real login flow"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "add_if_contract_or_regression_risk_requires",
+                      "expected": "add_if_contract_or_regression_risk_requires",
+                      "key": "durable Playwright",
+                      "passed": true
+                    },
+                    {
+                      "actual": "active_contract_and_bug_regression_risk",
+                      "expected": "active_contract_and_bug_regression_risk",
+                      "key": "decision driver",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "real login flow",
+                      "expected": "real login flow",
+                      "key": "required evidence",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2300,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "durable Playwright",
+                      "value": "add_if_contract_or_regression_risk_requires"
+                    },
+                    {
+                      "key": "decision driver",
+                      "value": "active_contract_and_bug_regression_risk"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                    },
+                    {
+                      "key": "required evidence",
+                      "value": "real login flow"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "add_if_contract_or_regression_risk_requires",
+                    "expected": "add_if_contract_or_regression_risk_requires",
+                    "key": "durable Playwright",
+                    "passed": true
+                  },
+                  {
+                    "actual": "active_contract_and_bug_regression_risk",
+                    "expected": "active_contract_and_bug_regression_risk",
+                    "key": "decision driver",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "real login flow",
+                    "expected": "real login flow",
+                    "key": "required evidence",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2300,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "durable Playwright",
+                        "value": "add_if_contract_or_regression_risk_requires"
+                      },
+                      {
+                        "key": "decision driver",
+                        "value": "active_contract_and_bug_regression_risk"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                      },
+                      {
+                        "key": "required evidence",
+                        "value": "real login flow"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "add_if_contract_or_regression_risk_requires",
+                      "expected": "add_if_contract_or_regression_risk_requires",
+                      "key": "durable Playwright",
+                      "passed": true
+                    },
+                    {
+                      "actual": "active_contract_and_bug_regression_risk",
+                      "expected": "active_contract_and_bug_regression_risk",
+                      "key": "decision driver",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "real login flow",
+                      "expected": "real login flow",
+                      "key": "required evidence",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2300,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "durable Playwright",
+                      "value": "add_if_contract_or_regression_risk_requires"
+                    },
+                    {
+                      "key": "decision driver",
+                      "value": "active_contract_and_bug_regression_risk"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                    },
+                    {
+                      "key": "required evidence",
+                      "value": "real login flow"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "add_if_contract_or_regression_risk_requires",
+                    "expected": "add_if_contract_or_regression_risk_requires",
+                    "key": "durable Playwright",
+                    "passed": true
+                  },
+                  {
+                    "actual": "active_contract_and_bug_regression_risk",
+                    "expected": "active_contract_and_bug_regression_risk",
+                    "key": "decision driver",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "real login flow",
+                    "expected": "real login flow",
+                    "key": "required evidence",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2300,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "durable Playwright",
+                        "value": "add_if_contract_or_regression_risk_requires"
+                      },
+                      {
+                        "key": "decision driver",
+                        "value": "active_contract_and_bug_regression_risk"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required_unless_ui_layout_or_visual_state_changed"
+                      },
+                      {
+                        "key": "required evidence",
+                        "value": "real login flow"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "add_if_contract_or_regression_risk_requires",
+                      "expected": "add_if_contract_or_regression_risk_requires",
+                      "key": "durable Playwright",
+                      "passed": true
+                    },
+                    {
+                      "actual": "active_contract_and_bug_regression_risk",
+                      "expected": "active_contract_and_bug_regression_risk",
+                      "key": "decision driver",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "expected": "not_required_unless_ui_layout_or_visual_state_changed",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "real login flow",
+                      "expected": "real login flow",
+                      "key": "required evidence",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2300,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-007"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "artifact root",
+                      "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                    },
+                    {
+                      "key": "spec-local qa verdict",
+                      "value": "skip_when_multiple_unrelated_specs"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "key": "artifact root",
+                    "passed": true
+                  },
+                  {
+                    "actual": "skip_when_multiple_unrelated_specs",
+                    "expected": "skip_when_multiple_unrelated_specs",
+                    "key": "spec-local qa verdict",
+                    "passed": true
+                  },
+                  {
+                    "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required",
+                    "expected": "required",
+                    "key": "cleanup",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": true
+                    },
+                    {
+                      "actual": "skip_when_multiple_unrelated_specs",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": true
+                    },
+                    {
+                      "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "artifact root",
+                      "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                    },
+                    {
+                      "key": "spec-local qa verdict",
+                      "value": "skip_when_multiple_unrelated_specs"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "key": "artifact root",
+                    "passed": true
+                  },
+                  {
+                    "actual": "skip_when_multiple_unrelated_specs",
+                    "expected": "skip_when_multiple_unrelated_specs",
+                    "key": "spec-local qa verdict",
+                    "passed": true
+                  },
+                  {
+                    "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required",
+                    "expected": "required",
+                    "key": "cleanup",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": true
+                    },
+                    {
+                      "actual": "skip_when_multiple_unrelated_specs",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": true
+                    },
+                    {
+                      "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "artifact root",
+                      "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                    },
+                    {
+                      "key": "spec-local qa verdict",
+                      "value": "skip_when_multiple_unrelated_specs"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                    "key": "artifact root",
+                    "passed": true
+                  },
+                  {
+                    "actual": "skip_when_multiple_unrelated_specs",
+                    "expected": "skip_when_multiple_unrelated_specs",
+                    "key": "spec-local qa verdict",
+                    "passed": true
+                  },
+                  {
+                    "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required",
+                    "expected": "required",
+                    "key": "cleanup",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "artifact root",
+                        "value": "contexts/browser-testing/<run-name>-<YYYYMMDD>"
+                      },
+                      {
+                        "key": "spec-local qa verdict",
+                        "value": "skip_when_multiple_unrelated_specs"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "separate_gate_per_ui_bearing_requirement_if_required"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "expected": "contexts/browser-testing/<run-name>-<YYYYMMDD>",
+                      "key": "artifact root",
+                      "passed": true
+                    },
+                    {
+                      "actual": "skip_when_multiple_unrelated_specs",
+                      "expected": "skip_when_multiple_unrelated_specs",
+                      "key": "spec-local qa verdict",
+                      "passed": true
+                    },
+                    {
+                      "actual": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "expected": "separate_gate_per_ui_bearing_requirement_if_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required",
+                      "expected": "required",
+                      "key": "cleanup",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-008"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "stop_env.sh_or_project_stop_command"
+                    },
+                    {
+                      "key": "left running exception",
+                      "value": "only_if_intentional_and_report_url_and_reason"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "stop_env.sh_or_project_stop_command",
+                    "expected": "stop_env.sh_or_project_stop_command",
+                    "key": "cleanup",
+                    "passed": true
+                  },
+                  {
+                    "actual": "only_if_intentional_and_report_url_and_reason",
+                    "expected": "only_if_intentional_and_report_url_and_reason",
+                    "key": "left running exception",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required",
+                    "expected": "not_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 1900,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": true
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 1900,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "stop_env.sh_or_project_stop_command"
+                    },
+                    {
+                      "key": "left running exception",
+                      "value": "only_if_intentional_and_report_url_and_reason"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "stop_env.sh_or_project_stop_command",
+                    "expected": "stop_env.sh_or_project_stop_command",
+                    "key": "cleanup",
+                    "passed": true
+                  },
+                  {
+                    "actual": "only_if_intentional_and_report_url_and_reason",
+                    "expected": "only_if_intentional_and_report_url_and_reason",
+                    "key": "left running exception",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required",
+                    "expected": "not_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 1900,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": true
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 1900,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "browser-testing"
+                    },
+                    {
+                      "key": "cleanup",
+                      "value": "stop_env.sh_or_project_stop_command"
+                    },
+                    {
+                      "key": "left running exception",
+                      "value": "only_if_intentional_and_report_url_and_reason"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "not_required"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "browser-testing",
+                    "expected": "browser-testing",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "stop_env.sh_or_project_stop_command",
+                    "expected": "stop_env.sh_or_project_stop_command",
+                    "key": "cleanup",
+                    "passed": true
+                  },
+                  {
+                    "actual": "only_if_intentional_and_report_url_and_reason",
+                    "expected": "only_if_intentional_and_report_url_and_reason",
+                    "key": "left running exception",
+                    "passed": true
+                  },
+                  {
+                    "actual": "not_required",
+                    "expected": "not_required",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 1900,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "browser-testing"
+                      },
+                      {
+                        "key": "cleanup",
+                        "value": "stop_env.sh_or_project_stop_command"
+                      },
+                      {
+                        "key": "left running exception",
+                        "value": "only_if_intentional_and_report_url_and_reason"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "not_required"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "browser-testing",
+                      "expected": "browser-testing",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "stop_env.sh_or_project_stop_command",
+                      "expected": "stop_env.sh_or_project_stop_command",
+                      "key": "cleanup",
+                      "passed": true
+                    },
+                    {
+                      "actual": "only_if_intentional_and_report_url_and_reason",
+                      "expected": "only_if_intentional_and_report_url_and_reason",
+                      "key": "left running exception",
+                      "passed": true
+                    },
+                    {
+                      "actual": "not_required",
+                      "expected": "not_required",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 1900,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-009"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "visual-qa-hardening"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                    },
+                    {
+                      "key": "companion reviewer",
+                      "value": "visual-qa-reviewer_when_available"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "visual-qa-hardening"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-reviewer_when_available",
+                    "expected": "visual-qa-reviewer_when_available",
+                    "key": "companion reviewer",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-reviewer_when_available",
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "visual-qa-hardening"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                    },
+                    {
+                      "key": "companion reviewer",
+                      "value": "visual-qa-reviewer_when_available"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "visual-qa-hardening"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-reviewer_when_available",
+                    "expected": "visual-qa-reviewer_when_available",
+                    "key": "companion reviewer",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-reviewer_when_available",
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": {
+                  "items": [
+                    {
+                      "key": "primary skill",
+                      "value": "visual-qa-hardening"
+                    },
+                    {
+                      "key": "browser-testing role",
+                      "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                    },
+                    {
+                      "key": "visual QA hardening",
+                      "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                    },
+                    {
+                      "key": "companion reviewer",
+                      "value": "visual-qa-reviewer_when_available"
+                    },
+                    {
+                      "key": "verdict owner",
+                      "value": "visual-qa-hardening"
+                    }
+                  ]
+                },
+                "items": [
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "primary skill",
+                    "passed": true
+                  },
+                  {
+                    "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                    "key": "browser-testing role",
+                    "passed": true
+                  },
+                  {
+                    "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                    "key": "visual QA hardening",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-reviewer_when_available",
+                    "expected": "visual-qa-reviewer_when_available",
+                    "key": "companion reviewer",
+                    "passed": true
+                  },
+                  {
+                    "actual": "visual-qa-hardening",
+                    "expected": "visual-qa-hardening",
+                    "key": "verdict owner",
+                    "passed": true
+                  }
+                ],
+                "op": "mapping_contains",
+                "passed": true,
+                "score": 1.0
+              },
+              {
+                "arg": 2400,
+                "op": "max_chars",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": {
+                    "items": [
+                      {
+                        "key": "primary skill",
+                        "value": "visual-qa-hardening"
+                      },
+                      {
+                        "key": "browser-testing role",
+                        "value": "provide_same_run_browser_screenshots_and_flow_evidence"
+                      },
+                      {
+                        "key": "visual QA hardening",
+                        "value": "required_after_browser_screenshot_verification_before_implementation_brake"
+                      },
+                      {
+                        "key": "companion reviewer",
+                        "value": "visual-qa-reviewer_when_available"
+                      },
+                      {
+                        "key": "verdict owner",
+                        "value": "visual-qa-hardening"
+                      }
+                    ]
+                  },
+                  "items": [
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "primary skill",
+                      "passed": true
+                    },
+                    {
+                      "actual": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "expected": "provide_same_run_browser_screenshots_and_flow_evidence",
+                      "key": "browser-testing role",
+                      "passed": true
+                    },
+                    {
+                      "actual": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "expected": "required_after_browser_screenshot_verification_before_implementation_brake",
+                      "key": "visual QA hardening",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-reviewer_when_available",
+                      "expected": "visual-qa-reviewer_when_available",
+                      "key": "companion reviewer",
+                      "passed": true
+                    },
+                    {
+                      "actual": "visual-qa-hardening",
+                      "expected": "visual-qa-hardening",
+                      "key": "verdict owner",
+                      "passed": true
+                    }
+                  ],
+                  "op": "mapping_contains",
+                  "passed": true,
+                  "score": 1.0
+                },
+                {
+                  "arg": 2400,
+                  "op": "max_chars",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "browser-testing-010"
+      }
+    ],
+    "reason": "below_baseline",
+    "sel_score": 1.0
+  }
+}

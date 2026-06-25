@@ -138,6 +138,40 @@ def assert_cso_reference_is_codex_native() -> None:
     assert_contains(text, "`rg`", "cso audit phases")
 
 
+def assert_decision_skills_require_metric_approval() -> None:
+    decision = read(".codex/skills/decision-brake/SKILL.md")
+    lenses = read(".codex/skills/decision-brake/references/review-lenses.md")
+    root_cause = read(".codex/skills/root-cause-solution/SKILL.md")
+    template_decision = read(".codex/skills/project-bootstrap/templates/root/.codex/skills/decision-brake/SKILL.md")
+    template_lenses = read(
+        ".codex/skills/project-bootstrap/templates/root/.codex/skills/decision-brake/references/review-lenses.md"
+    )
+
+    if template_decision != decision:
+        raise AssertionError("project-bootstrap decision-brake SKILL.md template drifted from runtime skill")
+    if template_lenses != lenses:
+        raise AssertionError("project-bootstrap decision-brake review-lenses.md template drifted from runtime skill")
+
+    for label, text in [
+        ("decision-brake", decision),
+        ("decision-brake review lenses", lenses),
+        ("root-cause-solution", root_cause),
+    ]:
+        for required in [
+            "first-principles decision-quality metrics",
+            "human approval",
+            "[NEEDS METRIC APPROVAL]",
+        ]:
+            assert_contains(text, required, label)
+
+    for label, text in [
+        ("decision-brake", decision),
+        ("root-cause-solution", root_cause),
+    ]:
+        assert_contains(text, "승인 후에는 승인된 metrics 를 기준으로만", label)
+        assert_contains(text, "평가 중 metric 을 바꿔야 하면 다시 human approval", label)
+
+
 def assert_devex_skills_preserve_gstack_review_shape() -> None:
     plan = read(".codex/skills/plan-devex-review/SKILL.md")
     live = read(".codex/skills/devex-review/SKILL.md")
@@ -358,7 +392,7 @@ def assert_ios_clean_uses_authoritative_release_evidence() -> None:
 
 def assert_repo_verify_runs_this_contract() -> None:
     verify = read("scripts/verify")
-    assert_contains(verify, "python3 tests/verify_gstack_skill_contracts.py", "scripts/verify")
+    assert_contains(verify, '"$PYTHON" tests/verify_gstack_skill_contracts.py', "scripts/verify")
 
 
 def main() -> None:
@@ -366,6 +400,7 @@ def main() -> None:
     assert_references_exist()
     assert_no_machine_specific_paths()
     assert_cso_reference_is_codex_native()
+    assert_decision_skills_require_metric_approval()
     assert_devex_skills_preserve_gstack_review_shape()
     assert_ux_skills_preserve_gstack_review_shape_without_design_overlap()
     assert_ios_templates_compose()

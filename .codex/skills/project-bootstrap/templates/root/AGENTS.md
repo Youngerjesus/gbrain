@@ -2,6 +2,10 @@
 
 Primary audience: coding agents and maintainers working inside this product repo.
 
+## Human Role
+
+The human user acts as the agent work environment designer. When the user points out an agent mistake, treat it as a signal to discuss the underlying environment design clearly before changing the surrounding contracts, checks, docs, or workflow so future agents are less likely to repeat it.
+
 ## Product Direction
 
 - Core value: `[Describe the primary value this project must deliver.]`
@@ -19,6 +23,8 @@ Primary audience: coding agents and maintainers working inside this product repo
 - Keep durable documentation aligned when user-facing behavior, compatibility guarantees, architecture boundaries, or verification commands change.
 - For UI-bearing work, read `DESIGN.md` before planning or implementation when it exists. Treat it as the product visual contract for app shell, navigation, layout, typography, spacing, component primitives, state treatment, and reference-fidelity boundaries.
 - Prefer subtraction and narrow changes over additive compatibility logic unless stability, migration, or an explicit contract requires the extra path.
+- For broad or bulk work, such as multi-screen UI builds, migrations, codebase ports, large data changes, or reference-parity tasks, maintain and check a structured coverage ledger or equivalent source-obligation tracker before treating requirements, plans, implementation, or closeout as complete, so agents cannot silently omit items, collapse examples into total scope, or shrink the requested work.
+- Do not silently downgrade the user's requested behavior, execution boundary, artifact class, or evidence level. If the requested contract cannot be implemented with the repo's current capabilities, stop and state the gap before changing scope; any weaker substitute, scaffold, mock, proxy, fixture, partial implementation, or documentation-only artifact requires explicit user approval before it can replace the original request. Completion evidence must match the accepted contract, not an unapproved downgraded implementation.
 
 ## Context Loading Before Implementation
 
@@ -39,12 +45,10 @@ Primary audience: coding agents and maintainers working inside this product repo
 - Add dependencies only when the task needs them and the repo policy allows them.
 - Keep documentation aligned when durable assumptions change.
 
-## Module Design For AI Workability
+## Test Addition Principles
 
-- Do not treat file count or line count as the quality target. A good structure has small public interfaces, cohesive internal implementation, clear ownership, and nearby test boundaries: deep modules.
-- Avoid shallow wrappers, pass-through modules, role-free file splits, circular dependencies, and scattered dependencies because they make it harder for AI agents to identify edit locations, test boundaries, and change impact.
-- Refactor only when the change improves boundaries, dependency direction, testability, or local reasoning; do not split files just to make them smaller.
-- Add an abstraction only when it reduces real complexity, removes meaningful duplication, or clearly matches an established local pattern.
+- Test additions should follow `.codex/skills/tdd-workflow/SKILL.md`: prove behavior or executable acceptance criteria with the narrowest honest evidence, and prefer observed red/green for behavior changes and bugfixes.
+- Avoid artificial duplicate tests for already-covered or non-behavioral changes; match verification type to the problem, then finish with targeted checks plus `scripts/verify`.
 
 ## Coverage Ledger Gates
 
@@ -60,6 +64,13 @@ Primary audience: coding agents and maintainers working inside this product repo
 - Run `source-obligation-reviewer` and require structured `source_obligation_review_status`/reconciliation reviewer `SHIP` before treating `scope-reconciliation.yml` as accepted scope. Missing, stale, failed, or unavailable source-obligation evidence is a blocker, not warning-only.
 - Run `scripts/coverage_ledger.py validate --mode readiness --requirement-dir requirements/<requirement-id>` before planning/implementation when source-obligation state is required, and `scripts/coverage_ledger.py validate --mode closure --requirement-dir requirements/<requirement-id>` before closeout.
 - Source inventory, scope reconciliation, reviewer status, and validator conflicts cannot be overridden by prose in requirements, progress, evidence, reviewer summaries, closeout, or chat.
+
+## Module Design For AI Workability
+
+- Do not treat file count or line count as the quality target. A good structure has small public interfaces, cohesive internal implementation, clear ownership, and nearby test boundaries: deep modules.
+- Avoid shallow wrappers, pass-through modules, role-free file splits, circular dependencies, and scattered dependencies because they make it harder for AI agents to identify edit locations, test boundaries, and change impact.
+- Refactor only when the change improves boundaries, dependency direction, testability, or local reasoning; do not split files just to make them smaller.
+- Add an abstraction only when it reduces real complexity, removes meaningful duplication, or clearly matches an established local pattern.
 
 ## Anti Coding Patterns
 
@@ -81,12 +92,13 @@ Primary audience: coding agents and maintainers working inside this product repo
 
 ## Execution Source Selection
 
-- If the task provides or selects `goal-requirements/<id>/sequence.md`, use the goal-requirements path. Start with the first unchecked requirement and read `requirements/<requirement-id>/requirements.md`, `requirements/<requirement-id>/research.md`, `requirements/<requirement-id>/technical-design.md`, `requirements/<requirement-id>/architecture.md`, `requirements/<requirement-id>/progress.md`, `requirements/<requirement-id>/decisions.md`, `requirements/<requirement-id>/evidence.md`, any accepted `plans/<plan-id>/plan.md` and `plans/<plan-id>/secondary_plan.md`, plus current git status/diff.
-- If a broad initiative has no accepted sequence yet, use `goal-requirement-orchestrator` to create `goal-requirements/<id>/sequence.md`, `goal-requirements/<id>/progress.md`, and the first requirement's requirement/progress/decisions/evidence state; later requirement documents remain deferred until their slice starts.
-- A ready requirement document is not permission to implement directly. For each goal-requirements slice, evaluate the conditional hard gates in this order: `requirement-clarifier`, `research`, `technical-design`, `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, `scenario-brake`, `secondary-plan`, then after implementation and applicable live evidence `ux-review` and `devex-review`; `research` writes `requirements/<requirement-id>/research.md` when required, `technical-design` writes `requirements/<requirement-id>/technical-design.md` when required, optional architecture design writes `requirements/<requirement-id>/architecture.md` only when needed, `plan-design-review` is required before `plan-eng-review` for UI-bearing slices, `plan-ux-review` is required before `plan-eng-review` for user-facing experience slices, and `plan-devex-review` is required before `plan-eng-review` for developer-facing experience slices.
+- If the task provides or selects `goal-requirements/<id>/sequence.md`, use the goal-requirements path. Start with the first unchecked requirement and read `requirements/<requirement-id>/requirements.md`, any Plan artifacts such as `requirements/<requirement-id>/research.md`, `requirements/<requirement-id>/technical-design.md`, `requirements/<requirement-id>/architecture.md`, `requirements/<requirement-id>/progress.md`, `requirements/<requirement-id>/decisions.md`, `requirements/<requirement-id>/evidence.md`, any accepted `plans/<plan-id>/plan.md`, `plans/<plan-id>/secondary_plan.md`, `plans/<plan-id>/plan_handoff.toml`, plus current git status/diff.
+- Before implementation for any goal-requirements slice, bind an isolated task worktree and run `scripts/init_worktree.sh <task-worktree-path>`. A target on branch `main`, the primary/base worktree, a missing worktree binding, stale dynamic state, or a failed init script blocks implementation. Read-only planning may inspect the active checkout after recording cwd, git root, branch, HEAD, and dirty status, but implementation must not proceed in the primary/main worktree.
+- If a broad initiative has no accepted sequence yet, use `goal-requirement-orchestrator` to create `goal-requirements/<id>/sequence.md`, `goal-requirements/<id>/progress.md`, and every listed requirement's requirement/progress/decisions/evidence state up front; a listed requirement may not remain an unwritten future placeholder.
+- A ready requirement document is not permission to implement directly. After requirement acceptance plus source-obligation and coverage-ledger readiness, each goal-requirements slice uses the three main gate surface: `Plan` -> `Impl` -> `Review`. `Plan` is owned by `planning-orchestrator` and internally handles `research`, `design_depth`, `plan-design-review`, `plan-ux-review`, `plan-devex-review`, `plan-eng-review`, `scenario-brake`, and `secondary-plan`; `technical-design` is available only as the Plan-internal `design_depth: full_artifact_required` option when module boundaries, state, invariants, architecture, testability, or cross-layer handoff risk require a full artifact. `Impl` is owned by `impl-orchestrator`, starts only after accepted Plan handoff, and preserves worktree preflight, `scripts/init_worktree.sh`, context-loading, and TDD. `Review` is owned by `review-orchestrator`, starts only after implementation evidence, and includes triggered post-implementation visual/UX/DevEx review plus `implementation-brake`.
 - During `requirement-clarifier`, broad or high-risk work must either produce `coverage-decision.yml` plus required `coverage-ledger.yml`, or record a structured not-required decision. The post-draft reviewer must verify the decision and ledger state before `Readiness Status: Ready`.
-- For goal-requirements research/design gates, record `not_required` skips with reasons. Artifact existence alone is insufficient: progress, artifact path or chat-only review outcome, evidence, decisions, unresolved-item classification, and approval state must agree before `plan-eng-review`.
-- After planning is accepted, run `context-loading` before `tdd-workflow` when the context-loading triggers apply; for UI-bearing work, run `visual-qa-hardening` with the `visual-qa-reviewer` companion after browser screenshot verification and before `implementation-brake`, and also use the `reference-fidelity-reviewer` companion for reference-driven visual work; for user-facing experience work, run `ux-review` after runnable/browser evidence exists and before `implementation-brake`; for developer-facing experience work, run `devex-review` after runnable docs/API/CLI/SDK evidence exists and before `implementation-brake`; after implementation and verification, run `implementation-brake`, then `closeout` only after `[SHIP]`. UI-bearing work must have passed `plan-design-review` before planning is accepted; user-facing experience work must have passed `plan-ux-review` before planning is accepted; developer-facing experience work must have passed `plan-devex-review` before planning is accepted; non-triggered slices must record the relevant review gates as `not_required` with the reason.
+- For Plan-internal sub-decisions, record `not_required` skips with reasons. Artifact existence alone is insufficient: progress, required artifact paths, evidence, decisions, unresolved-item classification, and approval state must agree before Plan can emit `plans/<plan-id>/plan_handoff.toml`. Triggered plan-stage reviews must have durable artifacts under `plans/<plan-id>/reviews/*.md`.
+- During Impl, run `context-loading` before `tdd-workflow` when the context-loading triggers apply. During Review, run `visual-qa-hardening` with the `visual-qa-reviewer` companion after browser screenshot verification for UI-bearing work, and also use the `reference-fidelity-reviewer` companion for reference-driven visual work; run `ux-review` for user-facing experience work; run `devex-review` for developer-facing docs/API/CLI/SDK/library/platform/agent-tool work. If multiple independent post-implementation review lenses trigger, `review-orchestrator` may run them in parallel inside the same Review gate; if any post-implementation review lens triggers, use subagent-based review when runtime supports subagents. After triggered review blockers are closed or recorded not required, run `implementation-brake` with the triggered review evidence and related review agent findings as inputs, then `closeout` only after `[SHIP]`.
 - For MVP, beta, launch, or production-bound goal sequences, reserve a final production readiness requirement slice and run `production-readiness` as the sequence-level launch gate before marking the goal sequence complete.
 - Treat scheduler result artifacts, including run-local `result.md`/`status.txt` and any legacy `result_<phase>.md` files, as scheduler-owned phase status reports. They express phase outcome, next owner, and readiness only; they are not substitutes for requirement evidence, product acceptance evidence, or verification artifacts.
 - Before editing, identify the affected product contract: public API, CLI behavior, persisted data, UI behavior, external integration, tests, docs, or migration state.
@@ -114,7 +126,8 @@ Primary audience: coding agents and maintainers working inside this product repo
 - `scripts/verify` must be local, secret-free, and expected to finish in roughly one minute or less.
 - If ordinary `scripts/verify` runtime exceeds roughly one minute, prioritize refactoring the verification path before expanding it: parallelize deterministic checks, remove redundant work, improve test isolation, or move slow non-baseline checks into separate `scripts/verify*` entrypoints.
 - `scripts/verify` should run all stable baseline checks required before ordinary task completion.
-- The stable baseline includes the coverage ledger validator regression suite at `tests/verify_coverage_ledger.py`; keep `scripts/coverage_ledger.py`, its fixtures/tests, and `scripts/verify` aligned when the ledger contract changes.
+- The stable baseline includes the worktree preflight regression suite at `tests/verify_worktree_preflight.py` and the coverage ledger validator regression suite at `tests/verify_coverage_ledger.py`; keep `scripts/init_worktree.sh`, `scripts/coverage_ledger.py`, their fixtures/tests, and `scripts/verify` aligned when those contracts change.
+- Adopted projects must include stack-appropriate stable checks in `scripts/verify` (for example `ruff`, `mypy` or `pyright`, `pytest`, `eslint`, `biome`, `tsc`, `vitest`, `jest`, or `playwright`) without adding stack-specific config to this generic scaffold root.
 - When the stable baseline changes, update `scripts/verify`, this section, and any task contracts that reference required verification.
 - Slow checks, external-service checks, real-service smoke checks, and checks expected to exceed roughly one minute belong in separate scripts named `scripts/verify*`, such as `scripts/verify_full`, `scripts/verify_e2e`, or `scripts/verify_external`.
 - Verification scripts must fail clearly when required tools or environment variables are missing. They must not silently skip required checks.
@@ -126,8 +139,8 @@ Primary audience: coding agents and maintainers working inside this product repo
 - Track only placeholder examples such as `.env.example` or setup docs.
 - `scripts/verify` must not require secrets.
 - Secret-dependent or external checks must live in separate `scripts/verify*` scripts with explicit env requirements.
-- If this repo needs setup whenever a fresh task worktree is created, document it and implement it in `scripts/init_worktree.sh`.
-- `scripts/init_worktree.sh`, when present, must be idempotent, accept the task worktree path as its first argument, and avoid writing external automation runtime state into this repo.
+- This repo requires `scripts/init_worktree.sh` whenever a fresh task worktree is created for goal-requirements implementation.
+- `scripts/init_worktree.sh` must be idempotent, accept the task worktree path as its first argument, reject the primary/main worktree, require a non-main task branch and target `scripts/verify`, and avoid writing external automation runtime state into this repo.
 - Do not copy external automation runtime state, logs, generated task state, or local machine paths into this repo.
 
 ## Document Map
@@ -142,16 +155,15 @@ Primary audience: coding agents and maintainers working inside this product repo
 - `requirements/<requirement-id>/requirements.md`: requirement-slice source of truth for goal-requirements execution.
 - `requirements/<requirement-id>/coverage-decision.yml`: structured decision for whether a coverage ledger is required, including trigger signals and any not-required rationale.
 - `requirements/<requirement-id>/coverage-ledger.yml`: structured coverage and typed evidence ledger for broad or high-risk requirement slices when required by `coverage-decision.yml`.
-- `requirements/<requirement-id>/source-inventory.yml`: structured source-obligation inventory for broad or high-risk source-derived work when `source_obligation_inventory_required` is true.
-- `requirements/<requirement-id>/scope-reconciliation.yml`: source-obligation reconciliation that maps inventory items to included, excluded, deferred, or ambiguous accepted-scope dispositions.
-- `requirements/<requirement-id>/research.md`: requirement-local technical research artifact when the `research` gate is required.
-- `requirements/<requirement-id>/technical-design.md`: requirement-local module-level technical design artifact when the `technical-design` gate is required.
+- `requirements/<requirement-id>/research.md`: requirement-local technical research artifact when Plan requires research.
+- `requirements/<requirement-id>/technical-design.md`: requirement-local module-level technical design artifact when Plan records `design_depth: full_artifact_required`.
 - `requirements/<requirement-id>/architecture.md`: optional requirement-local architecture design artifact when system-level design is required.
 - `requirements/<requirement-id>/progress.md`: current gate, status, and next action for a requirement slice.
 - `requirements/<requirement-id>/decisions.md`: material decisions made while executing a requirement slice.
 - `requirements/<requirement-id>/evidence.md`: verification and review evidence for a requirement slice.
 - `plans/<plan-id>/plan.md`: accepted primary implementation plan for a requirement slice.
 - `plans/<plan-id>/secondary_plan.md`: accepted detailed implementation plan for a requirement slice.
+- `plans/<plan-id>/plan_handoff.toml`: accepted `planning-orchestrator` handoff consumed by Impl.
 - `tests/`: executable behavior and regression coverage.
 
 ## AGENTS.md Update Policy

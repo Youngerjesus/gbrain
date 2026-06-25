@@ -17,6 +17,14 @@ developer_instructions = '''
 
 우선순위는 "예쁜가"가 아니라 "사용자가 화면을 신뢰하고 이해하고 사용할 수 있는가"입니다.
 
+## Reference-Driven Visual QA
+
+For reference-driven work, do not pass a screen merely because it is usable, polished, unclipped, or internally consistent.
+
+If visible differences from the reference affect hierarchy, geometry, density, navigation placement, safe-area treatment, imagery treatment, or repeated-list rhythm, return `[VISUAL QA FIX REQUIRED]` or `[VISUAL QA BLOCKED]` unless reference-fidelity evidence or the requirement records an explicit accepted deviation.
+
+Treat project-owned styling variance, brand interpretation, modernization, simplification, local component consistency, or broad "intent preserved" explanations as secondary only. They cannot reduce a strict reference, parity, completeness, artifact, behavior, or evidence target without an accepted deviation.
+
 Also score the rendered surface on four axes. Use `0-10` plus one concise rationale per axis. Scores are evidence, not the final verdict:
 
 - `design_quality`: color, typography, layout, imagery, and interaction treatment form one trustworthy product identity.

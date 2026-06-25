@@ -52,20 +52,23 @@ Record every companion start, completion, timeout, cancellation request, cancell
 
 ## Worktree Preflight Checklist
 
-- Intended target classification: `autopilot_root` | `managed_repo` | `mixed`
+- Isolated task worktree required: yes
+- Task worktree path:
+- Worktree setup command: `scripts/init_worktree.sh <task-worktree-path>`
+- Worktree setup result:
 - Current cwd:
 - Git repository root:
 - Branch:
 - HEAD SHA:
 - Dirty status:
-- Isolated worktree execution required: yes | no
+- Primary worktree path:
 - Binding source or setup owner:
 - Mismatch status:
 - Next action or blocker:
 
-Before implementation, revalidate this checklist on resume and whenever the intended change set changes. A mismatch between the intended target and current cwd or git repository root is a blocker. Managed repo product source, product tests, or product docs modification in the base/main worktree is a blocker. Missing worktree binding or unavailable isolated setup is a blocker or handoff requirement, not a silent bypass.
+Before implementation, revalidate this checklist on resume and whenever the intended change set changes. Goal-requirements implementation always requires an isolated task worktree. A mismatch between the intended task worktree and current cwd or git repository root is a blocker. Product source, tests, docs, workflow, or verification modification in the primary, base, or main worktree is a blocker. Missing worktree binding, branch `main`, primary-worktree target, failed `scripts/init_worktree.sh <task-worktree-path>`, or unavailable isolated setup is a blocker or handoff requirement, not a silent bypass.
 
-If a slice starts as read-only planning or root-only work and later discovers managed repo product source, product tests, product docs, or mixed root-plus-managed changes, stop before implementation, reclassify, rerun preflight, and split or require isolated managed execution as applicable.
+If a slice starts as read-only planning and later discovers implementation changes, stop before implementation, bind an isolated task worktree, run `scripts/init_worktree.sh <task-worktree-path>`, rerun preflight, and record the result before coding.
 
 ## Managed Repo Merge Disposition Checklist
 
@@ -76,7 +79,7 @@ If a slice starts as read-only planning or root-only work and later discovers ma
 - accepted plan:
 - Implementation verification:
 - `implementation-brake` returned `[SHIP]`:
-- managed repo `scripts/verify`:
+- target worktree `scripts/verify`:
 - conditional live verification:
 - Live trigger type: UI | live/model | prompt/schema contract | multi-agent handoff | repair/evaluator/generator loop | live output parsing | not_applicable
 - Task worktree clean status:

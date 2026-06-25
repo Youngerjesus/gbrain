@@ -21,9 +21,10 @@ Keep this file focused on sequence-level recovery state: which requirement is ac
 ## Outcome Contract
 
 - Sequence outcome:
-- First requirement path:
-- First requirement acceptance status:
-- Later requirement files deferred until reached: yes | no
+- Listed requirement paths:
+- All requirement files created during bootstrap: yes | no
+- All requirement acceptance statuses recorded: yes | no
+- Requirement blockers:
 
 ## Production Readiness
 

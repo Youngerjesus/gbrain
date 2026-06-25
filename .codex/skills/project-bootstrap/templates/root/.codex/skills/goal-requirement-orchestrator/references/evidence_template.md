@@ -22,18 +22,20 @@ Evidence should make it possible to tell whether unresolved items are blocking/n
 
 ## Worktree And Merge Evidence Guidance
 
-When applicable, record direct evidence for worktree preflight, target classification, merge disposition, pre-merge gate, post-merge verification, and escalation. Dynamic values belong here or in `progress.md`; do not copy local cwd, branch, HEAD SHA, or machine paths into reusable templates.
+When applicable, record direct evidence for worktree preflight, isolated task worktree binding, merge disposition, pre-merge gate, post-merge verification, and escalation. Dynamic values belong here or in `progress.md`; do not copy local cwd, branch, HEAD SHA, or machine paths into reusable templates.
 
 For worktree preflight evidence, include:
 
 - worktree preflight claim
-- intended target classification
+- isolated task worktree requirement
+- task worktree path
+- `scripts/init_worktree.sh <task-worktree-path>` command and result
 - current cwd
 - git repository root
 - branch
 - HEAD SHA
 - dirty status
-- isolated worktree requirement
+- primary worktree path
 - binding source or setup owner
 - mismatch or blocker result
 - revalidation reason when resuming or when the intended change set changed
@@ -44,7 +46,7 @@ For managed repo merge disposition evidence, include:
 - pre-merge gate claim
 - accepted requirement and accepted plan evidence
 - implementation verification and `implementation-brake` evidence
-- managed repo `scripts/verify` evidence when present
+- target worktree `scripts/verify` evidence when present
 - conditional live verification evidence or explicit not-triggered/gap rationale
 - verified base or target SHA and immediate pre-merge SHA recheck
 - target branch

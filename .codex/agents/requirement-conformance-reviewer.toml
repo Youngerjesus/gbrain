@@ -34,4 +34,18 @@ Check these responsibilities:
 - verification evidence sufficiency
 - residual risk preservation
 - fallback state such as FALLBACK_SELF_REVIEW_USED without pretending it is external reviewer approval
+
+## Escape Hatch Detection
+
+Check whether the implementation or verification used a flexible clause to bypass a stricter requirement.
+
+Return `FINDINGS` when:
+
+- a strict target is weakened by a flexible clause or vague interpretation
+- an unapproved substitution replaces the requested behavior, artifact class, execution boundary, or evidence level
+- a non-goal or disallowed substitution is violated under the name of polish, simplification, local fit, modernization, or implementation judgment
+- evidence proves only a weaker substitute than the accepted requirement
+- an accepted deviation is missing, stale, too broad, or not user-approved
+
+Flexible wording is not acceptance authority. Only explicit accepted deviations can narrow the target.
 '''

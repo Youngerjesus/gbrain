@@ -35,6 +35,10 @@ export/
 # .context/test-shards/. Workspace-local by design — never committed.
 .context/
 
+# Codex decision-brake run artifacts.
+decision-brake/*
+!decision-brake/.gitkeep
+
 # Tier 3 PGLite snapshot fixture (built on demand by build:pglite-snapshot)
 test/fixtures/pglite-snapshot.tar
 test/fixtures/pglite-snapshot.version

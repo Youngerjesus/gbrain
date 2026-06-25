@@ -50,6 +50,7 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `.codex/skills/context-loading/SKILL.md` | Yes | all modes | preserve | No | installed runtime skill |
 | `.codex/skills/closeout/SKILL.md` | Yes | all modes | preserve | No | installed runtime skill |
 | `.codex/skills/goal-requirement-orchestrator/SKILL.md` | Yes | all modes | preserve | No | installed runtime skill |
+| `.codex/skills/goal-requirement-orchestrator/references/three_gate_contract.toml` | Yes | all modes | preserve | No | structured Plan/Impl/Review gate contract |
 | `.codex/skills/goal-requirement-orchestrator/references/decisions_template.md` | Yes | all modes | preserve | No | direct skill reference |
 | `.codex/skills/goal-requirement-orchestrator/references/evidence_template.md` | Yes | all modes | preserve | No | direct skill reference |
 | `.codex/skills/goal-requirement-orchestrator/references/requirement_progress_template.md` | Yes | all modes | preserve | No | direct skill reference |
@@ -65,6 +66,9 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `.codex/skills/grill-me/SKILL.md` | Yes | all modes | preserve | No | installed runtime skill |
 | `.codex/skills/grill-me/agents/openai.yaml` | Yes | all modes | preserve | No | companion prompt registry |
 | `.codex/skills/requirement-clarifier/SKILL.md` | Yes | all modes | preserve | No | installed runtime skill |
+| `.codex/skills/planning-orchestrator/SKILL.md` | Yes | all modes | preserve | No | installed Plan main gate skill |
+| `.codex/skills/impl-orchestrator/SKILL.md` | Yes | all modes | preserve | No | installed Impl main gate skill |
+| `.codex/skills/review-orchestrator/SKILL.md` | Yes | all modes | preserve | No | installed Review main gate skill |
 | `.codex/skills/secondary-plan/SKILL.md` | Yes | all modes | preserve | No | installed runtime skill |
 | `.codex/skills/secondary-plan/references/primary_plan_template.md` | Yes | all modes | preserve | No | direct skill reference |
 | `.codex/skills/secondary-plan/references/secondary_plan_template.md` | Yes | all modes | preserve | No | direct skill reference |
@@ -102,7 +106,9 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `.codex/skills/systematic-debugging/defense-in-depth.md` | Yes | all modes | preserve | No | direct skill reference |
 | `.codex/skills/systematic-debugging/condition-based-waiting.md` | Yes | all modes | preserve | No | direct skill reference |
 | `scripts/coverage_ledger.py` | Yes | all modes | preserve | Yes | coverage-ledger validator baseline |
+| `scripts/init_worktree.sh` | Yes | all modes | preserve | Yes | isolated task worktree preflight |
 | `scripts/verify` | Yes | all modes | preserve | Yes | local verification baseline |
+| `tests/verify_worktree_preflight.py` | Yes | all modes | preserve | Yes | task worktree preflight tests |
 | `tests/verify_coverage_ledger.py` | Yes | all modes | preserve | Yes | coverage-ledger validator tests |
 | `AGENTS.md` | Yes | all modes | never | No | strategic project doc |
 | `README.md` | Yes | all modes | never | No | strategic project doc |

@@ -1,13 +1,13 @@
 ---
 name: technical-design
-description: Produce requirement-local HOW-level module design and optional architecture design as a goal-requirements conditional hard gate before plan-eng-review.
+description: Produce requirement-local HOW-level module design and optional architecture design when planning-orchestrator records design_depth as full_artifact_required.
 ---
 
 # Technical Design
 
-This skill is the `goal-requirements` conditional hard gate for HOW-level module design and architecture design. It is not UI/visual design.
+This skill is the `goal-requirements` HOW-level module design and architecture design specialist. It is not UI/visual design.
 
-Use it after `requirement-clarifier` and after `research` when research is required. Use it before `plan-eng-review` when implementation planning needs module boundaries, architecture boundaries, interactions, state, invariants, error handling, edge cases, testability, or cross-layer handoff decisions.
+In the three main gate model, `technical-design` is not a top-level `goal-requirement-orchestrator` gate. Use it from `planning-orchestrator` when Plan records `design_depth: full_artifact_required` because implementation planning needs module boundaries, architecture boundaries, interactions, state, invariants, error handling, edge cases, testability, or cross-layer handoff decisions. Direct use outside goal orchestration remains valid when the user explicitly asks for technical design.
 
 ## Contract
 

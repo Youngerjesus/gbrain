@@ -39,6 +39,7 @@ description: Use after a root cause or strong causal model is identified and the
 ## Core Posture
 
 - 해결책은 원인 메커니즘을 닫아야 합니다. 증상을 덮는 패치는 실패입니다.
+- 해결책 평가 전에 decision-quality metrics 를 제1원칙에서 먼저 만들고 human approval 을 받아야 합니다.
 - "더 큰 설계"보다 "가장 작은 durable intervention"을 우선합니다.
 - 좋은 해결책은 무엇을 고칠지뿐 아니라 무엇을 고치지 않을지도 정합니다.
 - root cause evidence 가 약하면 해결책을 꾸미지 말고 조사로 되돌립니다.
@@ -68,7 +69,20 @@ description: Use after a root cause or strong causal model is identified and the
 - affected users, systems, data, policies, or workflows
 - constraints and non-negotiables
 
-### 2. Map intervention points
+### 2. Define decision-quality metrics and get approval
+
+해결책 후보를 평가하기 전에 first-principles decision-quality metrics 를 먼저 만듭니다.
+
+- metrics 는 현재 문제의 원인 메커니즘, invariant, 제약, 사용자 또는 운영 결과에서 도출합니다.
+- 3-5개 이하의 orthogonal metric 으로 제한하고, 각 metric 에 pass/fail 또는 비교 기준을 둡니다.
+- metric 은 "좋아 보임", "깔끔함" 같은 취향어가 아니라 해결책 품질을 가르는 관찰 가능한 기준이어야 합니다.
+- metrics 에는 최소한 causal closure, durability, verification feasibility, scope/reversibility 중 현재 결정에 필요한 축을 포함합니다.
+- human 이 metrics 를 승인하기 전에는 후보 평가, synthesis, recommended solution, implementation verdict 로 넘어가지 않습니다.
+
+승인이 없으면 metrics 초안과 approval request 만 제시하고 `[NEEDS METRIC APPROVAL]`로 멈춥니다.
+승인 후에는 승인된 metrics 를 기준으로만 후보를 비교하고, 평가 중 metric 을 바꿔야 하면 다시 human approval 을 받습니다.
+
+### 3. Map intervention points
 
 최소 3개 이상의 개입 지점을 검토합니다.
 
@@ -84,7 +98,7 @@ description: Use after a root cause or strong causal model is identified and the
 
 모든 지점을 길게 설명하지 말고, 실제로 plausible 한 지점만 비교합니다.
 
-### 3. Generate solution candidates
+### 4. Generate solution candidates
 
 기본적으로 아래 후보를 만듭니다.
 
@@ -93,7 +107,7 @@ description: Use after a root cause or strong causal model is identified and the
 - **Subtraction fix**: 복잡성, 상태, feature, branch, process 를 제거하는 해결책
 - **Divergent fix**: 현재 사고방식과 다른 개입 지점에서 출발하는 해결책
 
-### 4. Deepen the candidates
+### 5. Deepen the candidates
 
 필요한 사고법만 사용합니다.
 
@@ -102,7 +116,7 @@ description: Use after a root cause or strong causal model is identified and the
 - Systems thinking: 다른 컴포넌트, 사용자, 운영 흐름에 어떤 feedback 이 생기는가
 - Second-order thinking: 단기 해결 뒤 장기 비용, 유지보수, 재발 패턴은 무엇인가
 
-### 5. Synthesize dialectically
+### 6. Synthesize dialectically
 
 후보를 단순 투표하지 않습니다.
 
@@ -112,10 +126,11 @@ description: Use after a root cause or strong causal model is identified and the
 - 더 높은 수준에서 합칠 수 있는 해결 원리
 - 최종 선택과 버린 선택
 
-### 6. Review the solution
+### 7. Review the solution
 
 최종 해결책을 아래 기준으로 압박 검토합니다.
 
+- 승인된 decision-quality metrics 를 통과하는가
 - 원인 메커니즘을 실제로 닫는가
 - 증상 마스킹이 아닌가
 - 과도한 범위 확장이 아닌가
@@ -123,7 +138,7 @@ description: Use after a root cause or strong causal model is identified and the
 - failure, rollback, staged rollout 경로가 있는가
 - 구현자가 임의 결정을 내려야 하는 빈칸이 남아 있지 않은가
 
-### 7. Hand off
+### 8. Hand off
 
 해결책을 직접 구현하지 않습니다.
 다음 스킬 또는 작업으로 넘길 수 있게 handoff 를 만듭니다.
@@ -184,19 +199,22 @@ description: Use after a root cause or strong causal model is identified and the
 
 1. **Problem and causal model**
 2. **Evidence quality**
-3. **Solution candidates**
-4. **Intervention point analysis**
-5. **Dialectical synthesis**
-6. **Recommended solution**
-7. **Execution plan**
-8. **Verification plan**
-9. **Rejected alternatives**
-10. **Residual risks**
+3. **Decision-quality metrics**
+4. **Metric approval**
+5. **Solution candidates**
+6. **Intervention point analysis**
+7. **Dialectical synthesis**
+8. **Recommended solution**
+9. **Execution plan**
+10. **Verification plan**
+11. **Rejected alternatives**
+12. **Residual risks**
 
 판정은 반드시 아래 중 하나로 끝냅니다.
 
 - `[IMPLEMENT]`: 해결책이 명확하고 바로 구현 가능한 상태
 - `[IMPLEMENT WITH GUARDS]`: 구현하되 테스트, rollback, staged rollout, monitoring guard 가 필요함
+- `[NEEDS METRIC APPROVAL]`: decision-quality metrics 에 대한 human approval 이 아직 없음
 - `[NEEDS MORE EVIDENCE]`: root cause 또는 제약 증거가 부족함
 - `[ESCALATE]`: 높은 위험, 정책, 보안, 데이터 손실, irreversible decision 이 있음
 - `[DO NOT IMPLEMENT]`: 제안된 해결책이 실제 원인을 닫지 못하거나 더 큰 실패를 만듦

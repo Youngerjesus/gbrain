@@ -3,8 +3,9 @@
 
 This module owns the provider-dependent closed loop:
 target rollout -> judge score -> optimizer reflect edit -> validation gate.
-Baseline tests use a fake chat client; real provider calls go through the local
-Codex CLI first, then Gemini CLI as fallback, and are kept out of scripts/verify.
+Baseline tests use a fake chat client; default real provider calls go through the
+Gemini API, with an explicit provider switch for Codex CLI.
+Live calls are kept out of scripts/verify.
 
 Kept in one file for now because this is the first live adapter slice and its
 test seams need to remain easy to inspect. Split provider, scoring, reflect,
@@ -21,10 +22,13 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
 
 def _load_core():
@@ -39,6 +43,7 @@ def _load_core():
 
 
 core = _load_core()
+CODEX_MIN_TIMEOUT_SEC = 600
 
 
 class ChatClient(Protocol):
@@ -73,6 +78,30 @@ class BudgetedChatClient:
         self.budget.charge(model=model)
         return self.inner.chat(model=model, system=system, user=user, max_tokens=max_tokens)
 
+    def chat_json_object(
+        self,
+        *,
+        model: str,
+        system: str,
+        user: str,
+        max_tokens: int,
+        schema: dict[str, Any],
+        filename: str,
+    ) -> dict[str, Any]:
+        json_client = getattr(self.inner, "chat_json_object", None)
+        self.budget.charge(model=model)
+        if not callable(json_client):
+            raw = self.inner.chat(model=model, system=system, user=user, max_tokens=max_tokens)
+            return _extract_json_object(raw)
+        return json_client(
+            model=model,
+            system=system,
+            user=user,
+            max_tokens=max_tokens,
+            schema=schema,
+            filename=filename,
+        )
+
 
 class CliChatClient:
     def __init__(
@@ -80,23 +109,27 @@ class CliChatClient:
         *,
         provider: str = "gemini",
         codex_bin: str | None = None,
-        gemini_bin: str | None = None,
+        gemini_api_key: str | None = None,
+        gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta",
         gemini_model: str | None = None,
         timeout: int = 180,
+        urlopen: Callable[..., Any] | None = None,
     ) -> None:
         if provider not in {"gemini", "codex", "auto"}:
             raise ValueError("provider must be 'gemini', 'codex', or 'auto'")
         self.provider = provider
         self.codex_bin = codex_bin or shutil.which("codex")
-        self.gemini_bin = gemini_bin or shutil.which("gemini")
-        if self.provider == "gemini" and not self.gemini_bin:
-            raise RuntimeError("live SkillOpt provider 'gemini' requires gemini CLI")
+        self.gemini_api_key = gemini_api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        self.gemini_base_url = gemini_base_url.rstrip("/")
+        self.urlopen = urlopen or urllib.request.urlopen
+        if self.provider == "gemini" and not self.gemini_api_key:
+            raise RuntimeError("live SkillOpt provider 'gemini' requires GEMINI_API_KEY")
         if self.provider == "codex" and not self.codex_bin:
             raise RuntimeError("live SkillOpt provider 'codex' requires codex CLI")
-        if self.provider == "auto" and not self.codex_bin and not self.gemini_bin:
-            raise RuntimeError("live SkillOpt provider 'auto' requires codex CLI or gemini CLI")
+        if self.provider == "auto" and not self.codex_bin and not self.gemini_api_key:
+            raise RuntimeError("live SkillOpt provider 'auto' requires codex CLI or GEMINI_API_KEY")
         self.gemini_model = gemini_model or os.environ.get("SKILLOPT_GEMINI_MODEL")
-        self.timeout = timeout
+        self.timeout = max(timeout, CODEX_MIN_TIMEOUT_SEC) if self.provider in {"codex", "auto"} else timeout
         self.last_tool_calls: list[dict[str, Any]] = []
 
     def chat(self, *, model: str, system: str, user: str, max_tokens: int) -> str:
@@ -107,6 +140,11 @@ class CliChatClient:
             f"SYSTEM:\n{system}\n\nUSER:\n{user}\n"
         )
         errors: list[str] = []
+        if self.provider == "gemini":
+            try:
+                return self._gemini_api_chat(model=model, prompt=prompt, max_tokens=max_tokens)
+            except Exception as exc:
+                raise RuntimeError(f"live SkillOpt Gemini API call failed: {exc}") from exc
         if self.provider in {"codex", "auto"} and self.codex_bin:
             try:
                 return self._codex_chat(model=model, prompt=prompt, output_schema=_schema_for_system(system))
@@ -114,9 +152,9 @@ class CliChatClient:
                 errors.append(f"codex: {exc}")
                 if self.provider == "codex":
                     raise RuntimeError("live SkillOpt CLI calls failed: " + " | ".join(errors))
-        if self.provider in {"gemini", "auto"} and self.gemini_bin:
+        if self.provider == "auto" and self.gemini_api_key:
             try:
-                return self._gemini_chat(model=self.gemini_model or model, prompt=prompt)
+                return self._gemini_api_chat(model=self.gemini_model or model, prompt=prompt, max_tokens=max_tokens)
             except Exception as exc:
                 errors.append(f"gemini: {exc}")
         raise RuntimeError("live SkillOpt CLI calls failed: " + " | ".join(errors))
@@ -132,14 +170,31 @@ class CliChatClient:
         filename: str,
     ) -> dict[str, Any]:
         self.last_tool_calls = []
-        prompt = (
-            "Follow the SYSTEM instructions below. Do not edit repo files, run tools, "
-            "or perform side effects. The final answer will be written by the CLI to "
-            f"`{filename}`; make that file contain exactly one JSON object matching "
-            "the supplied schema, with no Markdown fence, prose, or second JSON object.\n\n"
-            f"SYSTEM:\n{system}\n\nUSER:\n{user}\n"
-        )
+        if self.provider == "gemini":
+            prompt = (
+                "Follow the SYSTEM instructions below. Do not edit repo files, run tools, "
+                "or perform side effects. Return exactly one JSON object matching the "
+                "supplied schema, with no Markdown fence, prose, or second JSON object.\n\n"
+                f"SYSTEM:\n{system}\n\nUSER:\n{user}\n"
+            )
+        else:
+            prompt = (
+                "Follow the SYSTEM instructions below. Do not edit repo files, run tools, "
+                "or perform side effects. The final answer will be written by the CLI to "
+                f"`{filename}`; make that file contain exactly one JSON object matching "
+                "the supplied schema, with no Markdown fence, prose, or second JSON object.\n\n"
+                f"SYSTEM:\n{system}\n\nUSER:\n{user}\n"
+            )
         errors: list[str] = []
+        if self.provider == "gemini":
+            try:
+                return self._gemini_api_json_object(
+                    model=model,
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                )
+            except Exception as exc:
+                raise RuntimeError(f"live SkillOpt Gemini API JSON call failed: {exc}") from exc
         if self.provider in {"codex", "auto"} and self.codex_bin:
             try:
                 return self._codex_json_object(
@@ -152,17 +207,32 @@ class CliChatClient:
                 errors.append(f"codex: {exc}")
                 if self.provider == "codex":
                     raise RuntimeError("live SkillOpt JSON CLI calls failed: " + " | ".join(errors))
-        if self.provider in {"gemini", "auto"} and self.gemini_bin:
+        if self.provider == "auto" and self.gemini_api_key:
             try:
-                raw = self._gemini_chat(model=self.gemini_model or model, prompt=prompt)
-                data = _extract_json_object(raw)
-                with tempfile.TemporaryDirectory(prefix="skillopt-gemini-json-") as tmp:
-                    path = Path(tmp) / filename
-                    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-                    return _load_json_object(path)
+                return self._gemini_api_json_object(
+                    model=self.gemini_model or model,
+                    prompt=prompt,
+                    max_tokens=max_tokens,
+                )
             except Exception as exc:
                 errors.append(f"gemini: {exc}")
         raise RuntimeError("live SkillOpt JSON CLI calls failed: " + " | ".join(errors))
+
+    def _gemini_api_json_object(self, *, model: str, prompt: str, max_tokens: int) -> dict[str, Any]:
+        token_attempts = [max_tokens, max(max_tokens * 2, max_tokens + 1)]
+        for index, token_budget in enumerate(token_attempts):
+            raw = self._gemini_api_chat(
+                model=model,
+                prompt=prompt,
+                max_tokens=token_budget,
+                response_mime_type="application/json",
+            )
+            try:
+                return _extract_json_object(raw)
+            except json.JSONDecodeError:
+                if index + 1 == len(token_attempts):
+                    raise
+        raise RuntimeError("unreachable Gemini JSON retry state")
 
     def _codex_chat(self, *, model: str, prompt: str, output_schema: dict[str, Any] | None = None) -> str:
         with tempfile.TemporaryDirectory(prefix="skillopt-codex-") as tmp:
@@ -242,27 +312,54 @@ class CliChatClient:
             self.last_tool_calls = _extract_codex_tool_calls(result.stdout)
             return _load_json_object(out)
 
-    def _gemini_chat(self, *, model: str, prompt: str) -> str:
-        cmd = [
-            self.gemini_bin or "gemini",
-            "--model",
-            model,
-            "--output-format",
-            "text",
-            "--prompt",
-            prompt,
-        ]
-        result = subprocess.run(
-            cmd,
-            text=True,
-            capture_output=True,
-            timeout=self.timeout,
-            check=False,
+    def _gemini_api_chat(
+        self,
+        *,
+        model: str,
+        prompt: str,
+        max_tokens: int,
+        response_mime_type: str | None = None,
+    ) -> str:
+        if not self.gemini_api_key:
+            raise RuntimeError("GEMINI_API_KEY is not set")
+        endpoint = (
+            f"{self.gemini_base_url}/models/{urllib.parse.quote(model, safe='')}:generateContent"
+            f"?key={urllib.parse.quote(self.gemini_api_key, safe='')}"
         )
-        if result.returncode != 0:
-            raise RuntimeError(result.stderr.strip() or result.stdout.strip() or f"exit {result.returncode}")
+        payload = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": prompt}],
+                }
+            ],
+            "generationConfig": {
+                "maxOutputTokens": max_tokens,
+            },
+            "toolConfig": {
+                "functionCallingConfig": {
+                    "mode": "NONE",
+                },
+            },
+        }
+        if response_mime_type is not None:
+            payload["generationConfig"]["responseMimeType"] = response_mime_type
+        request = urllib.request.Request(
+            endpoint,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with self.urlopen(request, timeout=self.timeout) as response:
+                data = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(body or f"HTTP {exc.code}") from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(str(exc.reason)) from exc
         self.last_tool_calls = []
-        return result.stdout.strip()
+        return _extract_gemini_api_text(data)
 
 
 def run_live_skillopt(
@@ -809,10 +906,44 @@ def _extract_json_object(text: str) -> dict[str, Any]:
         stripped = "\n".join(lines[1:-1])
         if stripped.splitlines()[0].strip().lower() == "json":
             stripped = "\n".join(stripped.splitlines()[1:])
-    data = json.loads(stripped)
+    try:
+        data = json.loads(stripped)
+    except json.JSONDecodeError:
+        start = stripped.find("{")
+        if start == -1:
+            raise
+        data, end = json.JSONDecoder().raw_decode(stripped[start:])
+        if stripped[start + end :].strip():
+            raise ValueError("expected exactly one JSON object")
     if not isinstance(data, dict):
         raise ValueError("expected JSON object")
     return data
+
+
+def _extract_gemini_api_text(data: dict[str, Any]) -> str:
+    candidates = data.get("candidates")
+    if not isinstance(candidates, list) or not candidates:
+        raise ValueError("Gemini API response did not include candidates")
+    first = candidates[0]
+    if not isinstance(first, dict):
+        raise ValueError("Gemini API candidate must be an object")
+    content = first.get("content")
+    if not isinstance(content, dict):
+        raise ValueError("Gemini API candidate did not include content; " + _gemini_candidate_diagnostics(first))
+    parts = content.get("parts")
+    if not isinstance(parts, list):
+        raise ValueError("Gemini API content did not include parts")
+    text_parts = [part.get("text") for part in parts if isinstance(part, dict) and isinstance(part.get("text"), str)]
+    if not text_parts:
+        raise ValueError("Gemini API response did not include text; " + _gemini_candidate_diagnostics(first))
+    return "".join(text_parts).strip()
+
+
+def _gemini_candidate_diagnostics(candidate: dict[str, Any]) -> str:
+    return (
+        f"finishReason={candidate.get('finishReason', 'unknown')}; "
+        f"SAFETY={json.dumps(candidate.get('safetyRatings'), ensure_ascii=False)}"
+    )
 
 
 def _parse_judge_response(text: str) -> dict[str, Any]:

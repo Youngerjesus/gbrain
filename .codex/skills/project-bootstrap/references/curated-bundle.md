@@ -60,6 +60,9 @@
 - `implementation-brake`
 - `grill-me`
 - `requirement-clarifier`
+- `planning-orchestrator`
+- `impl-orchestrator`
+- `review-orchestrator`
 - `secondary-plan`
 - `research`
 - `technical-design`

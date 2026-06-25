@@ -222,6 +222,40 @@ When enough context exists, play the requirement back before finalization using:
 
 If the playback exposes a blocking gap, ask the next clarification question instead of writing a final document.
 
+## Original Intent Preservation
+
+Preserve the user's original intent before applying interpretation, normalization, decomposition, or implementation-oriented wording.
+
+Do not reinterpret the user's request into a narrower, easier, more conventional, more locally convenient, or more agent-friendly version unless the user explicitly approves that change.
+
+Flexible interpretation may clarify ambiguity, but it must not change the requested outcome, requested behavior, artifact class, execution boundary, evidence level, fidelity/completeness expectation, source/reference preservation, or success standard.
+
+If the user's wording is ambiguous, preserve the broader plausible intent, ask a clarification question, or mark the requirement `Blocked`. Do not silently choose the narrower interpretation.
+
+If implementation constraints make the original intent difficult or impossible, record the capability gap and ask the user before substituting a weaker target.
+
+Interpretation may clarify intent, but it must not replace intent.
+
+## Strict Target And Flexible Clause Priority
+
+When a requirement contains both a strict user target and a flexible interpretation clause, the strict user target is authoritative.
+
+A strict user target includes any explicit requirement about requested behavior, artifact class, execution boundary, evidence level, acceptance threshold, source or reference preservation, parity, fidelity, completeness, user-visible output, non-goals, or disallowed substitutions.
+
+A flexible interpretation clause includes any language that gives the agent discretion, such as adapting style, improving fit, simplifying, modernizing, aligning with local conventions, using judgment, preserving intent, or making reasonable substitutions.
+
+Flexible clauses are secondary constraints only. They may guide execution inside the strict target, but they must not reduce, replace, reinterpret, bypass, or weaken the strict target.
+
+If a flexible clause could plausibly be used to narrow the user's requested outcome, the requirement must do one of the following before it can be marked `Ready`:
+
+- bound the flexible clause to a specific allowed range
+- record explicit disallowed uses of the flexible clause
+- require a deviation ledger for any intentional difference
+- ask the user to choose priority
+- mark the requirement `Blocked`
+
+Agent discretion is allowed only inside the user's strict target, never as authority to narrow it.
+
 ## Requirement Quality Gate
 
 Before a requirement can be accepted as `Ready`, validate the draft against this gate. This gate is the contract that turns a plausible requirements document into a handoff-ready requirements source of truth.
@@ -231,6 +265,8 @@ Required checks:
 - Section completeness: every required section exists, is non-empty, and contains no placeholder text outside `Open Questions` or `Assumptions`.
 - Acceptance criteria quality: every criterion is pass/fail testable, states an observable behavior, state, output, artifact, or user-visible result, and includes an AC-to-verification mapping.
 - Contract preservation quality: the requested behavior, execution boundary or artifact class, evidence level, known capability gaps, and allowed or disallowed substitutions are explicit enough that a later agent cannot silently downgrade the work.
+- Original intent preservation: the requirement must not narrow, normalize, simplify, or reinterpret the user's original request into a weaker target without explicit user approval. Ambiguous requests must preserve the broader plausible intent, ask for clarification, or mark the requirement `Blocked`.
+- Escape-hatch quality: no flexible interpretation clause may weaken a strict user target. Any clause that permits discretion must be bounded, subordinate to strict targets, and paired with explicit downgrade rules when ambiguity could affect scope, fidelity, artifact class, evidence level, execution boundary, source/reference preservation, completeness, or user-visible behavior.
 - Evidence quality: every source-backed claim appears in `Evidence Reviewed` with source type, location or reference, extracted fact, and confidence.
 - Provenance quality: front matter records `session_provenance`, `readiness_status`, and `reviewer_status` when a persisted requirements file is created or updated.
 - Decision Boundaries quality: both `Agent may decide` and `User must confirm` are specific, and user-visible behavior, data model, security posture, pricing, irreversible migration, or scope changes remain user-confirmed.
@@ -362,6 +398,15 @@ Ready | Risky but usable | Blocked
 
 ## Contract Preservation
 
+- Original user intent:
+- Interpreted requirement:
+- Narrowing risk:
+- Confirmed interpretation changes:
+- Strict targets:
+- Flexible clauses:
+- Priority rule:
+- Allowed deviations:
+- Disallowed downgrades:
 - Requested behavior / artifact:
 - Execution boundary:
 - Required evidence level:

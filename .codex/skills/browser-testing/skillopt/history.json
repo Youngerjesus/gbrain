@@ -1,0 +1,26 @@
+[
+  {
+    "created_at": "2026-06-21T09:01:51.054439+00:00",
+    "held_out": null,
+    "llm_calls": 18,
+    "mode": "live_closed_loop",
+    "no_mutate": true,
+    "outcome": "no_improvement",
+    "receipt": ".codex/skills/browser-testing/skillopt/browser-testing-442a761a7182.receipt.json",
+    "run_id": "browser-testing-442a761a7182",
+    "sel_score": 1.0,
+    "trace": ".codex/skills/browser-testing/skillopt/browser-testing-442a761a7182.trace.json"
+  },
+  {
+    "created_at": "2026-06-21T12:29:00.471643+00:00",
+    "held_out": null,
+    "llm_calls": 42,
+    "mode": "live_closed_loop",
+    "no_mutate": true,
+    "outcome": "no_improvement",
+    "receipt": ".codex/skills/browser-testing/skillopt/browser-testing-442a761a7182.receipt.json",
+    "run_id": "browser-testing-442a761a7182",
+    "sel_score": 1.0,
+    "trace": ".codex/skills/browser-testing/skillopt/browser-testing-442a761a7182.trace.json"
+  }
+]

@@ -8,6 +8,14 @@
 
 기본 `decision-brake`는 아래 질문을 우선 사용합니다.
 
+### 0. Decision-Quality Metrics
+
+- 이 결정을 평가할 first-principles metric 은 무엇인가?
+- metric 은 실제 문제, causal mechanism, non-goal, 제약에서 나온 것인가?
+- metric 이 3-5개 이하의 orthogonal 기준이며 pass/fail 또는 비교 기준을 갖는가?
+- human 이 이 metric 을 승인했는가?
+- 승인되지 않았다면 아직 방향성 평가나 brake level 로 넘어가지 않았는가?
+
 ### 1. Problem Legitimacy
 
 - 이 결정은 진짜 문제를 푸는가, 아니면 표면 증상을 만지는가?
@@ -174,6 +182,8 @@
 
 ## Suggested Review Moves
 
+- 방향성 판단 전에 first-principles decision-quality metrics 를 만들고 human approval 을 받습니다.
+- human approval 이 없으면 metrics 초안과 승인 요청만 남기고 `[NEEDS METRIC APPROVAL]`로 멈춥니다.
 - 가장 치명적인 가정 1개를 먼저 겨냥합니다.
 - 권고 전에 현재안이 preserve/strengthen, narrow, broaden/complete, pivot, pause 중 어디에 해당하는지 분류합니다.
 - "더 작게 시작하라"는 결론은 스코프가 실제로 검증 지연, 실패 확률, 조정 비용을 키운다는 evidence 가 있을 때만 냅니다.

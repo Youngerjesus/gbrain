@@ -1,0 +1,1934 @@
+[
+  {
+    "accepted": true,
+    "created_at": "2026-06-24T06:20:26.895019+00:00",
+    "no_mutate": true,
+    "outcome": "accepted",
+    "run_id": "gbrain-protocol-f0b8a768627e",
+    "sel_score": 0.8888888888888888,
+    "validation_gate": {
+      "accepted": true,
+      "per_task_medians": [
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-007"
+        },
+        {
+          "median": 0.6666666666666666,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": true,
+              "score": 0.6666666666666666
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": true,
+              "score": 0.6666666666666666
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": true,
+              "score": 0.6666666666666666
+            }
+          ],
+          "runs": [
+            0.6666666666666666,
+            0.6666666666666666,
+            0.6666666666666666
+          ],
+          "task_id": "gbrain-source-008"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-009"
+        },
+        {
+          "median": 0.6666666666666666,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "contract": null,
+              "contract_violation": true,
+              "score": 0.6666666666666666
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "contract": null,
+              "contract_violation": true,
+              "score": 0.6666666666666666
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "contract": null,
+              "contract_violation": true,
+              "score": 0.6666666666666666
+            }
+          ],
+          "runs": [
+            0.6666666666666666,
+            0.6666666666666666,
+            0.6666666666666666
+          ],
+          "task_id": "gbrain-source-010"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-011"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-012"
+        }
+      ],
+      "reason": null,
+      "sel_score": 0.8888888888888888
+    }
+  },
+  {
+    "accepted": true,
+    "created_at": "2026-06-24T06:20:52.954903+00:00",
+    "no_mutate": true,
+    "outcome": "accepted",
+    "run_id": "gbrain-protocol-821733f10f28",
+    "sel_score": 1.0,
+    "validation_gate": {
+      "accepted": true,
+      "per_task_medians": [
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-007"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-008"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-009"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-010"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-011"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-012"
+        }
+      ],
+      "reason": null,
+      "sel_score": 1.0
+    }
+  },
+  {
+    "accepted": true,
+    "created_at": "2026-06-24T06:21:23.119517+00:00",
+    "no_mutate": true,
+    "outcome": "accepted",
+    "run_id": "gbrain-protocol-11bea5b5dcb7",
+    "sel_score": 1.0,
+    "validation_gate": {
+      "accepted": true,
+      "per_task_medians": [
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-007"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-008"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-009"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-010"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-011"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-012"
+        }
+      ],
+      "reason": null,
+      "sel_score": 1.0
+    }
+  },
+  {
+    "accepted": true,
+    "created_at": "2026-06-24T06:21:44.604289+00:00",
+    "no_mutate": true,
+    "outcome": "accepted",
+    "run_id": "gbrain-protocol-b5957465c83d",
+    "sel_score": 1.0,
+    "validation_gate": {
+      "accepted": true,
+      "per_task_medians": [
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-007"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-008"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-009"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-010"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-011"
+        },
+        {
+          "median": 1.0,
+          "run_details": [
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            },
+            {
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "contract": null,
+              "contract_violation": false,
+              "score": 1.0
+            }
+          ],
+          "runs": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "task_id": "gbrain-source-012"
+        }
+      ],
+      "reason": null,
+      "sel_score": 1.0
+    }
+  },
+  {
+    "created_at": "2026-06-24T06:51:53.272906+00:00",
+    "held_out": null,
+    "llm_calls": 71,
+    "mode": "live_closed_loop",
+    "no_mutate": true,
+    "outcome": "no_improvement",
+    "receipt": "/Users/jeongmin/Downloads/projects/codex/.codex/skills/gbrain-protocol/skillopt/gbrain-protocol-339b1154de3f.receipt.json",
+    "run_id": "gbrain-protocol-339b1154de3f",
+    "sel_score": 0.611111111111111,
+    "trace": "/Users/jeongmin/Downloads/projects/codex/.codex/skills/gbrain-protocol/skillopt/gbrain-protocol-339b1154de3f.trace.json"
+  },
+  {
+    "created_at": "2026-06-25T02:21:22.464493+00:00",
+    "held_out": null,
+    "llm_calls": 97,
+    "mode": "live_closed_loop",
+    "no_mutate": true,
+    "outcome": "accepted",
+    "receipt": "/Users/jeongmin/Downloads/projects/codex/.codex/skills/gbrain-protocol/skillopt/gbrain-protocol-a0d9302d6db7.receipt.json",
+    "run_id": "gbrain-protocol-a0d9302d6db7",
+    "sel_score": 0.7222222222222222,
+    "trace": "/Users/jeongmin/Downloads/projects/codex/.codex/skills/gbrain-protocol/skillopt/gbrain-protocol-a0d9302d6db7.trace.json"
+  }
+]

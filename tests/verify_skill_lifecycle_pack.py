@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -183,8 +184,39 @@ class SkillLifecyclePackStructureTest(unittest.TestCase):
     def test_scripts_verify_runs_lifecycle_contract(self) -> None:
         verify = read("scripts/verify")
         self.assertIn("PYTHONDONTWRITEBYTECODE=1", verify)
-        self.assertIn("python3 tests/verify_skill_lifecycle_pack.py", verify)
+        self.assertIn('"$PYTHON" tests/verify_skill_lifecycle_pack.py', verify)
         self.assertNotIn("tests/verify_gstack_codex_skills.py", verify)
+
+    def test_browser_testing_skill_is_skillified_for_browser_evidence(self) -> None:
+        text = read(".codex/skills/browser-testing/SKILL.md")
+        frontmatter = parse_frontmatter(text)
+        self.assertEqual(frontmatter.get("name"), "browser-testing")
+        self.assertIn("browser evidence", frontmatter.get("description", ""))
+        for required in [
+            "## Contract",
+            "## Routing Decisions",
+            "## Workflow",
+            "## Output Format",
+            "## Playwright Guidelines",
+            "## Anti-Patterns",
+            "read-only",
+            "contexts/browser-testing",
+            "start_dev_env.sh",
+            "check_logs.sh",
+            "stop_env.sh",
+            "design-review",
+            "ux-review",
+            "visual-qa-hardening",
+            "benchmark",
+        ]:
+            self.assertIn(required, text)
+        for forbidden in [
+            "ALWAYS read the relevant `specs",
+            "main/scripts/run_dev_env.sh",
+            "mcp_chrome-devtools_",
+            "zombie processes",
+        ]:
+            self.assertNotIn(forbidden, text)
 
 
 class SkillOptCoreTest(unittest.TestCase):
@@ -488,6 +520,62 @@ class SkillOptCoreTest(unittest.TestCase):
             self.assertTrue((skill_dir / "skillopt" / "best.md").is_file())
             history = json.loads((skill_dir / "skillopt" / "history.json").read_text(encoding="utf-8"))
             self.assertEqual(history[-1]["outcome"], "accepted")
+
+    def test_browser_testing_skillopt_assets_are_reviewed_and_runnable(self) -> None:
+        benchmark_path = ROOT / ".codex/skills/browser-testing/skillopt-benchmark.jsonl"
+        heldout_path = ROOT / ".codex/skills/browser-testing/skillopt-heldout.jsonl"
+        benchmark_text = benchmark_path.read_text(encoding="utf-8")
+        heldout_text = heldout_path.read_text(encoding="utf-8")
+        self.assertNotIn(self.skillopt.BOOTSTRAP_PENDING_REVIEW, benchmark_text)
+        self.assertNotIn(self.skillopt.BOOTSTRAP_PENDING_REVIEW, heldout_text)
+
+        benchmark = self.skillopt.load_benchmark(benchmark_path, bootstrap_reviewed=True)
+        heldout = self.skillopt.load_benchmark(heldout_path, bootstrap_reviewed=True)
+        self.assertEqual(len(benchmark), 15)
+        self.assertEqual(len(heldout), 6)
+        split = self.skillopt.split_benchmark(benchmark, (1, 1, 1))
+        self.assertEqual((len(split.train), len(split.sel), len(split.test)), (5, 5, 5))
+        self.assertFalse({row["task_id"] for row in benchmark} & {row["task_id"] for row in heldout})
+
+    def test_browser_testing_skillopt_benchmark_encodes_goal_routing_decisions(self) -> None:
+        benchmark = self.skillopt.load_benchmark(
+            ROOT / ".codex/skills/browser-testing/skillopt-benchmark.jsonl",
+            bootstrap_reviewed=True,
+        )
+        heldout = self.skillopt.load_benchmark(
+            ROOT / ".codex/skills/browser-testing/skillopt-heldout.jsonl",
+            bootstrap_reviewed=True,
+        )
+        for row in benchmark + heldout:
+            expected = row.get("expected_decision")
+            self.assertIsInstance(expected, dict, row["task_id"])
+            self.assertIn("primary_skill", expected, row["task_id"])
+            self.assertIn("visual_qa_hardening", expected, row["task_id"])
+            self.assertIn("required_evidence", expected, row["task_id"])
+            checks = row["judge"]["checks"]
+            self.assertTrue(
+                any(check.get("op") == "mapping_contains" for check in checks),
+                row["task_id"],
+            )
+
+        primary_skills = {row["expected_decision"]["primary_skill"] for row in benchmark}
+        self.assertIn("browser-testing", primary_skills)
+        self.assertIn("design-review", primary_skills)
+        self.assertIn("visual-qa-hardening", primary_skills)
+        self.assertTrue(
+            any(
+                row["expected_decision"]["visual_qa_hardening"].startswith("required")
+                for row in benchmark + heldout
+            )
+        )
+        visual_rows = [
+            row
+            for row in benchmark + heldout
+            if row["expected_decision"]["primary_skill"] == "visual-qa-hardening"
+        ]
+        self.assertGreaterEqual(len(visual_rows), 3)
+        for row in visual_rows:
+            self.assertEqual(row["expected_decision"].get("verdict_owner"), "visual-qa-hardening", row["task_id"])
 
     def test_runner_proxy_scores_candidate_against_benchmark(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1381,62 +1469,166 @@ class SkillOptCoreTest(unittest.TestCase):
         self.assertEqual(captured["provider"], "codex")
         self.assertIsNone(captured["gemini_model"])
 
-    def test_cli_chat_client_gemini_provider_skips_codex_and_uses_per_call_model(self) -> None:
+    def test_live_runner_rejects_removed_gemini_cli_provider(self) -> None:
+        removed_provider = "gemini" + "-cli"
+        self.assertNotIn(removed_provider, self.runner.LIVE_PROVIDERS)
+        with self.assertRaisesRegex(ValueError, "unsupported live provider"):
+            self.runner._resolve_provider(removed_provider)
+
+    def test_chat_client_gemini_provider_uses_api_not_cli(self) -> None:
+        captured: dict[str, object] = {}
+
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return json.dumps(
+                    {
+                        "candidates": [
+                            {
+                                "content": {
+                                    "parts": [{"text": "api-direct"}],
+                                }
+                            }
+                        ]
+                    }
+                ).encode("utf-8")
+
+        def fake_urlopen(request: object, timeout: int) -> FakeResponse:
+            captured["url"] = request.full_url  # type: ignore[attr-defined]
+            captured["data"] = json.loads(request.data.decode("utf-8"))  # type: ignore[attr-defined]
+            captured["timeout"] = timeout
+            return FakeResponse()
+
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             codex = root / "codex"
             gemini = root / "gemini"
-            gemini_argv = root / "gemini-argv.json"
             codex_marker = root / "codex-called"
-            codex.write_text(
-                "#!/usr/bin/env bash\n"
-                f"touch {str(codex_marker)!r}\n"
-                "echo codex-should-not-run\n",
-                encoding="utf-8",
-            )
-            gemini.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json, pathlib, sys\n"
-                f"pathlib.Path({str(gemini_argv)!r}).write_text(json.dumps(sys.argv), encoding='utf-8')\n"
-                "print('gemini-direct')\n",
-                encoding="utf-8",
-            )
+            gemini_marker = root / "gemini-called"
+            codex.write_text("#!/usr/bin/env bash\n" f"touch {str(codex_marker)!r}\n", encoding="utf-8")
+            gemini.write_text("#!/usr/bin/env bash\n" f"touch {str(gemini_marker)!r}\n", encoding="utf-8")
             codex.chmod(0o755)
             gemini.chmod(0o755)
             client = self.live.CliChatClient(
                 provider="gemini",
                 codex_bin=str(codex),
-                gemini_bin=str(gemini),
-                timeout=5,
+                gemini_api_key="test-key",
+                urlopen=fake_urlopen,
+                timeout=7,
             )
             self.assertEqual(
                 client.chat(model="gemini-2.5-flash", system="system", user="user", max_tokens=10),
-                "gemini-direct",
+                "api-direct",
             )
             self.assertFalse(codex_marker.exists())
-            argv = json.loads(gemini_argv.read_text(encoding="utf-8"))
-            self.assertEqual(argv[argv.index("--model") + 1], "gemini-2.5-flash")
-
-    def test_cli_chat_client_falls_back_to_gemini(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            codex = root / "codex"
-            gemini = root / "gemini"
-            codex.write_text("#!/usr/bin/env bash\nexit 42\n", encoding="utf-8")
-            gemini.write_text("#!/usr/bin/env bash\necho gemini-fallback\n", encoding="utf-8")
-            codex.chmod(0o755)
-            gemini.chmod(0o755)
-            client = self.live.CliChatClient(
-                provider="auto",
-                codex_bin=str(codex),
-                gemini_bin=str(gemini),
-                gemini_model="gemini-test",
-                timeout=5,
-            )
+            self.assertFalse(gemini_marker.exists())
+            self.assertIn("/models/gemini-2.5-flash:generateContent", captured["url"])
+            self.assertIn("key=test-key", captured["url"])
+            self.assertEqual(captured["timeout"], 7)
+            self.assertIn("contents", captured["data"])
+            self.assertEqual(captured["data"]["generationConfig"]["maxOutputTokens"], 10)
             self.assertEqual(
-                client.chat(model="codex-test", system="system", user="user", max_tokens=10),
-                "gemini-fallback",
+                captured["data"]["toolConfig"]["functionCallingConfig"]["mode"],
+                "NONE",
             )
+            self.assertEqual(client.last_tool_calls, [])
+
+    def test_chat_client_gemini_json_prompt_does_not_claim_cli_file_output(self) -> None:
+        captured: dict[str, object] = {}
+
+        class FakeResponse:
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return json.dumps(
+                    {
+                        "candidates": [
+                            {
+                                "content": {
+                                    "parts": [{"text": "{\"edits\": []}"}],
+                                }
+                            }
+                        ]
+                    }
+                ).encode("utf-8")
+
+        def fake_urlopen(request: object, timeout: int) -> FakeResponse:
+            captured["data"] = json.loads(request.data.decode("utf-8"))  # type: ignore[attr-defined]
+            return FakeResponse()
+
+        client = self.live.CliChatClient(
+            provider="gemini",
+            gemini_api_key="test-key",
+            urlopen=fake_urlopen,
+            timeout=7,
+        )
+        result = client.chat_json_object(
+            model="gemini-3.5-flash",
+            system="You are SkillOpt's optimizer.",
+            user="{}",
+            max_tokens=20,
+            schema={"type": "object"},
+            filename="optimizer-edits.json",
+        )
+        self.assertEqual(result, {"edits": []})
+        prompt = captured["data"]["contents"][0]["parts"][0]["text"]
+        self.assertNotIn("CLI", prompt)
+        self.assertNotIn("optimizer-edits.json", prompt)
+
+    def test_chat_client_gemini_json_retries_truncated_json_with_more_tokens(self) -> None:
+        captured_tokens: list[int] = []
+
+        class FakeResponse:
+            def __init__(self, payload: dict[str, object]) -> None:
+                self.payload = payload
+
+            def __enter__(self) -> "FakeResponse":
+                return self
+
+            def __exit__(self, *args: object) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return json.dumps(self.payload).encode("utf-8")
+
+        def fake_urlopen(request: object, timeout: int) -> FakeResponse:
+            data = json.loads(request.data.decode("utf-8"))  # type: ignore[attr-defined]
+            captured_tokens.append(data["generationConfig"]["maxOutputTokens"])
+            text = '{"edits": [{"op": "add", "content": "unterminated}'
+            if len(captured_tokens) == 2:
+                text = '{"edits": []}'
+            return FakeResponse({"candidates": [{"content": {"parts": [{"text": text}]}}]})
+
+        client = self.live.CliChatClient(
+            provider="gemini",
+            gemini_api_key="test-key",
+            urlopen=fake_urlopen,
+            timeout=7,
+        )
+        result = client.chat_json_object(
+            model="gemini-3.5-flash",
+            system="You are SkillOpt's optimizer.",
+            user="{}",
+            max_tokens=20,
+            schema={"type": "object"},
+            filename="optimizer-edits.json",
+        )
+        self.assertEqual(result, {"edits": []})
+        self.assertEqual(captured_tokens, [20, 40])
+
+    def test_cli_chat_client_rejects_removed_gemini_cli_provider(self) -> None:
+        removed_provider = "gemini" + "-cli"
+        with self.assertRaisesRegex(ValueError, "provider must be"):
+            self.live.CliChatClient(provider=removed_provider, gemini_api_key="test-key")
 
     def test_cli_chat_client_uses_supported_codex_exec_flags(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1456,7 +1648,6 @@ class SkillOptCoreTest(unittest.TestCase):
             client = self.live.CliChatClient(
                 provider="codex",
                 codex_bin=str(codex),
-                gemini_bin=None,
                 timeout=5,
             )
             self.assertEqual(
@@ -1468,6 +1659,31 @@ class SkillOptCoreTest(unittest.TestCase):
             self.assertIn("--json", argv)
             self.assertIn("--ignore-user-config", argv)
             self.assertEqual(client.last_tool_calls, [{"name": "web.open", "failed": False}])
+
+    def test_cli_chat_client_codex_timeout_is_at_least_ten_minutes(self) -> None:
+        captured: dict[str, object] = {}
+
+        def fake_run(*args: object, **kwargs: object) -> object:
+            captured["timeout"] = kwargs["timeout"]
+            cmd = args[0]
+            out_path = Path(cmd[cmd.index("--output-last-message") + 1])
+            out_path.write_text("codex-ok", encoding="utf-8")
+
+            class Result:
+                returncode = 0
+                stdout = ""
+                stderr = ""
+
+            return Result()
+
+        client = self.live.CliChatClient(
+            provider="codex",
+            codex_bin="codex",
+            timeout=5,
+        )
+        with mock.patch.object(self.live.subprocess, "run", side_effect=fake_run):
+            self.assertEqual(client.chat(model="codex-test", system="system", user="user", max_tokens=10), "codex-ok")
+        self.assertEqual(captured["timeout"], 600)
 
     def test_cli_chat_client_optimizer_json_uses_json_artifact_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1489,7 +1705,6 @@ class SkillOptCoreTest(unittest.TestCase):
             client = self.live.CliChatClient(
                 provider="codex",
                 codex_bin=str(codex),
-                gemini_bin=None,
                 timeout=5,
             )
             result = client.chat_json_object(
@@ -1506,54 +1721,51 @@ class SkillOptCoreTest(unittest.TestCase):
             self.assertEqual(out_path.name, "optimizer-edits.json")
             self.assertIn("optimizer-edits.json", prompt_log.read_text(encoding="utf-8"))
 
-    def test_cli_chat_client_gemini_fallback_uses_prompt_flag_and_clears_tool_calls(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            codex = root / "codex"
-            gemini = root / "gemini"
-            gemini_argv = root / "gemini-argv.json"
-            codex.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json, pathlib, sys\n"
-                "if pathlib.Path(sys.argv[0]).with_name('codex-once').exists():\n"
-                "    print('codex failed', file=sys.stderr)\n"
-                "    raise SystemExit(42)\n"
-                "pathlib.Path(sys.argv[0]).with_name('codex-once').write_text('1', encoding='utf-8')\n"
-                "out = pathlib.Path(sys.argv[sys.argv.index('--output-last-message') + 1])\n"
-                "out.write_text('codex-ok', encoding='utf-8')\n"
-                "print(json.dumps({'type':'tool_call','name':'web.open','failed':False}))\n",
-                encoding="utf-8",
-            )
-            gemini.write_text(
-                "#!/usr/bin/env python3\n"
-                "import json, pathlib, sys\n"
-                f"pathlib.Path({str(gemini_argv)!r}).write_text(json.dumps(sys.argv), encoding='utf-8')\n"
-                "print('gemini-ok')\n",
-                encoding="utf-8",
-            )
-            codex.chmod(0o755)
-            gemini.chmod(0o755)
-            client = self.live.CliChatClient(
-                provider="auto",
-                codex_bin=str(codex),
-                gemini_bin=str(gemini),
-                gemini_model="gemini-test",
-                timeout=5,
-            )
-            self.assertEqual(client.chat(model="codex-test", system="system", user="user", max_tokens=10), "codex-ok")
-            self.assertEqual(client.last_tool_calls, [{"name": "web.open", "failed": False}])
-            self.assertEqual(client.chat(model="codex-test", system="system", user="user", max_tokens=10), "gemini-ok")
-            argv = json.loads(gemini_argv.read_text(encoding="utf-8"))
-            self.assertIn("--prompt", argv)
-            self.assertEqual(client.last_tool_calls, [])
-
-    def test_live_json_contract_parser_rejects_prose_wrapped_optimizer_output(self) -> None:
-        with self.assertRaisesRegex(json.JSONDecodeError, "Expecting value"):
-            self.live._parse_optimizer_response('Here is the JSON: {"edits": []}')
+    def test_live_json_contract_parser_accepts_prose_wrapped_optimizer_output(self) -> None:
+        self.assertEqual(
+            self.live._parse_optimizer_response('Here is the JSON: {"edits": []}'),
+            [],
+        )
         self.assertEqual(
             self.live._parse_optimizer_response('```json\n{"edits": []}\n```'),
             [],
         )
+
+    def test_gemini_api_content_error_reports_finish_reason_and_safety(self) -> None:
+        with self.assertRaisesRegex(ValueError, "MAX_TOKENS.*SAFETY"):
+            self.live._extract_gemini_api_text(
+                {
+                    "candidates": [
+                        {
+                            "finishReason": "MAX_TOKENS",
+                            "safetyRatings": [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "LOW"}],
+                        }
+                    ]
+                }
+            )
+
+    def test_budgeted_chat_client_preserves_json_object_channel(self) -> None:
+        captured: dict[str, object] = {}
+
+        class Inner:
+            def chat(self, **kwargs: object) -> str:
+                raise AssertionError("optimizer should use chat_json_object when available")
+
+            def chat_json_object(self, **kwargs: object) -> dict[str, object]:
+                captured["kwargs"] = kwargs
+                return {"edits": []}
+
+        client = self.live.BudgetedChatClient(Inner(), self.live.LiveBudget(max_calls=1))
+        result = self.live._reflect_edits(
+            chat_client=client,
+            optimizer_model="optimizer",
+            skill_text="---\nname: demo\n---\n# Demo\n",
+            scored_rollouts=[],
+            criteria="- contains: demo",
+        )
+        self.assertEqual(result, [])
+        self.assertEqual(client.budget.calls, 1)
+        self.assertEqual(captured["kwargs"]["model"], "optimizer")
 
     def test_codex_json_events_can_supply_tool_calls_to_rule_judges(self) -> None:
         stdout = "\n".join(

@@ -1,0 +1,43 @@
+[
+  {
+    "event": "baseline_validation",
+    "sel_score": 0.5555555555555556,
+    "tasks": [
+      "gbrain-source-007",
+      "gbrain-source-008",
+      "gbrain-source-009",
+      "gbrain-source-010",
+      "gbrain-source-011",
+      "gbrain-source-012"
+    ]
+  },
+  {
+    "edits_proposed": 1,
+    "epoch": 1,
+    "event": "reflect",
+    "failure_ids": [
+      "gbrain-source-002"
+    ],
+    "rejected_buffer_size": 0,
+    "success_ids": [
+      "gbrain-source-001",
+      "gbrain-source-003",
+      "gbrain-source-004"
+    ]
+  },
+  {
+    "edits_applied": 1,
+    "epoch": 1,
+    "event": "candidate_generated"
+  },
+  {
+    "accepted": true,
+    "epoch": 1,
+    "event": "candidate_validation",
+    "sel_score": 0.7222222222222222
+  },
+  {
+    "event": "final_test",
+    "test_score": 0.875
+  }
+]

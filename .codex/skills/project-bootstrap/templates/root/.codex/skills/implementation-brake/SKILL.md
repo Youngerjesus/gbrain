@@ -222,6 +222,20 @@ commit, report, documentation sync, progress update, PR, merge 는 이 스킬의
 - `[FIX BEFORE SHIP]`
 - `[NEEDS REWORK]`
 
+## Review Gate Evidence Inputs
+
+When `implementation-brake` runs inside the goal-requirements `Review` main gate, it is the final brake after any triggered review evidence has been produced. Multiple visual, UX, and DevEx lenses may have completed through parallel Review lens execution; that parallelism does not make them separate ship verdicts.
+
+Before `[SHIP]`, consume and reconcile all triggered review evidence:
+
+- `visual-qa-hardening` output for UI, layout, responsive, design-system, or reference-fidelity changes
+- `visual-qa-reviewer` evidence when visual QA uses its independent companion
+- `reference-fidelity-reviewer` evidence when reference-driven visual work is in scope
+- `ux-review` output for user-facing task, recovery, accessibility, trust, or live-flow changes
+- `devex-review` output for docs/API/CLI/SDK/library/platform/agent-tool changes
+
+Triggered review evidence is input, not delegation of final authority. `implementation-brake` still owns final ship-readiness verdict, and must reject `[SHIP]` when any triggered review is missing, stale, cleanup-only, timed out, contradicted, unresolved, unavailable without an accepted fallback, or not reconciled against the implementation and verification evidence.
+
 ## Requirement Conformance Review
 
 When the implementation is requirement-bearing, `implementation-brake` must invoke or explicitly account for the read-only `requirement-conformance-reviewer` before `[SHIP]`.
@@ -290,6 +304,24 @@ Do not issue `[SHIP]` when required source-obligation validation or reviewer evi
 
 Prose-only approval, progress prose, evidence prose, reviewer praise, or route names cannot replace structured source-obligation status and validator evidence. If a source-obligation not-required decision exists, ensure it is structured and current before accepting it.
 
+## Contract Downgrade Ship Gate
+
+Do not issue `[SHIP]` when the implemented result satisfies only a weaker interpretation of the accepted requirement.
+
+A contract downgrade includes:
+
+- lower fidelity, parity, completeness, or behavioral precision than requested
+- partial artifact instead of the requested artifact class
+- mock, scaffold, proxy, fixture-only, route-only, or documentation-only substitute instead of the requested implementation or evidence
+- screenshot-only, prose-only, route-only, stale, or weaker proof where behavioral, typed, live, consumer-side, or validator proof was required
+- undocumented deviation from a source, reference, acceptance threshold, execution boundary, or user-visible behavior
+- flexible wording such as interpretation, local fit, modernization, simplification, preserving intent, or component consistency used as approval for scope shrinkage
+- unapproved narrowing of source obligations, non-goals, disallowed substitutions, artifact class, evidence level, execution boundary, or success standard
+
+Unapproved downgrade is must-fix, not polish.
+
+If a flexible clause appears to conflict with a strict target, treat the strict target as authoritative unless the accepted requirement includes an explicit user-approved deviation. Record the downgrade finding, required correction or required user decision, and the verification needed before reconsidering `[SHIP]`.
+
 ## Companion Agent Routing
 
 `implementation-brake`가 최종 ship-readiness verdict 를 소유합니다.
@@ -302,6 +334,10 @@ Companion reviewer 는 병렬 판정자가 아니라 evidence input 입니다. c
 - `code-reviewer`: merge-gate companion 입니다. correctness, regression, completeness, merge safety 에 집중하며, implementation-brake-specific reviewer 와 독립된 좁은 렌즈입니다. merge-risk 가 있는 non-trivial diff 에서 별도 read-only evidence input 으로 사용할 수 있습니다.
 - `performance-reviewer`: conditional specialist 입니다. query, loop, async/request path, rendering, bundle, unbounded data, cache/queue/resource-risk 같은 concrete performance trigger 가 있을 때만 호출합니다. 성능 리스크가 없는 diff 에서는 호출하지 않습니다.
 - `requirement-conformance-reviewer`: requirement-bearing implementation companion 입니다. accepted requirement, implementation diff, verification evidence, and requirement-local evidence 를 읽고 `conformance_result_status`, AC coverage, non-goal drift, Decision Boundaries drift, residual risk, and evidence sufficiency 를 보고합니다. It does not own final ship-readiness.
+- `visual-qa-reviewer`: Review gate visual companion 입니다. `visual-qa-hardening` evidence 로 들어오며, UI/layout/design-token/responsive risk 를 독립 시선으로 확인합니다. It does not own final ship-readiness.
+- `reference-fidelity-reviewer`: Review gate reference-fidelity companion 입니다. reference-driven visual scope 에서 `visual-qa-hardening` evidence 로 들어오며, source reference drift 와 accepted deviation 여부를 확인합니다. It does not own final ship-readiness.
+- `ux-review` output: Review gate user-experience evidence 입니다. user-facing live flow, task success, recovery, trust, and accessibility findings 를 final verdict input 으로 reconciles 합니다.
+- `devex-review` output: Review gate developer-experience evidence 입니다. docs/API/CLI/SDK/library/platform/agent-tool usability, onboarding, error quality, and runnable proof findings 를 final verdict input 으로 reconciles 합니다.
 
 ### When to Invoke
 

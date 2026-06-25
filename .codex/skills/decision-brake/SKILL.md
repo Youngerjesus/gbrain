@@ -36,6 +36,7 @@ reference @./references/review-lenses.md
 ## Core Posture
 
 - 목적은 동의나 격려가 아니라 의사결정 품질 향상입니다.
+- 판단을 시작하기 전에 decision-quality metrics 를 제1원칙에서 먼저 만들고 human approval 을 받아야 합니다.
 - 사용자가 제시한 해법을 전제로 깔지 않습니다. 문제와 해법을 분리해서 봅니다.
 - 추가, 제거, 축소, 확대, 유지, 전환을 모두 가능한 개입으로 둡니다. 특정 개입을 기본값으로 두지 않습니다.
 - 좋은 비판은 반드시 더 나은 다음 행동을 동반해야 합니다. 그 행동은 현재 방향 강화, 범위 축소, 범위 확대, 전환, 보류 중 하나일 수 있습니다.
@@ -238,7 +239,20 @@ reference @./references/review-lenses.md
 - `<topic-slug>`는 검토 대상 이름을 짧은 kebab-case 로 만든 값입니다. 이미 같은 주제 디렉터리가 있으면 재사용합니다.
 - 기록 파일은 decision-brake 실행 기록이며, SSOT, progress, memory, task queue, spec package 를 대체하지 않습니다.
 
-### 2. Brake the direction
+### 2. Define decision-quality metrics and get approval
+
+방향을 압박 검토하기 전에 first-principles decision-quality metrics 를 먼저 만듭니다.
+
+- metrics 는 현재 결정의 목적, 실제 문제, causal mechanism, non-goals, 제약에서 도출합니다.
+- 3-5개 이하의 orthogonal metric 으로 제한하고, 각 metric 에 pass/fail 또는 비교 기준을 둡니다.
+- metric 은 "좋음", "충분함", "강함" 같은 취향어가 아니라 판단을 가르는 관찰 가능한 기준이어야 합니다.
+- metrics 에는 현재 결정에 필요한 축만 넣되, 기본 후보는 problem fit, causal coverage, evidence sufficiency, reversibility/scope, handoff readiness 입니다.
+- human 이 metrics 를 승인하기 전에는 lens review, alternative comparison, synthesis, brake level 로 넘어가지 않습니다.
+
+승인이 없으면 metrics 초안, 각 metric 의 이유, approval request 를 제시하고 `[NEEDS METRIC APPROVAL]`로 멈춥니다.
+승인 후에는 승인된 metrics 를 기준으로만 판단하고, 평가 중 metric 을 바꿔야 하면 다시 human approval 을 받습니다.
+
+### 3. Brake the direction
 
 `references/review-lenses.md`의 기본 질문을 이용해 현재 방향을 압박 검토합니다.
 
@@ -254,7 +268,7 @@ reference @./references/review-lenses.md
 - 지금 바로 handoff 할 만큼 입력, 완료 기준, 검증 방법이 닫혀 있는가?
 - 이 방향을 지금 고정할 근거가 충분한가?
 
-### 2a. Calibrate the intervention
+### 3a. Calibrate the intervention
 
 압박 검토 후 권고 유형을 먼저 고릅니다.
 
@@ -267,7 +281,7 @@ reference @./references/review-lenses.md
 `Narrow`나 `Pause`를 고를 때는 위 결론을 만든 구체적 evidence 를 남깁니다.
 그 evidence 가 없으면 현재 방향을 축소하지 말고 `Preserve and strengthen` 또는 `Broaden or complete`를 우선 검토합니다.
 
-### 3. Target scope if needed
+### 4. Target scope if needed
 
 `scope-targeter`가 필요하면 스코프의 하한, 상한, 실제 승리 지점을 압박 검토합니다.
 
@@ -275,14 +289,14 @@ reference @./references/review-lenses.md
 - scope-targeter 는 축소뿐 아니라 유지, 확대, 완결성 보강도 제안할 수 있습니다.
 - scope-targeter 결과는 최종 결론이 아니라 메인 판단이 스코프를 재조준하는 입력입니다.
 
-### 4. Check readiness if needed
+### 5. Check readiness if needed
 
 `readiness-reviewer`가 필요하면 실행 준비도와 handoff 가능성을 검토합니다.
 
 - readiness-reviewer 는 required inputs, acceptance criteria, verification method, missing evidence 를 봅니다.
 - readiness-reviewer 결과는 실행 영향과 `required_followups` 판단에 특히 중요합니다.
 
-### 5. Check causal coverage if needed
+### 6. Check causal coverage if needed
 
 `causal-coverage-reviewer`가 필요하면 문제, 개입, expected outcome 의 연결을 검토합니다.
 
@@ -290,14 +304,14 @@ reference @./references/review-lenses.md
 - symptom, proxy, missing link, counter-cause, confounder 를 구분합니다.
 - causal-coverage-reviewer 결과는 verdict, 대안 비교, 검증 followup 판단에 특히 중요합니다.
 
-### 6. Deepen if needed
+### 7. Deepen if needed
 
 `thinker`가 필요하면 심층 사고 프레임으로 문제를 다시 모델링합니다.
 
 - thinker 는 문제 재정의, 구조적 상호작용, second-order cost, inversion 관점을 확장합니다.
 - thinker 결과는 최종 결론이 아니라 메인 판단을 깊게 만드는 입력입니다.
 
-### 7. Explore if needed
+### 8. Explore if needed
 
 `explorer`가 필요하면 현재안 밖의 대안 공간을 별도로 탐색합니다.
 
@@ -305,7 +319,7 @@ reference @./references/review-lenses.md
 - explorer 는 다른 문제 정의, 원인 가설, 해결 원리, leverage point 를 제시합니다.
 - explorer 결과는 최종 결론이 아니라 메인 판단이 종합할 발산 입력입니다.
 
-### 8. Review if needed
+### 9. Review if needed
 
 `reviewer`가 필요하면 메인 판단과 thinker / explorer 결과를 독립 검토합니다.
 
@@ -313,7 +327,7 @@ reference @./references/review-lenses.md
 - reviewer 는 이미 나온 판단과 심층 사고의 약점, 비약, 과신, 누락을 검토합니다.
 - reviewer 는 현재 방향 강화, 더 단순한 대안, 더 안전한 대안, 더 완결적인 대안 중 무엇이 evidence 에 맞는지 제시할 수 있습니다.
 
-### 9. Compare alternatives
+### 10. Compare alternatives
 
 최소 2개의 실행 가능한 다음 행동을 둡니다.
 
@@ -348,20 +362,22 @@ reference @./references/review-lenses.md
 - **Weakest causal link**: verdict 를 가장 크게 바꾸는 missing link, proxy, counter-cause, confounder
 - **Causal evidence path**: causal claim 을 확인하거나 반증할 수 있는 검증 또는 측정 경로
 
-### 10. Recommend with a clear brake level
+### 11. Recommend with a clear brake level
 
 마지막에는 아래 중 하나로 판정합니다.
 
 - `[PROCEED]`: 지금 방향이 충분히 타당함
 - `[PROCEED WITH CHANGES]`: 핵심 수정 후 진행할 가치가 있음
+- `[NEEDS METRIC APPROVAL]`: decision-quality metrics 에 대한 human approval 이 아직 없음
 - `[PAUSE]`: 중요한 가정, 리스크, 경직성이 정리되기 전까지 멈춰야 함
 - `[STOP]`: 현재 방향은 문제 정의 또는 접근 자체를 다시 잡는 편이 나음
 
 `[PROCEED]`나 `[PROCEED WITH CHANGES]`는 충분히 좋은 결론입니다.
 브레이크 스킬이라고 해서 `[PAUSE]`나 `[STOP]`을 선호하지 않습니다.
 `[PAUSE]`나 `[STOP]`은 구체적 blocking evidence 또는 높은 오판 비용이 있을 때만 사용합니다.
+`[NEEDS METRIC APPROVAL]`은 평가 verdict 가 아니라 approval gate 입니다. 승인 전에는 방향성 판단을 완료했다고 쓰지 않습니다.
 
-### 11. Write the scribe record
+### 12. Write the scribe record
 
 최종 응답 전에 루트 `decision-brake/<topic-slug>/` 아래에 Markdown 기록을 남깁니다.
 
@@ -371,6 +387,7 @@ reference @./references/review-lenses.md
 - thinker / explorer / scope-targeter / readiness-reviewer / causal-coverage-reviewer 를 사용했다면 각 렌즈의 핵심 신호와 verdict 영향만 보존합니다.
 - 기록에는 최소한 아래 항목을 포함합니다.
   - decision under review
+  - decision-quality metrics and human approval status
   - framing: 선택지, 숨은 전제, 반례, 검증 방법, 실패 시나리오
   - lens notes
   - alternatives considered
@@ -387,12 +404,14 @@ reference @./references/review-lenses.md
 응답은 아래 순서를 기본으로 합니다.
 
 1. **Decision under review**
-2. **What is probably wrong or weak**
-3. **Risks and failure modes**
-4. **Same-direction strengthening**
-5. **Better alternatives**
-6. **Recommendation**
-7. **Brake level**
+2. **Decision-quality metrics**
+3. **Metric approval**
+4. **What is probably wrong or weak**
+5. **Risks and failure modes**
+6. **Same-direction strengthening**
+7. **Better alternatives**
+8. **Recommendation**
+9. **Brake level**
 
 파일 기록을 생성한 경우, 응답 마지막에 `Scribe record: decision-brake/<topic-slug>/<YYYY-MM-DD-HHMM>-review.md`를 덧붙입니다.
 
@@ -407,7 +426,7 @@ Lens Notes
   impact_on_verdict: <verdict, scope, readiness, followup 에 준 영향>
 
 Synthesis
-- verdict: <[PROCEED] | [PROCEED WITH CHANGES] | [PAUSE] | [STOP]>
+- verdict: <[PROCEED] | [PROCEED WITH CHANGES] | [NEEDS METRIC APPROVAL] | [PAUSE] | [STOP]>
 - decisive_reasons: <최종 판정을 결정한 이유, 최대 5개>
 - preserved_dissent: <치명도 기준 또는 렌즈 간 충돌 기준으로 보존해야 하는 반론>
 - required_followups: <진행 전 또는 진행 중 닫아야 할 입력, 증거, 수정사항>

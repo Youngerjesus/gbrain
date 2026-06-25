@@ -1,0 +1,81 @@
+[
+  {
+    "event": "baseline_validation",
+    "sel_score": 0.611111111111111,
+    "tasks": [
+      "gbrain-source-007",
+      "gbrain-source-008",
+      "gbrain-source-009",
+      "gbrain-source-010",
+      "gbrain-source-011",
+      "gbrain-source-012"
+    ]
+  },
+  {
+    "edits_proposed": 3,
+    "epoch": 1,
+    "event": "reflect",
+    "failure_ids": [],
+    "rejected_buffer_size": 0,
+    "success_ids": [
+      "gbrain-source-001",
+      "gbrain-source-002",
+      "gbrain-source-003",
+      "gbrain-source-004"
+    ]
+  },
+  {
+    "edits_applied": 3,
+    "epoch": 1,
+    "event": "candidate_generated"
+  },
+  {
+    "accepted": false,
+    "epoch": 1,
+    "event": "candidate_validation",
+    "sel_score": 0.611111111111111
+  },
+  {
+    "epoch": 1,
+    "event": "rejected_candidate",
+    "reason": "below_baseline",
+    "task_signal": {
+      "improved": [
+        {
+          "after": 0.6666666666666666,
+          "before": 0.3333333333333333,
+          "task_id": "gbrain-source-012"
+        }
+      ],
+      "regressed": [
+        {
+          "after": 0.3333333333333333,
+          "before": 0.6666666666666666,
+          "task_id": "gbrain-source-010"
+        }
+      ],
+      "unchanged": [
+        {
+          "after": 1.0,
+          "before": 1.0,
+          "task_id": "gbrain-source-007"
+        },
+        {
+          "after": 0.6666666666666666,
+          "before": 0.6666666666666666,
+          "task_id": "gbrain-source-008"
+        },
+        {
+          "after": 0.0,
+          "before": 0.0,
+          "task_id": "gbrain-source-009"
+        },
+        {
+          "after": 1.0,
+          "before": 1.0,
+          "task_id": "gbrain-source-011"
+        }
+      ]
+    }
+  }
+]

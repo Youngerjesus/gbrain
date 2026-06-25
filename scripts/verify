@@ -3,20 +3,26 @@ set -euo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -z "${PYTHON:-}" ]; then
+  if command -v pyenv >/dev/null 2>&1 && pyenv which python3 >/dev/null 2>&1; then
+    PYTHON="$(pyenv which python3)"
+  else
+    PYTHON="python3"
+  fi
+fi
 
 cd "$repo_root"
 
 git diff --check
-python3 tests/verify_goal_orchestrator_policy.py
-python3 tests/verify_coverage_ledger.py
-python3 tests/verify_sandbox_mompick_category_ia.py
-python3 tests/verify_sandbox_httpie_migration.py
-python3 tests/verify_sandbox_mompick_find_main.py
-python3 tests/verify_behavior_text_contracts.py
-python3 tests/verify_behavior_contract_eval.py
-python3 tests/verify_removed_artifact_contract.py
-python3 tests/verify_grill_me_skill_contract.py
-python3 tests/verify_gstack_skill_contracts.py
-python3 tests/verify_skill_lifecycle_pack.py
-python3 tests/verify_subagent_lifecycle.py
-python3 tests/verify_visual_qa_skill_contract.py
+"$PYTHON" tests/verify_goal_orchestrator_policy.py
+"$PYTHON" tests/verify_worktree_preflight.py
+"$PYTHON" tests/verify_coverage_ledger.py
+"$PYTHON" tests/verify_removed_artifact_contract.py
+"$PYTHON" tests/verify_requirement_stress_questioner_skill_contract.py
+"$PYTHON" tests/verify_requirement_stress_questioner_output_validator.py
+"$PYTHON" tests/verify_grill_me_skill_contract.py
+"$PYTHON" tests/verify_gstack_skill_contracts.py
+"$PYTHON" tests/verify_gbrain_protocol_skill_contract.py
+"$PYTHON" tests/verify_skill_lifecycle_pack.py
+"$PYTHON" tests/verify_subagent_lifecycle.py
+"$PYTHON" tests/verify_visual_qa_skill_contract.py

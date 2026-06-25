@@ -1,0 +1,3496 @@
+{
+  "baseline_gate": {
+    "accepted": true,
+    "per_task_medians": [
+      {
+        "median": 0.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "gbrain search \"<topic>\" --source <source-id>",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "gbrain list --source",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "gbrain search \"<topic>\" --source <source-id>",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "gbrain list --source",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          },
+          {
+            "checks": [
+              {
+                "arg": "gbrain search \"<topic>\" --source <source-id>",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "gbrain list --source",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          }
+        ],
+        "runs": [
+          0.0,
+          0.6666666666666666,
+          0.0
+        ],
+        "task_id": "gbrain-source-007"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "If the user supplied a source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "before any broad summary",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "read it with `gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "If the user supplied a source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "before any broad summary",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "read it with `gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "If the user supplied a source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "before any broad summary",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "read it with `gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-008"
+      },
+      {
+        "median": 0.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "distinguish direct matches, related notes",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Do not present broad/federated top hits",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "for a named source",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.0,
+              "missing": [
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          },
+          {
+            "checks": [
+              {
+                "arg": "distinguish direct matches, related notes",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Do not present broad/federated top hits",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "for a named source",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "distinguish direct matches, related notes",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Do not present broad/federated top hits",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "for a named source",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          }
+        ],
+        "runs": [
+          0.3333333333333333,
+          0.0,
+          0.0
+        ],
+        "task_id": "gbrain-source-009"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "when the source exposes a local root",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg -n",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Use source-root `rg` only for candidate discovery",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          },
+          {
+            "checks": [
+              {
+                "arg": "when the source exposes a local root",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg -n",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Use source-root `rg` only for candidate discovery",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "when the source exposes a local root",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg -n",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Use source-root `rg` only for candidate discovery",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          0.6666666666666666,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-010"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Use the source the user names",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-bound by the server context",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Search for a distinctive phrase",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Use the source the user names",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-bound by the server context",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Search for a distinctive phrase",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Use the source the user names",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-bound by the server context",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Search for a distinctive phrase",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-011"
+      },
+      {
+        "median": 0.3333333333333333,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "memory answers are based on fetched GBrain content",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Read relevant pages",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "cite pages as `<source-id>:<slug>`",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "memory answers are based on fetched GBrain content",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Read relevant pages",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "cite pages as `<source-id>:<slug>`",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          },
+          {
+            "checks": [
+              {
+                "arg": "memory answers are based on fetched GBrain content",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Read relevant pages",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "cite pages as `<source-id>:<slug>`",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.0,
+              "missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          }
+        ],
+        "runs": [
+          0.0,
+          0.3333333333333333,
+          0.6666666666666666
+        ],
+        "task_id": "gbrain-source-012"
+      }
+    ],
+    "reason": null,
+    "sel_score": 0.5555555555555556
+  },
+  "baseline_sel_score": 0.5555555555555556,
+  "benchmark_sha256": "502dd67cce97b6d48766f131cb8d5cda99f31b2b0e6d301c856b47ddf87e7db2",
+  "candidate_sha256": "a0d9302d6db7db802493af129b1f6bf433fa75547464fc42151a42fa70f538bb",
+  "held_out": null,
+  "llm_calls": 97,
+  "mode": "live_closed_loop",
+  "models": {
+    "judge": "gemini-2.5-flash",
+    "optimizer": "gemini-3.5-flash",
+    "target": "gemini-2.5-flash"
+  },
+  "outcome": "accepted",
+  "rejected_edits": [],
+  "run_id": "gbrain-protocol-a0d9302d6db7",
+  "sel_score": 0.7222222222222222,
+  "split": {
+    "sel": 6,
+    "test": 8,
+    "train": 6
+  },
+  "test_gate": {
+    "accepted": true,
+    "per_task_medians": [
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Do not assume AI Notes is the whole brain",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "If the user asks a general memory question",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "federated behavior",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Do not assume AI Notes is the whole brain",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "If the user asks a general memory question",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "federated behavior",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Do not assume AI Notes is the whole brain",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "If the user asks a general memory question",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "federated behavior",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Do not assume AI Notes is the whole brain",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "If the user asks a general memory question",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "federated behavior",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Do not assume AI Notes is the whole brain",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "If the user asks a general memory question",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "federated behavior",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Do not assume AI Notes is the whole brain",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "If the user asks a general memory question",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "federated behavior",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-013"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Answering a named-source or exact-path lookup",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "without source-bound slug/path inventory",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "`gbrain get`",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "Answering a named-source or exact-path lookup",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "without source-bound slug/path inventory",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "`gbrain get`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "Answering a named-source or exact-path lookup",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "without source-bound slug/path inventory",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "Answering a named-source or exact-path lookup",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "without source-bound slug/path inventory",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          },
+          {
+            "checks": [
+              {
+                "arg": "Answering a named-source or exact-path lookup",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "without source-bound slug/path inventory",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "`gbrain get`",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Answering a named-source or exact-path lookup",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "without source-bound slug/path inventory",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "`gbrain get`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Answering a named-source or exact-path lookup",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "without source-bound slug/path inventory",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "`gbrain get`",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Answering a named-source or exact-path lookup",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "without source-bound slug/path inventory",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "`gbrain get`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          0.3333333333333333,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-014"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Named Source And Path Lookup",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Named Source And Path Lookup",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Named Source And Path Lookup",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Named Source And Path Lookup",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Named Source And Path Lookup",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Named Source And Path Lookup",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-015"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Broad-To-Final Retrieval",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "wide candidate pool",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Collect broadly from multiple signals",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "wide candidate pool",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Broad-To-Final Retrieval",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "wide candidate pool",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Collect broadly from multiple signals",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "wide candidate pool",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Broad-To-Final Retrieval",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "wide candidate pool",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Collect broadly from multiple signals",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "wide candidate pool",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-016"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "filter and rerank",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Rerank the remaining candidates",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "directness to the user's topic",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "filter and rerank",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Rerank the remaining candidates",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "directness to the user's topic",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "filter and rerank",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Rerank the remaining candidates",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "directness to the user's topic",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "filter and rerank",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Rerank the remaining candidates",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "directness to the user's topic",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": "filter and rerank",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "filter and rerank",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Rerank the remaining candidates",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "directness to the user's topic",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "filter and rerank",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Rerank the remaining candidates",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "directness to the user's topic",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "filter and rerank",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "filter and rerank",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          0.6666666666666666
+        ],
+        "task_id": "gbrain-source-017"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Open and inspect enough top candidates",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Do not finalize a top result from title or snippet alone",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "Open and inspect enough top candidates",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not finalize a top result from title or snippet alone",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": "Open and inspect enough top candidates",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not finalize a top result from title or snippet alone",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Open and inspect enough top candidates",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Do not finalize a top result from title or snippet alone",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Open and inspect enough top candidates",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not finalize a top result from title or snippet alone",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Open and inspect enough top candidates",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Do not finalize a top result from title or snippet alone",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Open and inspect enough top candidates",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not finalize a top result from title or snippet alone",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-018"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Return roughly the top 10 relevant pages by default",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "If fewer than 10 are actually relevant",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "if more than 10 are strong matches",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Return roughly the top 10 relevant pages by default",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "If fewer than 10 are actually relevant",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "if more than 10 are strong matches",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Return roughly the top 10 relevant pages by default",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "If fewer than 10 are actually relevant",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "if more than 10 are strong matches",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Return roughly the top 10 relevant pages by default",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "If fewer than 10 are actually relevant",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "if more than 10 are strong matches",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Return roughly the top 10 relevant pages by default",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "If fewer than 10 are actually relevant",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "if more than 10 are strong matches",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Return roughly the top 10 relevant pages by default",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "If fewer than 10 are actually relevant",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "if more than 10 are strong matches",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "task_id": "gbrain-source-019"
+      },
+      {
+        "median": 0.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Broad-To-Final Retrieval",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Collect broadly from multiple signals",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "top 10 relevant pages",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Broad-To-Final Retrieval",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Collect broadly from multiple signals",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "top 10 relevant pages",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.0,
+              "missing": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Broad-To-Final Retrieval",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Collect broadly from multiple signals",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "top 10 relevant pages",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.0,
+              "missing": [
+                {
+                  "arg": "Broad-To-Final Retrieval",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Collect broadly from multiple signals",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "top 10 relevant pages",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          }
+        ],
+        "runs": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "task_id": "gbrain-source-020"
+      }
+    ],
+    "reason": null,
+    "sel_score": 0.875
+  },
+  "test_score": 0.875,
+  "trace": "/Users/jeongmin/Downloads/projects/codex/.codex/skills/gbrain-protocol/skillopt/gbrain-protocol-a0d9302d6db7.trace.json",
+  "validation_gate": {
+    "accepted": true,
+    "per_task_medians": [
+      {
+        "median": 0.6666666666666666,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "gbrain search \"<topic>\" --source <source-id>",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "gbrain list --source",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "gbrain search \"<topic>\" --source <source-id>",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "gbrain list --source",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          },
+          {
+            "checks": [
+              {
+                "arg": "gbrain search \"<topic>\" --source <source-id>",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "gbrain list --source",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg --files",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "gbrain list --source",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg --files",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": "gbrain search \"<topic>\" --source <source-id>",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          0.0,
+          0.6666666666666666,
+          1.0
+        ],
+        "task_id": "gbrain-source-007"
+      },
+      {
+        "median": 0.6666666666666666,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "If the user supplied a source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "before any broad summary",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "read it with `gbrain get",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          },
+          {
+            "checks": [
+              {
+                "arg": "If the user supplied a source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "before any broad summary",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "read it with `gbrain get",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "If the user supplied a source-root file path",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "before any broad summary",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "read it with `gbrain get",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "before any broad summary",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "If the user supplied a source-root file path",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "read it with `gbrain get",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          }
+        ],
+        "runs": [
+          0.3333333333333333,
+          1.0,
+          0.6666666666666666
+        ],
+        "task_id": "gbrain-source-008"
+      },
+      {
+        "median": 0.3333333333333333,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "distinguish direct matches, related notes",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Do not present broad/federated top hits",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "for a named source",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "initial_missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [],
+              "status": "repaired"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "distinguish direct matches, related notes",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Do not present broad/federated top hits",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "for a named source",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          },
+          {
+            "checks": [
+              {
+                "arg": "distinguish direct matches, related notes",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Do not present broad/federated top hits",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "for a named source",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.0,
+              "initial_missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "distinguish direct matches, related notes",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Do not present broad/federated top hits",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "for a named source",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.0
+          }
+        ],
+        "runs": [
+          1.0,
+          0.3333333333333333,
+          0.0
+        ],
+        "task_id": "gbrain-source-009"
+      },
+      {
+        "median": 0.6666666666666666,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "when the source exposes a local root",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg -n",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Use source-root `rg` only for candidate discovery",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          },
+          {
+            "checks": [
+              {
+                "arg": "when the source exposes a local root",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "rg -n",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Use source-root `rg` only for candidate discovery",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 0.6666666666666666,
+              "initial_missing": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.6666666666666666
+          },
+          {
+            "checks": [
+              {
+                "arg": "when the source exposes a local root",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "rg -n",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Use source-root `rg` only for candidate discovery",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "when the source exposes a local root",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "rg -n",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Use source-root `rg` only for candidate discovery",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          0.6666666666666666,
+          0.6666666666666666,
+          1.0
+        ],
+        "task_id": "gbrain-source-010"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "Use the source the user names",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-bound by the server context",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Search for a distinctive phrase",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Use the source the user names",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-bound by the server context",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Search for a distinctive phrase",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "Use the source the user names",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "source-bound by the server context",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Search for a distinctive phrase",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "Use the source the user names",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.6666666666666666,
+              "missing": [
+                {
+                  "arg": "source-bound by the server context",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Search for a distinctive phrase",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          }
+        ],
+        "runs": [
+          1.0,
+          1.0,
+          0.3333333333333333
+        ],
+        "task_id": "gbrain-source-011"
+      },
+      {
+        "median": 1.0,
+        "run_details": [
+          {
+            "checks": [
+              {
+                "arg": "memory answers are based on fetched GBrain content",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Read relevant pages",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "cite pages as `<source-id>:<slug>`",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          },
+          {
+            "checks": [
+              {
+                "arg": "memory answers are based on fetched GBrain content",
+                "op": "contains",
+                "passed": false
+              },
+              {
+                "arg": "Read relevant pages",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "cite pages as `<source-id>:<slug>`",
+                "op": "contains",
+                "passed": false
+              }
+            ],
+            "contract": {
+              "attempts": 1,
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "final_score": 0.3333333333333333,
+              "initial_missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "initial_score": 0.3333333333333333,
+              "missing": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": false
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": false
+                }
+              ],
+              "status": "repair_failed"
+            },
+            "contract_violation": true,
+            "score": 0.3333333333333333
+          },
+          {
+            "checks": [
+              {
+                "arg": "memory answers are based on fetched GBrain content",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "Read relevant pages",
+                "op": "contains",
+                "passed": true
+              },
+              {
+                "arg": "cite pages as `<source-id>:<slug>`",
+                "op": "contains",
+                "passed": true
+              }
+            ],
+            "contract": {
+              "attempts": 0,
+              "checks": [
+                {
+                  "arg": "memory answers are based on fetched GBrain content",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "Read relevant pages",
+                  "op": "contains",
+                  "passed": true
+                },
+                {
+                  "arg": "cite pages as `<source-id>:<slug>`",
+                  "op": "contains",
+                  "passed": true
+                }
+              ],
+              "final_score": 1.0,
+              "missing": [],
+              "status": "passed"
+            },
+            "contract_violation": false,
+            "score": 1.0
+          }
+        ],
+        "runs": [
+          1.0,
+          0.3333333333333333,
+          1.0
+        ],
+        "task_id": "gbrain-source-012"
+      }
+    ],
+    "reason": null,
+    "sel_score": 0.7222222222222222
+  }
+}

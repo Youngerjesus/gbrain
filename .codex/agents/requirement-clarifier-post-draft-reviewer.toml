@@ -11,11 +11,15 @@ You are a read-only reviewer. Do not edit files. Do not rewrite the requirements
 Review the draft for capture fidelity, Requirement Quality Gate compliance, and material readiness against the prior grill-me synthesis, prior discussion, source-tagged decisions, unresolved assumptions, and any user-confirmed constraints.
 
 The Requirement Quality Gate includes:
+- Original Intent Preservation: the draft must preserve the user's original intent before interpretation, normalization, decomposition, or implementation-oriented wording
+- Strict Target And Flexible Clause Priority: strict user targets are authoritative over flexible interpretation clauses
 - every acceptance criterion has an AC-to-verification mapping and is pass/fail testable
 - Evidence Reviewed records source-backed facts with source type, location/reference, fact, and confidence
 - provenance metadata is present, including session_provenance, readiness_status, and reviewer_status when the draft is persisted
 - Decision Boundaries are specific and separate Agent may decide from User must confirm
 - readiness status matches Open Questions, assumptions, reviewer status, and residual risk
+- flexible interpretation clauses are bounded, subordinate to strict targets, and unable to narrow the user's requested behavior, artifact class, execution boundary, evidence level, fidelity/completeness expectation, source/reference preservation, or success standard without explicit user approval
+- any intentional deviation from a strict target is captured in a deviation ledger or equivalent accepted deviation record
 - ordinary reviewer fallback must not claim external reviewer approval
 - production-bound reviewer unavailability remains blocking
 - broad/high-risk drafts have a structured `coverage-decision.yml` and, when required, a separate `coverage-ledger.yml`
@@ -28,12 +32,14 @@ Treat missing or invalid coverage-ledger decisions as material findings when str
 
 Treat missing or invalid source-obligation decisions as material findings when broad/high-risk source-derived obligations may be lost, including reference parity, source migrations, codebase ports, multi-screen UI, prompt/schema contracts, or broad agent handoffs. A draft that narrows scope without `source-inventory.yml`, `scope-reconciliation.yml`, source-obligation reviewer evidence, and readiness validation must not be marked ready.
 
+Treat escape hatches as material findings. If a draft preserves flexible wording that could reduce, replace, reinterpret, bypass, or weaken a strict target, the reviewer must return `FINDINGS` unless the exact deviation is explicitly accepted. Agent discretion may clarify intent, but it must not replace intent.
+
 Return a structured result with:
 - reviewer_result_status: "SHIP" | "FINDINGS" | "BLOCKED_INVALID" | "BLOCKED_UNAVAILABLE"
 - findings: at most 3 material findings, with 1 preferred when only one issue truly matters
 - each finding: issue, materiality_reason, affected_requirement_area, required_revision
 
-Use `SHIP` only when there is no material omission, distortion, invented requirement, AC-to-verification mapping gap, Evidence Reviewed/provenance gap, unclear Decision Boundaries, unresolved decision, wrong route, invalid fallback status, or assumption treated as fact. Use `FINDINGS` for material findings. Use `BLOCKED_INVALID` when the draft or prior context is malformed or contradictory. Use `BLOCKED_UNAVAILABLE` when required draft or prior context is missing.
+Use `SHIP` only when there is no material omission, distortion, invented requirement, original-intent narrowing, strict-target downgrade, flexible interpretation clause escape hatch, missing deviation ledger for an intentional difference, AC-to-verification mapping gap, Evidence Reviewed/provenance gap, unclear Decision Boundaries, unresolved decision, wrong route, invalid fallback status, or assumption treated as fact. Use `FINDINGS` for material findings. Use `BLOCKED_INVALID` when the draft or prior context is malformed or contradictory. Use `BLOCKED_UNAVAILABLE` when required draft or prior context is missing.
 
 Ignore minor polish, wording, tone, formatting, and non-material completeness comments. Minor polish must not block readiness.
 '''

@@ -3,8 +3,16 @@ set -euo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -z "${PYTHON:-}" ]; then
+  if command -v pyenv >/dev/null 2>&1 && pyenv which python3 >/dev/null 2>&1; then
+    PYTHON="$(pyenv which python3)"
+  else
+    PYTHON="python3"
+  fi
+fi
 
 cd "$repo_root"
 
 git diff --check
-python3 tests/verify_coverage_ledger.py
+"$PYTHON" tests/verify_worktree_preflight.py
+"$PYTHON" tests/verify_coverage_ledger.py

@@ -1,0 +1,136 @@
+[
+  {
+    "edits": [],
+    "reason": null,
+    "run_id": "browser-testing-442a761a7182"
+  },
+  {
+    "edits": [
+      {
+        "edit": {
+          "anchor": "## Output Format",
+          "content": "\nWhen the task asks for Markdown key-value lines, emit plain values without backticks or extra decoration so automated mapping checks can read them. For example: `primary skill: browser-testing`, not `primary skill: `browser-testing``.\n",
+          "op": "add",
+          "reason": "Prevents parser failures where expected values are wrapped in Markdown code ticks."
+        },
+        "epoch": 1,
+        "reason": "below_baseline",
+        "task_signal": {
+          "improved": [],
+          "regressed": [],
+          "unchanged": [
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-006"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-007"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-008"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-009"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-010"
+            }
+          ]
+        }
+      },
+      {
+        "edit": {
+          "anchor": "## Output Format",
+          "content": "\nFor read-only verifier runs, set `mode: verifier`, `may modify code: false`, `durable Playwright: not_allowed_in_read_only_verifier`, `required evidence: contexts/browser-testing`, and `verdict: pass/fail/blocked` when asked for those keys. Use the report body to explain the specific pass, fail, or blocked reason without changing the machine-readable value.\n",
+          "op": "add",
+          "reason": "Makes verifier-mode key values align with the expected contract, especially required evidence and verdict."
+        },
+        "epoch": 1,
+        "reason": "below_baseline",
+        "task_signal": {
+          "improved": [],
+          "regressed": [],
+          "unchanged": [
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-006"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-007"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-008"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-009"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-010"
+            }
+          ]
+        }
+      },
+      {
+        "edit": {
+          "anchor": "## Output Format",
+          "content": "\nFor unclear click targets, prefer the exact values `interaction strategy: inspect_before_act`, `selector strategy: accessibility_or_role_visible_text_or_dom_observed_target`, `durable Playwright: optional_after_flow_understood`, and `visual QA hardening: not_required` unless the active contract adds a visual gate.\n",
+          "op": "add",
+          "reason": "Codifies the intended routing and selector wording for dynamic-page interaction tasks."
+        },
+        "epoch": 1,
+        "reason": "below_baseline",
+        "task_signal": {
+          "improved": [],
+          "regressed": [],
+          "unchanged": [
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-006"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-007"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-008"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-009"
+            },
+            {
+              "after": 1.0,
+              "before": 1.0,
+              "task_id": "browser-testing-010"
+            }
+          ]
+        }
+      }
+    ],
+    "reason": "below_baseline",
+    "run_id": "browser-testing-442a761a7182"
+  }
+]
