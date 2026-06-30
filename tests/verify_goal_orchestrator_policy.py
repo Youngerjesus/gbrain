@@ -632,6 +632,25 @@ def assert_manifest_declares_orchestrator_scripts() -> None:
         raise AssertionError(f"project-bootstrap manifest missing orchestrator scripts {missing}")
 
 
+def assert_bootstrap_installs_task_card_templates() -> None:
+    manifest = read(".codex/skills/project-bootstrap/references/manifest.md")
+    required = [
+        "projects/README.md",
+        "projects/task-card-template.md",
+        "project Task Card storage guidance",
+        "global Task Card template",
+    ]
+    missing = [item for item in required if item not in manifest]
+    if missing:
+        raise AssertionError(f"project-bootstrap manifest missing Task Card entries {missing}")
+    for path in [
+        ROOT / ".codex/skills/project-bootstrap/templates/root/projects/README.md",
+        ROOT / ".codex/skills/project-bootstrap/templates/root/projects/task-card-template.md",
+    ]:
+        if not path.exists():
+            raise AssertionError(f"project-bootstrap template missing {path}")
+
+
 def assert_bootstrap_installs_plan_design_review() -> None:
     expected_path = (
         ROOT
@@ -1716,6 +1735,7 @@ def main() -> int:
     assert_bootstrap_installs_plan_design_review()
     assert_bootstrap_installs_main_gate_orchestrators()
     assert_manifest_declares_orchestrator_scripts()
+    assert_bootstrap_installs_task_card_templates()
     assert_bootstrap_installs_experience_review_skills()
     assert_experience_skill_template_parity()
     assert_bootstrap_installs_production_readiness()

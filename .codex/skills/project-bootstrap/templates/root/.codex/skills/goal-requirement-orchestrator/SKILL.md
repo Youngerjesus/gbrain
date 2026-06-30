@@ -43,9 +43,17 @@ requirements/<requirement-id-1>/requirements.md
 requirements/<requirement-id-1>/progress.md
 requirements/<requirement-id-1>/decisions.md
 requirements/<requirement-id-1>/evidence.md
+projects/<project-id>/task-card
 ```
 
 Create every listed requirement document during orchestration bootstrap, including the production readiness requirement for MVP, beta, launch, or production-bound initiatives. Before any slice can move toward Plan, all listed requirement documents must exist, carry reviewer-backed acceptance state or a recorded blocker, and have `progress.md`, `decisions.md`, and `evidence.md`.
+
+Use `gbrain-protocol` to save or update `projects/<project-id>/task-card` as
+compact working memory for the sequence. The Task Card is not an acceptance
+artifact and must not replace sequence, requirement, progress, decision, or
+evidence files. It should preserve the current Goal / Outcome, Sequence and
+Requirement inputs, Verification standard, Constraints, and durable Decisions
+so the next session can resume without rereading every document first.
 
 ## File Shape
 
@@ -158,6 +166,9 @@ Update state files at gate boundaries, not only at closeout.
 - Before and after `Review`, record post-implementation lens decisions for `visual-qa-hardening`, `ux-review`, and `devex-review`; record whether triggered lenses ran in parallel or serial, the joined evidence set consumed by `implementation-brake`, and `[SHIP]` evidence.
 - When verification or review evidence is produced, update the current requirement's `evidence.md`.
 - When a material design, scope, ordering, constraint, or tradeoff decision is made, update the current requirement's `decisions.md`.
+- When a sequence is created or resumed, or when Goal / Outcome, current
+  Requirement, Verification, Constraints, or durable Decisions change, update
+  `projects/<project-id>/task-card` through `gbrain-protocol`.
 - When a companion subagent starts, completes, times out, is cancelled, fails cancellation, or leaves cleanup pending, update the current requirement's `progress.md` and `evidence.md` before moving to the next gate.
 
 ## Completion Contract
@@ -197,8 +208,10 @@ Keep state files concise. Summarize logs and verification output; preserve paths
 5. Create or update `goal-requirements/<id>/sequence.md` and `goal-requirements/<id>/progress.md`.
 6. Create or update every listed `requirements/<requirement-id>/requirements.md` with `requirement-clarifier`; create each requirement's `progress.md`, `decisions.md`, and `evidence.md` state files during orchestration bootstrap.
 7. Ensure each `requirement-clarifier` run invokes `requirement-clarifier-post-draft-reviewer` when the runtime allows subagents. Record structured `reviewer_status`, any fallback status, and unresolved findings in each requirement's state files before treating the sequence as accepted for later execution. If reviewer state becomes stale, rerun or revalidate the post-draft reviewer gate before `Plan`.
-8. Add the fixed execution surface so later goal runs know the required `Plan`, `Impl`, `Review`, closeout, and production-readiness contract.
-9. In the final response, tell the user the listed requirement paths, their reviewer-backed acceptance statuses or blockers, and that implementation still starts at state rehydration plus the `Plan` gate, not direct implementation.
+8. Use `gbrain-protocol` to save or update the sequence Task Card at
+   `projects/<project-id>/task-card`.
+9. Add the fixed execution surface so later goal runs know the required `Plan`, `Impl`, `Review`, closeout, and production-readiness contract.
+10. In the final response, tell the user the listed requirement paths, their reviewer-backed acceptance statuses or blockers, and that implementation still starts at state rehydration plus the `Plan` gate, not direct implementation.
 
 ## Constraints
 

@@ -17,6 +17,7 @@ A GBrain task is complete only when:
 - named-source or user-supplied path lookups prove the source-local slug or
   source-root file inventory before summarizing results;
 - writes use durable page shape with frontmatter and source citation;
+- project Task Card writes follow [Project Task Card Memory](./references/project-task-cards.md);
 - source-bound operations use a tool or CLI path that can actually target that
   source;
 - every write is read back and checked with a distinctive phrase.
@@ -57,9 +58,10 @@ tool selection details.
    relevant document set is complete.
 6. Read relevant pages with `get_page` or `gbrain get`.
 7. For writes, choose source, slug, type, and page shape before writing.
-8. Write with `put_page` only when its source context is acceptable; otherwise
+8. For project Task Card writes, use [Project Task Card Memory](./references/project-task-cards.md) before writing.
+9. Write with `put_page` only when its source context is acceptable; otherwise
    write with `gbrain capture --file` or `gbrain put --source`.
-9. Verify by reading the page back and searching for a distinctive phrase.
+10. Verify by reading the page back and searching for a distinctive phrase.
 
 ## Named Source And Path Lookup
 
@@ -175,4 +177,5 @@ briefly.
 
 - [CLI And MCP Usage](./references/cli-and-mcp.md)
 - [Page Writing Rules](./references/page-writing.md)
+- [Project Task Card Memory](./references/project-task-cards.md)
 - [Source Path Patterns](./references/source-path-patterns.md)

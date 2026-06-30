@@ -113,6 +113,8 @@ Every template-managed file under `templates/root/` that bootstrap may create, p
 | `AGENTS.md` | Yes | all modes | never | No | strategic project doc |
 | `README.md` | Yes | all modes | never | No | strategic project doc |
 | `DESIGN.md` | Optional | UI-bearing projects only | never | No | root design SSOT |
+| `projects/README.md` | Yes | all modes | preserve | No | project Task Card storage guidance |
+| `projects/task-card-template.md` | Yes | all modes | preserve | No | global Task Card template |
 | `main/README.md` | Yes | all modes | preserve | No | workspace intro |
 | `main/.gitignore` | Yes | all modes | preserve | No | generic ignores |
 | `main/.env.example` | Yes | all modes | preserve | No | placeholder only |

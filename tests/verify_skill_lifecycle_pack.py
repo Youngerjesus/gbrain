@@ -2210,6 +2210,9 @@ class GoalRequirementOrchestratorSkillificationTest(unittest.TestCase):
             "Worktree Execution Policy",
             "Delegated Subagent Lifecycle",
             "giant state machine",
+            "projects/<project-id>/task-card",
+            "gbrain-protocol",
+            "Goal / Outcome",
         ]:
             self.assertIn(required, text)
 
@@ -2309,6 +2312,13 @@ class RequirementClarifierSkillificationTest(unittest.TestCase):
             self.assertIn(section, text)
         for route in ["design-consultation", "technical-design", "plan-eng-review", "decision-brake", "scenario-brake", "grill-me"]:
             self.assertIn(route, text)
+        for required in [
+            "gbrain-protocol",
+            "projects/<project-id>/task-card",
+            "Goal / Outcome",
+            "durable Decisions",
+        ]:
+            self.assertIn(required, text)
         for unclear_route in ["ralplan", "office-hours", "spec-creator"]:
             self.assertNotIn(unclear_route, text)
 

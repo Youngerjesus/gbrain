@@ -34,6 +34,10 @@ Do not create `contracts.md`. If strict executable contracts are needed after re
 5. Play back the requirement before finalization when enough context exists.
 6. Apply the requirement quality gate and post-draft reviewer policy.
 7. Finalize `requirements/<requirement-id>/requirements.md` only with a structured readiness status, provenance, evidence, and a clear next step.
+8. When the requirement is expected to continue across sessions, use
+   `gbrain-protocol` to create or update the matching
+   `projects/<project-id>/task-card` with Goal / Outcome, Inputs, Verification,
+   Constraints, and durable Decisions.
 
 ## Session Provenance
 
@@ -491,6 +495,14 @@ Preserve the handoff bridge:
 ```
 
 If any required field remains unresolved, keep it under `Open Questions` and do not claim the requirement is final. If unresolved questions block planning or implementation, ask the next clarification question instead of writing a final requirements document.
+
+When the finalized requirement is part of long-running or multi-session work,
+route to `gbrain-protocol` to save or update compact project task memory at
+`projects/<project-id>/task-card`. The Task Card is a recall and handoff aid,
+not the product requirements source of truth. It must link the Requirement path
+and, when known, the Sequence path; preserve Goal / Outcome, Verification,
+Constraints, and durable Decisions; and avoid duplicating the full requirements
+document.
 
 ## Handoff Routing
 

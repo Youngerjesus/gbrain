@@ -18,6 +18,8 @@ Observed paths:
 - `concepts/ai-agents/*` - AI agent concepts and harness notes.
 - `concepts/ai-blogs/*` - AI blog-derived concept pages.
 - `concepts/ai-safety/*` - AI safety, evaluation, scheming, and CoT pages.
+- `projects/*` - project Task Cards and compact working memory for long-running
+  agent work.
 - `wealth-os/00-index/*` - Wealth OS indexes and protocols.
 - `wealth-os/10-principles/*` - wealth principles.
 - `wealth-os/20-mental-models/*` - wealth mental models.

@@ -11,6 +11,7 @@ SKILL = SKILL_DIR / "SKILL.md"
 REFERENCES = [
     "cli-and-mcp.md",
     "page-writing.md",
+    "project-task-cards.md",
     "source-path-patterns.md",
 ]
 
@@ -72,8 +73,16 @@ def assert_skill_shape() -> None:
         "filter and rerank",
         "top 10",
         "distinctive phrase",
+        "Project Task Card Memory",
     ]:
         assert_contains(text, required, "gbrain-protocol SKILL.md")
+    for moved_detail in [
+        "## Project Task Cards",
+        "Global template or policy",
+        "Project-specific memory",
+        "When updating a Task Card, fold in only durable conclusions",
+    ]:
+        assert_not_contains(text, moved_detail, "gbrain-protocol SKILL.md")
 
 
 def assert_references_are_one_hop() -> None:
@@ -97,6 +106,7 @@ def assert_reference_contracts() -> None:
             raise AssertionError(f"missing gbrain-protocol reference: {name}")
     cli = read(SKILL_DIR / "references" / "cli-and-mcp.md")
     page = read(SKILL_DIR / "references" / "page-writing.md")
+    task_cards = read(SKILL_DIR / "references" / "project-task-cards.md")
     paths = read(SKILL_DIR / "references" / "source-path-patterns.md")
     for required in [
         "sources_list",
@@ -124,10 +134,24 @@ def assert_reference_contracts() -> None:
     ]:
         assert_contains(page, required, "page-writing reference")
     for required in [
+        "compact working memory",
+        "projects/task-card-template",
+        "projects/<project-id>/task-card",
+        "Goal / Outcome",
+        "Inputs",
+        "Verification",
+        "Constraints",
+        "Decisions",
+        "requirement-clarifier",
+        "goal-requirement-orchestrator",
+    ]:
+        assert_contains(task_cards, required, "project-task-cards reference")
+    for required in [
         "`default`",
         "`ai-notes`",
         "`business-notes`",
         "`mindset-notes`",
+        "`projects/*`",
         "Verify live state",
     ]:
         assert_contains(paths, required, "source-path-patterns reference")
